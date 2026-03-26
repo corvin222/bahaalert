@@ -465,8 +465,7 @@
     <div style="width:44px;height:44px;background:linear-gradient(135deg,#2563eb,#38bdf8);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">🌊</div>
     <div style="flex:1;">
       <div style="font-size:14px;font-weight:700;color:var(--text);" id="installTitle">Install BahaAlert</div>
-      <div style="font-size:11px;color:var(--muted);margin-top:2px;" id="installSub">Add to home screen for quick access</div>
-    </div>
+      <div style="font-size:11px;color:var(--muted);margin-top:2px;" id="installSub">Add to home screen for quick access</div>    </div>
     <button onclick="dismissInstall()" style="background:none;border:none;font-size:18px;color:var(--muted);cursor:pointer;padding:4px;">✕</button>
   </div>
   <div style="display:flex;gap:8px;margin-top:12px;">
@@ -555,10 +554,10 @@ async function fetchWeather(city) {
 // ── RAIN CLASSIFICATION ──
 function rainInfo(rain1h) {
   const r = rain1h || 0;
-  if (r >= 10)  return { label:'Malakas na ulan', cls:'heavy',   emoji:'⛈️' };
-  if (r >= 2)   return { label:'Katamtamang ulan', cls:'moderate',emoji:'🌧️' };
-  if (r > 0)    return { label:'Magaang ulan',     cls:'light',   emoji:'🌦️' };
-  return         { label:'Walang ulan',            cls:'none',    emoji:'☀️' };
+  if (r >= 10)  return { label: t('heavy'),    cls:'heavy',    emoji:'⛈️' };
+  if (r >= 2)   return { label: t('moderate'),  cls:'moderate', emoji:'🌧️' };
+  if (r > 0)    return { label: t('light'),     cls:'light',    emoji:'🌦️' };
+  return               { label: t('noRain'),    cls:'none',     emoji:'☀️' };
 }
 
 function floodEmoji(status) {
@@ -566,7 +565,7 @@ function floodEmoji(status) {
 }
 
 function floodLabel(status) {
-  return { critical:'KRITIKAL', warning:'BABALA', normal:'NORMAL' }[status];
+  return { critical: t('critical'), warning: t('warning'), normal: t('normal') }[status] || status;
 }
 
 function floodColor(status) {
@@ -621,14 +620,14 @@ function buildCityPopup(phCity, weather) {
       ${hasWeather ? `
         <div class="rain-badge ${ri.cls}">${ri.emoji} ${ri.label}${rain>0?` (${rain.toFixed(1)}mm/hr)`:''}</div>
         <div class="weather-grid">
-          <div class="weather-cell"><div class="wval">${safeTemp(weather)}</div><div class="wlbl">Temp</div></div>
-          <div class="weather-cell"><div class="wval">${safeHumidity(weather)}</div><div class="wlbl">Humidity</div></div>
-          <div class="weather-cell"><div class="wval">${safeWind(weather)}</div><div class="wlbl">Wind</div></div>
-          <div class="weather-cell"><div class="wval" style="font-size:11px;text-transform:capitalize;">${safeDesc(weather)}</div><div class="wlbl">Condition</div></div>
+          <div class="weather-cell"><div class="wval">${safeTemp(weather)}</div><div class="wlbl">${t('temperature')}</div></div>
+          <div class="weather-cell"><div class="wval">${safeHumidity(weather)}</div><div class="wlbl">${t('humidity')}</div></div>
+          <div class="weather-cell"><div class="wval">${safeWind(weather)}</div><div class="wlbl">${t('windSpeed')}</div></div>
+          <div class="weather-cell"><div class="wval" style="font-size:11px;text-transform:capitalize;">${safeDesc(weather)}</div><div class="wlbl">${t('condition')}</div></div>
         </div>
-      ` : `<div style="padding:10px;text-align:center;font-size:12px;color:var(--muted);">⏳ Loading weather...</div>`}
+      ` : `<div style="padding:10px;text-align:center;font-size:12px;color:var(--muted);">⏳ ${t('loading')}</div>`}
     </div>
-    <div class="popup-footer"><span>Live data · ${timeStr}</span><strong>OpenWeatherMap</strong></div>`;
+    <div class="popup-footer"><span>${t('liveData')} · ${timeStr}</span><strong>OpenWeatherMap</strong></div>`;
 }
 
 // ── WEATHER ICON ──
@@ -670,7 +669,7 @@ function buildFloodPopup(city, weather) {
         <div class="popup-badge ${city.floodStatus}">${floodLabel(city.floodStatus)}</div>
       </div>
 
-      <div class="popup-row"><span>Antas ng ilog</span><span>${city.riverLevel}m / ${city.riverMax}m</span></div>
+      <div class="popup-row"><span>${t('riverLevel')}</span><span>${city.riverLevel}m / ${city.riverMax}m</span></div>
       <div style="height:6px;background:#f1f5f9;border-radius:3px;margin:6px 0;overflow:hidden;">
         <div style="height:100%;width:${pct}%;background:${floodColor(city.floodStatus)};border-radius:3px;"></div>
       </div>
@@ -681,10 +680,10 @@ function buildFloodPopup(city, weather) {
       <div style="font-size:11px;font-weight:700;color:var(--muted);margin-bottom:7px;text-transform:uppercase;letter-spacing:0.5px;">🌤️ Live Weather</div>
       <div class="rain-badge ${ri.cls}">${ri.emoji} ${ri.label}${rain > 0 ? ` (${rain.toFixed(1)}mm/hr)` : ''}</div>
       <div class="weather-grid">
-        <div class="weather-cell"><div class="wval">${safeTemp(weather)}</div><div class="wlbl">Temperatura</div></div>
-        <div class="weather-cell"><div class="wval">${safeHumidity(weather)}</div><div class="wlbl">Humidity</div></div>
-        <div class="weather-cell"><div class="wval">${safeWind(weather)}</div><div class="wlbl">Hangin</div></div>
-        <div class="weather-cell"><div class="wval" style="font-size:11px;text-transform:capitalize;">${safeDesc(weather)}</div><div class="wlbl">Kondisyon</div></div>
+        <div class="weather-cell"><div class="wval">${safeTemp(weather)}</div><div class="wlbl">${t('temperature')}</div></div>
+        <div class="weather-cell"><div class="wval">${safeHumidity(weather)}</div><div class="wlbl">${t('humidity')}</div></div>
+        <div class="weather-cell"><div class="wval">${safeWind(weather)}</div><div class="wlbl">${t('windSpeed')}</div></div>
+        <div class="weather-cell"><div class="wval" style="font-size:11px;text-transform:capitalize;">${safeDesc(weather)}</div><div class="wlbl">${t('condition')}</div></div>
       </div>
       ` : `
       <div style="background:#f1f5f9;border-radius:10px;padding:12px;text-align:center;">
@@ -1165,7 +1164,7 @@ function selectSearchResult(lat, lng, name) {
 // ── WEATHER PANEL ──
 async function buildWeatherPanel() {
   const panel = document.getElementById('panelContent');
-  panel.innerHTML = `<div class="loading-spinner"><div class="spinner"></div>Nilo-load ang live weather...</div>`;
+  panel.innerHTML = `<div class="loading-spinner"><div class="spinner"></div>${t('loading')}</div>`;
 
   const topCities = cities.filter(c => currentFilter === 'all' || c.region === currentFilter).slice(0, 8);
   const results = await Promise.all(topCities.map(c => fetchWeather(c)));
@@ -1214,7 +1213,7 @@ async function updateAlertStrip() {
     const rain = safeRain(weatherData);
     const ri = rainInfo(rain);
     document.getElementById('alertText').textContent =
-      `🚨 KRITIKAL: ${critical[0].river} (${critical[0].name}) — ${ri.label}${rain > 0 ? ` ${rain.toFixed(1)}mm/hr` : ''} · ${critical.length} kritikal na ilog`;
+      `🚨 ${t('critical')}: ${critical[0].river} (${critical[0].name}) — ${ri.label}${rain > 0 ? ` ${rain.toFixed(1)}mm/hr` : ''} · ${critical.length} ${currentLang === 'tl' ? 'kritikal na ilog' : 'critical rivers'}`;
   }
 }
 
@@ -1282,6 +1281,13 @@ const translations = {
     condition: 'Condition',
     riverLevel: 'River level',
     affected: 'Affected areas',
+    critical: 'CRITICAL',
+    warning: 'WARNING',
+    normal: 'NORMAL',
+    temperature: 'Temperature',
+    installTitle: 'Install BahaAlert',
+    installSub: 'Add to home screen for quick access',
+    installBtn: '📲 Install App',
   },
   tl: {
     search: 'Hanapin ang iyong barangay o lungsod...',
@@ -1345,6 +1351,13 @@ const translations = {
     condition: 'Kondisyon',
     riverLevel: 'Antas ng ilog',
     affected: 'Apektadong lugar',
+    critical: 'KRITIKAL',
+    warning: 'BABALA',
+    normal: 'NORMAL',
+    temperature: 'Temperatura',
+    installTitle: 'I-install ang BahaAlert',
+    installSub: 'Idagdag sa home screen para sa mabilis na access',
+    installBtn: '📲 I-install',
   }
 };
 
@@ -1371,6 +1384,17 @@ function applyTranslations() {
   // Update logo sub if not showing update time
   const sub = document.getElementById('lastUpdated');
   if (sub && sub.textContent.includes('update')) sub.textContent = t('loading');
+  // Update install banner
+  const installTitle = document.getElementById('installTitle');
+  const installSub = document.getElementById('installSub');
+  const installBtn = document.getElementById('installBtn');
+  if (installTitle) installTitle.textContent = t('installTitle');
+  if (installSub) installSub.textContent = t('installSub');
+  if (installBtn) installBtn.textContent = t('installBtn');
+  // Fix temperature layer button (has emoji in key)
+  document.querySelectorAll('[data-i18n="temperature"]').forEach(el => {
+    el.textContent = currentLang === 'tl' ? '🌡️ Temperatura' : '🌡️ Temperature';
+  });
 }
 
 function setLang(lang) {
