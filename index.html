@@ -1599,7 +1599,12 @@ async function buildReportsPanel() {
     <button onclick="buildReportsPanel()" style="background:var(--blue-light);color:var(--blue);border:none;border-radius:8px;padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer;font-family:Lexend,sans-serif;">🔄 I-refresh</button>
   </div>`;
 
+  const flaggedIds = JSON.parse(localStorage.getItem('baha_flagged') || '[]');
+
   reports.forEach(r => {
+    // Hide reports with 3+ flags
+    if ((r.flags || 0) >= 3) return;
+
     const sev = depthToSeverity(r.depth);
     const emoji = depthToEmoji(r.depth);
     const createdAt = new Date(r.created_at);
@@ -1607,12 +1612,23 @@ async function buildReportsPanel() {
     const photoExpired = ageMs > 48 * 60 * 60 * 1000;
     const hoursLeft = Math.max(0, Math.ceil((48 * 60 * 60 * 1000 - ageMs) / (60 * 60 * 1000)));
     const showPhoto = r.photo_url && !photoExpired;
+    const alreadyFlagged = flaggedIds.includes(r.id);
+
+    // Show location coords badge if available
+    const hasCords = r.lat && r.lng;
 
     html += `
       <div class="report-card" id="rcard-${r.id}">
         <div class="report-sev ${sev}">${emoji}</div>
         <div class="report-body">
-          <div class="report-place">📍 ${r.location}</div>
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+            <div class="report-place">📍 ${r.location}${hasCords ? ` <span style="font-size:9px;background:var(--green-light);color:var(--green);padding:1px 5px;border-radius:4px;font-weight:700;">GPS ✓</span>` : ''}</div>
+            <button onclick="flagReport('${r.id}',this)" ${alreadyFlagged ? 'data-flagged="1"' : ''}
+              style="background:none;border:none;font-size:13px;color:${alreadyFlagged ? 'var(--red)' : 'var(--muted)'};cursor:pointer;padding:0 2px;flex-shrink:0;"
+              title="${currentLang === 'tl' ? 'I-flag bilang peke' : 'Flag as fake'}">
+              ${alreadyFlagged ? '🚩' : '⚑'}
+            </button>
+          </div>
           ${r.depth ? `<div style="display:inline-block;background:var(--soft);border-radius:6px;padding:2px 7px;font-size:10px;font-weight:700;color:var(--muted);margin:3px 0;">${r.depth}</div>` : ''}
           ${r.description ? `<div class="report-text">${r.description}</div>` : ''}
           ${showPhoto ? `
@@ -1687,61 +1703,168 @@ function buildEvacPanel() {
   `;
 }
 
-// ── MODAL ──
+// ── ABUSE PREVENTION ──
+
+// Generate a stable device fingerprint stored in localStorage
+function getDeviceId() {
+  let id = localStorage.getItem('baha_device_id');
+  if (!id) {
+    id = 'dev_' + Date.now().toString(36) + Math.random().toString(36).slice(2);
+    localStorage.setItem('baha_device_id', id);
+  }
+  return id;
+}
+
+// Rate limiting — max 1 report per hour per device
+function canSubmitReport() {
+  const last = localStorage.getItem('baha_last_report');
+  if (!last) return true;
+  const elapsed = Date.now() - parseInt(last);
+  const oneHour = 60 * 60 * 1000;
+  if (elapsed < oneHour) {
+    const minsLeft = Math.ceil((oneHour - elapsed) / 60000);
+    showToast(`⏳ ${currentLang === 'tl'
+      ? `Maaari kang mag-report ulit sa ${minsLeft} minuto`
+      : `You can report again in ${minsLeft} minute${minsLeft > 1 ? 's' : ''}`}`);
+    return false;
+  }
+  return true;
+}
+
+function markReportSubmitted() {
+  localStorage.setItem('baha_last_report', Date.now().toString());
+}
+
+// Get GPS coordinates for report (uses already-detected location if available)
+function getReportCoords() {
+  return new Promise(resolve => {
+    if (userLat && userLng) {
+      resolve({ lat: userLat, lng: userLng });
+      return;
+    }
+    if (!navigator.geolocation) { resolve(null); return; }
+    navigator.geolocation.getCurrentPosition(
+      pos => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+      () => resolve(null),
+      { timeout: 5000, maximumAge: 300000 }
+    );
+  });
+}
+
+// Flag a report as fake/inappropriate
+async function flagReport(id, btn) {
+  if (btn.dataset.flagged) return;
+  btn.dataset.flagged = '1';
+  btn.textContent = '🚩 Flagged';
+  btn.style.color = 'var(--red)';
+
+  // Track flagged reports locally to prevent re-flagging
+  const flagged = JSON.parse(localStorage.getItem('baha_flagged') || '[]');
+  if (flagged.includes(id)) return;
+  flagged.push(id);
+  localStorage.setItem('baha_flagged', JSON.stringify(flagged));
+
+  // Increment flag count in Supabase
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/reports?id=eq.${id}&select=flags`, { headers: sbHeaders });
+    const data = await res.json();
+    const currentFlags = data[0]?.flags || 0;
+    await fetch(`${SUPABASE_URL}/rest/v1/reports?id=eq.${id}`, {
+      method: 'PATCH',
+      headers: sbHeaders,
+      body: JSON.stringify({ flags: currentFlags + 1 })
+    });
+    showToast(currentLang === 'tl'
+      ? '🚩 Na-flag ang ulat. Salamat sa pag-ulat!'
+      : '🚩 Report flagged. Thank you for keeping the app safe!');
+  } catch(e) {
+    console.error('Flag error:', e);
+  }
+}
 function openModal()  { document.getElementById('modalBg').classList.add('show'); }
 function closeModal() { document.getElementById('modalBg').classList.remove('show'); }
 function closeModalOutside(e) { if(e.target===document.getElementById('modalBg')) closeModal(); }
 function pickDepth(el){ document.querySelectorAll('.depth-tile').forEach(d=>d.classList.remove('selected')); el.classList.add('selected'); }
 
 async function submitReport() {
-  const loc = document.getElementById('repLoc').value.trim() ||
-              document.getElementById('gpsCity')?.textContent?.split(',')[0] || '';
+  // ── RATE LIMIT CHECK ──
+  if (!canSubmitReport()) return;
+
+  const loc   = document.getElementById('repLoc').value.trim() ||
+                document.getElementById('gpsCity')?.textContent?.split(',')[0] || '';
   const desc  = document.getElementById('repDesc').value.trim();
   const role  = document.getElementById('repRole').value;
   const depth = document.querySelector('.depth-tile.selected')?.querySelector('.dl')?.textContent || '';
   const photoFile = document.getElementById('photoInput').files[0];
 
-  if (!loc) {
-    showToast('⚠️ Ilagay ang iyong lokasyon!');
+  if (!loc) { showToast(t('locationRequired')); return; }
+  if (desc && desc.length < 5) {
+    showToast(currentLang === 'tl'
+      ? '⚠️ Pakigamit ang mas mahabang deskripsyon'
+      : '⚠️ Please write a longer description');
     return;
   }
 
   const btn = document.querySelector('.submit-btn');
   btn.disabled = true;
 
-  // Upload photo first if exists
+  // Get GPS coords silently
+  btn.textContent = '📍 Getting location...';
+  const coords = await getReportCoords();
+
+  // Upload photo if exists
   let photo_url = null;
   if (photoFile) {
-    btn.textContent = '📸 Ina-upload ang larawan...';
+    btn.textContent = t('uploadingPhoto');
     photo_url = await uploadPhoto(photoFile);
     if (!photo_url) {
-      showToast('⚠️ Hindi na-upload ang larawan. Subukan ulit.');
-      btn.textContent = '✅ Isumite ang Ulat';
+      showToast(t('photoError'));
+      btn.textContent = t('submit');
       btn.disabled = false;
       return;
     }
   }
 
-  btn.textContent = '⏳ Nise-save...';
-  const report = { location: loc, depth, description: desc, role, votes: 0, photo_url };
-  const result = await saveReport(report);
+  btn.textContent = t('submitting');
 
-  btn.textContent = '✅ Isumite ang Ulat';
+  const report = {
+    location: loc, depth, description: desc, role,
+    votes: 0, photo_url, flags: 0,
+    lat:  coords?.lat  || null,
+    lng:  coords?.lng  || null,
+    device_id: getDeviceId()
+  };
+
+  const result = await saveReport(report);
+  btn.textContent = t('submit');
   btn.disabled = false;
 
   if (result && result[0]) {
+    markReportSubmitted();
     closeModal();
-    // Reset form
     document.getElementById('repLoc').value = '';
     document.getElementById('repDesc').value = '';
     document.querySelectorAll('.depth-tile').forEach(d => d.classList.remove('selected'));
     removePhoto();
-    showToast(`✅ Naisave na ang ulat${photo_url ? ' kasama ang larawan 📸' : ''} 🙏`);
+    showToast(`✅ ${t('submitSuccess')}${photo_url ? ' 📸' : ''}`);
+
+    // Drop a temporary pin on the map
+    if (coords) {
+      const pinIcon = L.divIcon({
+        className: '',
+        html: `<div style="background:#ef4444;color:white;border-radius:20px;padding:4px 10px;font-size:11px;font-weight:700;border:2px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.2);white-space:nowrap;">📍 ${loc}</div>`,
+        iconSize: [120, 28], iconAnchor: [60, 14]
+      });
+      const pin = L.marker([coords.lat, coords.lng], { icon: pinIcon }).addTo(map);
+      map.setView([coords.lat, coords.lng], 14, { animate: true });
+      setTimeout(() => map.removeLayer(pin), 10000);
+    }
+
     const stat = document.getElementById('statReports');
     const cur = parseInt(stat.textContent.match(/\d+/) || 0);
-    stat.textContent = `📝 ${cur + 1} Ulat`;
+    stat.textContent = `📝 ${cur + 1} ${t('reports')}`;
   } else {
-    showToast('❌ May error. Subukan ulit.');
+    showToast('❌ ' + (currentLang === 'tl' ? 'May error. Subukan ulit.' : 'Error saving. Try again.'));
   }
 }
 
