@@ -4,6 +4,21 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>BahaAlert — Philippines Flood Monitor</title>
+
+<!-- PWA -->
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#2563eb">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="BahaAlert">
+<meta name="description" content="Real-time flood monitoring and community reporting for the Philippines">
+<link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect width='192' height='192' rx='40' fill='%232563eb'/><text y='130' x='96' text-anchor='middle' font-size='120'>🌊</text></svg>">
+
+<!-- Open Graph -->
+<meta property="og:title" content="BahaAlert — Philippines Flood Monitor">
+<meta property="og:description" content="Real-time flood monitoring and community reporting for the Philippines">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://bahaalert.vercel.app">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css"/>
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css"/>
@@ -279,6 +294,8 @@
   .report-photo { width:100%; border-radius:10px; margin-top:8px; max-height:160px; object-fit:cover; cursor:pointer; }
   .photo-expiry { font-size:10px; color:var(--muted); margin-top:3px; display:flex; align-items:center; gap:4px; }
 
+  @keyframes slideUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
+
   /* TOAST */
   .toast{position:fixed;top:20px;left:50%;transform:translateX(-50%) translateY(-80px);background:var(--text);color:white;border-radius:14px;padding:11px 18px;font-size:13px;font-weight:600;z-index:2000;white-space:nowrap;transition:transform 0.35s cubic-bezier(0.4,0,0.2,1);box-shadow:0 8px 24px rgba(0,0,0,0.2);display:flex;align-items:center;gap:7px;}
   .toast.show{transform:translateX(-50%) translateY(0);}
@@ -439,6 +456,22 @@
       </select>
     </div>
     <button class="submit-btn" onclick="submitReport()" data-i18n="submit">✅ Submit Report</button>
+  </div>
+</div>
+
+<!-- PWA INSTALL BANNER -->
+<div id="installBanner" style="display:none;position:fixed;bottom:76px;left:12px;right:12px;background:var(--white);border:1.5px solid var(--border);border-radius:16px;padding:14px 16px;box-shadow:0 8px 32px rgba(37,99,235,0.15);z-index:890;animation:slideUp 0.4s cubic-bezier(0.4,0,0.2,1);">
+  <div style="display:flex;align-items:center;gap:12px;">
+    <div style="width:44px;height:44px;background:linear-gradient(135deg,#2563eb,#38bdf8);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">🌊</div>
+    <div style="flex:1;">
+      <div style="font-size:14px;font-weight:700;color:var(--text);" id="installTitle">Install BahaAlert</div>
+      <div style="font-size:11px;color:var(--muted);margin-top:2px;" id="installSub">Add to home screen for quick access</div>
+    </div>
+    <button onclick="dismissInstall()" style="background:none;border:none;font-size:18px;color:var(--muted);cursor:pointer;padding:4px;">✕</button>
+  </div>
+  <div style="display:flex;gap:8px;margin-top:12px;">
+    <button onclick="installApp()" style="flex:1;background:linear-gradient(90deg,#2563eb,#38bdf8);color:white;border:none;border-radius:10px;padding:10px;font-family:'Lexend',sans-serif;font-size:13px;font-weight:700;cursor:pointer;" id="installBtn">📲 Install App</button>
+    <button onclick="dismissInstall()" style="padding:10px 14px;background:var(--soft);color:var(--muted);border:none;border-radius:10px;font-family:'Lexend',sans-serif;font-size:13px;cursor:pointer;">Later</button>
   </div>
 </div>
 
@@ -1774,7 +1807,70 @@ async function init() {
   }
 }
 
-// ── LOAD SCRIPTS DYNAMICALLY ──
+// ── PWA: SERVICE WORKER ──
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js')
+      .then(reg => console.log('SW registered:', reg.scope))
+      .catch(err => console.log('SW failed:', err));
+  });
+}
+
+// ── PWA: INSTALL PROMPT ──
+let deferredPrompt = null;
+
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredPrompt = e;
+  // Show install banner after 30 seconds if not dismissed
+  const dismissed = localStorage.getItem('installDismissed');
+  if (!dismissed) {
+    setTimeout(() => {
+      document.getElementById('installBanner').style.display = 'block';
+    }, 30000);
+  }
+});
+
+window.addEventListener('appinstalled', () => {
+  deferredPrompt = null;
+  document.getElementById('installBanner').style.display = 'none';
+  showToast('🎉 BahaAlert installed successfully!');
+});
+
+function installApp() {
+  if (deferredPrompt) {
+    deferredPrompt.prompt();
+    deferredPrompt.userChoice.then(choice => {
+      if (choice.outcome === 'accepted') {
+        showToast('🎉 Installing BahaAlert...');
+      }
+      deferredPrompt = null;
+      document.getElementById('installBanner').style.display = 'none';
+    });
+  } else {
+    // iOS fallback instructions
+    showToast('📱 Tap Share → "Add to Home Screen"');
+    dismissInstall();
+  }
+}
+
+function dismissInstall() {
+  document.getElementById('installBanner').style.display = 'none';
+  localStorage.setItem('installDismissed', '1');
+}
+
+// ── PWA: HANDLE SHORTCUTS ──
+const urlParams = new URLSearchParams(window.location.search);
+if (urlParams.get('action') === 'report') {
+  window.addEventListener('load', () => setTimeout(openModal, 1000));
+}
+if (urlParams.get('action') === 'locate') {
+  window.addEventListener('load', () => setTimeout(requestLocation, 1000));
+}
+
+// ── PWA: OFFLINE INDICATOR ──
+window.addEventListener('online',  () => showToast('✅ Back online!'));
+window.addEventListener('offline', () => showToast('⚠️ You are offline. Some features may not work.'));
 function loadScript(src) {
   return new Promise((resolve, reject) => {
     const s = document.createElement('script');
