@@ -207,6 +207,11 @@
   .depth-tile.selected{background:var(--blue-light);border-color:var(--blue);color:var(--blue);}
   .submit-btn{width:100%;padding:15px;background:linear-gradient(90deg,#2563eb,#38bdf8);color:white;border:none;border-radius:14px;font-family:'Nunito',sans-serif;font-size:16px;font-weight:900;cursor:pointer;margin-top:8px;box-shadow:0 4px 16px rgba(37,99,235,0.3);}
 
+  /* LANG TOGGLE */
+  .lang-toggle{display:flex;background:var(--soft);border:1.5px solid var(--border);border-radius:10px;padding:3px;gap:3px;}
+  .lang-btn{background:transparent;border:none;border-radius:7px;padding:4px 10px;font-family:'Lexend',sans-serif;font-size:12px;font-weight:700;color:var(--muted);cursor:pointer;transition:all 0.2s;}
+  .lang-btn.active{background:var(--blue);color:white;}
+
   /* PHOTO UPLOAD */
   #photoUploadArea:hover { border-color:var(--blue); background:var(--blue-light); }
   #photoUploadArea.has-photo { border-color:var(--green); border-style:solid; }
@@ -237,18 +242,24 @@
         <div class="logo-sub" id="lastUpdated">Nag-a-update...</div>
       </div>
     </div>
-    <div class="live-pill"><div class="live-dot"></div>LIVE</div>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <div class="lang-toggle" id="langToggle">
+        <button class="lang-btn active" id="btnEN" onclick="setLang('en')">EN</button>
+        <button class="lang-btn" id="btnTL" onclick="setLang('tl')">TL</button>
+      </div>
+      <div class="live-pill"><div class="live-dot"></div>LIVE</div>
+    </div>
   </div>
   <div class="search-bar">
     <span>🔍</span>
-    <input type="text" id="searchInput" placeholder="Hanapin ang iyong barangay o lungsod..."/>
+    <input type="text" id="searchInput" data-i18n-placeholder="search"/>
   </div>
 </div>
 
 <!-- ALERT STRIP -->
 <div class="alert-strip" id="alertStrip">
   <span>🌧️</span>
-  <span id="alertText">Nilo-load ang live weather data...</span>
+  <span id="alertText">Loading live weather data...</span>
 </div>
 
 <!-- MAP -->
@@ -256,11 +267,11 @@
 
 <!-- LAYER BAR (over map) -->
 <div class="layer-bar" id="layerBar" style="display:none;">
-  <button class="layer-btn active" onclick="switchLayer(this,'flood')">🌊 Flood Points</button>
-  <button class="layer-btn" onclick="switchLayer(this,'rain')">🌧️ Rainfall</button>
-  <button class="layer-btn" onclick="switchLayer(this,'wind')">💨 Hangin</button>
-  <button class="layer-btn" onclick="switchLayer(this,'temp')">🌡️ Temperatura</button>
-  <button class="layer-btn" onclick="switchLayer(this,'cloud')">☁️ Ulap</button>
+  <button class="layer-btn active" onclick="switchLayer(this,'flood')" data-i18n="floodPoints">🌊 Flood Points</button>
+  <button class="layer-btn" onclick="switchLayer(this,'rain')" data-i18n="rainfall">🌧️ Rainfall</button>
+  <button class="layer-btn" onclick="switchLayer(this,'wind')" data-i18n="wind">💨 Wind</button>
+  <button class="layer-btn" onclick="switchLayer(this,'temp')" data-i18n="temperature">🌡️ Temperature</button>
+  <button class="layer-btn" onclick="switchLayer(this,'cloud')" data-i18n="clouds">☁️ Clouds</button>
 </div>
 
 <!-- STATS BAR -->
@@ -269,12 +280,12 @@
   <div class="stat-chip orange" id="statWarning">🟠 —</div>
   <div class="stat-chip green" id="statNormal">🟢 —</div>
   <div class="stat-chip blue" id="statCities">🌦️ —</div>
-  <div class="stat-chip blue" id="statReports">📝 — Ulat</div>
+  <div class="stat-chip blue" id="statReports">📝 — <span data-i18n="reports">Reports</span></div>
 </div>
 
 <!-- REGION FILTER -->
 <div class="region-toggle" id="regionToggle" style="display:none;">
-  <button class="toggle-btn active" onclick="filterRegion(this,'all')">🇵🇭 Lahat</button>
+  <button class="toggle-btn active" onclick="filterRegion(this,'all')" data-i18n="all">🇵🇭 All</button>
   <button class="toggle-btn" onclick="filterRegion(this,'ncr')">Metro Manila</button>
   <button class="toggle-btn" onclick="filterRegion(this,'luzon')">Luzon</button>
   <button class="toggle-btn" onclick="filterRegion(this,'visayas')">Visayas</button>
@@ -283,11 +294,11 @@
 
 <!-- WEATHER LEGEND -->
 <div class="weather-legend" id="weatherLegend">
-  <div class="legend-title">🌧️ Ulan (mm/hr)</div>
-  <div class="legend-row"><div class="legend-dot" style="background:#ef4444"></div>Malakas (>10mm)</div>
-  <div class="legend-row"><div class="legend-dot" style="background:#f97316"></div>Katamtaman (2–10mm)</div>
-  <div class="legend-row"><div class="legend-dot" style="background:#3b82f6"></div>Magaan (<2mm)</div>
-  <div class="legend-row"><div class="legend-dot" style="background:#22c55e"></div>Walang ulan</div>
+  <div class="legend-title">🌧️ <span data-i18n="rainfall">Rainfall</span> (mm/hr)</div>
+  <div class="legend-row"><div class="legend-dot" style="background:#ef4444"></div><span data-i18n="heavy">Heavy</span> (&gt;10mm)</div>
+  <div class="legend-row"><div class="legend-dot" style="background:#f97316"></div><span data-i18n="moderate">Moderate</span> (2–10mm)</div>
+  <div class="legend-row"><div class="legend-dot" style="background:#3b82f6"></div><span data-i18n="light">Light</span> (&lt;2mm)</div>
+  <div class="legend-row"><div class="legend-dot" style="background:#22c55e"></div><span data-i18n="noRain">No rain</span></div>
 </div>
 
 <!-- FAB -->
@@ -295,10 +306,10 @@
 
 <!-- BOTTOM NAV -->
 <div class="bottom-nav">
-  <div class="nav-item active" onclick="switchNav(this,'map')"><div class="nav-icon">🗺️</div>Mapa</div>
-  <div class="nav-item" onclick="switchNav(this,'weather')"><div class="nav-icon">🌦️</div>Panahon</div>
-  <div class="nav-item" onclick="switchNav(this,'reports')"><div class="nav-icon">📣</div>Ulat</div>
-  <div class="nav-item" onclick="switchNav(this,'evac')"><div class="nav-icon">🏫</div>Evacuation</div>
+  <div class="nav-item active" onclick="switchNav(this,'map')"><div class="nav-icon">🗺️</div><span data-i18n="map">Map</span></div>
+  <div class="nav-item" onclick="switchNav(this,'weather')"><div class="nav-icon">🌦️</div><span data-i18n="weather">Weather</span></div>
+  <div class="nav-item" onclick="switchNav(this,'reports')"><div class="nav-icon">📣</div><span data-i18n="reports">Reports</span></div>
+  <div class="nav-item" onclick="switchNav(this,'evac')"><div class="nav-icon">🏫</div><span data-i18n="evacuation">Evacuation</span></div>
 </div>
 
 <!-- SIDE PANEL -->
@@ -315,45 +326,43 @@
 <div class="modal-bg" id="modalBg" onclick="closeModalOutside(event)">
   <div class="modal-sheet">
     <div class="sheet-handle"></div>
-    <div class="sheet-title">🌊 I-report ang Baha</div>
-    <div class="sheet-sub">Tulungan ang iyong komunidad.</div>
-    <div class="form-field"><label>Lokasyon</label><input type="text" id="repLoc" placeholder="Barangay o kalye..."></div>
+    <div class="sheet-title" data-i18n="reportTitle">🌊 Report Flooding</div>
+    <div class="sheet-sub" data-i18n="reportSub">Help your community. Share what's happening near you.</div>
+    <div class="form-field"><label data-i18n="location">Location</label><input type="text" id="repLoc" data-i18n-placeholder="locationPlaceholder"></div>
     <div class="form-field">
-      <label>Lalim ng baha</label>
+      <label data-i18n="floodDepth">Flood Depth</label>
       <div class="depth-grid">
-        <div class="depth-tile" onclick="pickDepth(this)"><span class="de">🦶</span><span class="dl">Bukung-buko</span></div>
-        <div class="depth-tile" onclick="pickDepth(this)"><span class="de">🦵</span><span class="dl">Tuhod</span></div>
-        <div class="depth-tile" onclick="pickDepth(this)"><span class="de">🧍</span><span class="dl">Baywang</span></div>
-        <div class="depth-tile" onclick="pickDepth(this)"><span class="de">🌊</span><span class="dl">Dibdib pataas</span></div>
+        <div class="depth-tile" onclick="pickDepth(this)"><span class="de">🦶</span><span class="dl" data-i18n="ankle">Ankle-deep</span></div>
+        <div class="depth-tile" onclick="pickDepth(this)"><span class="de">🦵</span><span class="dl" data-i18n="knee">Knee-deep</span></div>
+        <div class="depth-tile" onclick="pickDepth(this)"><span class="de">🧍</span><span class="dl" data-i18n="waist">Waist-deep</span></div>
+        <div class="depth-tile" onclick="pickDepth(this)"><span class="de">🌊</span><span class="dl" data-i18n="chest">Chest-deep+</span></div>
       </div>
     </div>
-    <div class="form-field"><label>Deskripsyon</label><textarea id="repDesc" placeholder="Ilarawan ang sitwasyon..."></textarea></div>
-
+    <div class="form-field"><label data-i18n="description">Description</label><textarea id="repDesc" data-i18n-placeholder="descPlaceholder"></textarea></div>
     <div class="form-field">
-      <label>📸 Kunan ng larawan (mabubura pagkatapos ng 48 oras)</label>
+      <label data-i18n="photoLabel">📸 Add photo (deleted after 48 hours)</label>
       <div id="photoUploadArea" onclick="document.getElementById('photoInput').click()"
         style="border:2px dashed var(--border);border-radius:12px;padding:20px;text-align:center;cursor:pointer;background:var(--soft);transition:all 0.2s;">
         <div id="photoPlaceholder">
           <div style="font-size:28px;margin-bottom:6px;">📷</div>
-          <div style="font-size:13px;font-weight:600;color:var(--muted);">I-tap para mag-upload ng larawan</div>
-          <div style="font-size:11px;color:var(--muted);margin-top:3px;">JPG, PNG · Max 5MB · Mabubura pagkatapos ng 48h</div>
+          <div id="photoUploadText" style="font-size:13px;font-weight:600;color:var(--muted);" data-i18n="photoTap">Tap to upload a photo</div>
+          <div id="photoUploadSub" style="font-size:11px;color:var(--muted);margin-top:3px;" data-i18n="photoSub">JPG, PNG · Max 5MB · Deleted after 48h</div>
         </div>
         <img id="photoPreview" style="display:none;width:100%;border-radius:8px;max-height:180px;object-fit:cover;" />
       </div>
       <input type="file" id="photoInput" accept="image/*" style="display:none;" onchange="previewPhoto(this)">
-      <button id="removePhotoBtn" onclick="removePhoto()" style="display:none;margin-top:8px;background:var(--red-light);color:var(--red);border:none;border-radius:8px;padding:5px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:Lexend,sans-serif;">✕ Alisin ang larawan</button>
+      <button id="removePhotoBtn" onclick="removePhoto()" data-i18n="removePhoto" style="display:none;margin-top:8px;background:var(--red-light);color:var(--red);border:none;border-radius:8px;padding:5px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:Lexend,sans-serif;">✕ Remove photo</button>
     </div>
-
     <div class="form-field">
-      <label>Ikaw ay...</label>
+      <label data-i18n="youAre">You are...</label>
       <select id="repRole">
-        <option>Residente / Sibilyan</option>
-        <option>Opisyal ng Barangay</option>
+        <option data-i18n="resident">Resident / Civilian</option>
+        <option data-i18n="barangay">Barangay Official</option>
         <option>BFP / PNP</option>
         <option>NGO / Relief Worker</option>
       </select>
     </div>
-    <button class="submit-btn" onclick="submitReport()">✅ Isumite ang Ulat</button>
+    <button class="submit-btn" onclick="submitReport()" data-i18n="submit">✅ Submit Report</button>
   </div>
 </div>
 
@@ -694,7 +703,174 @@ async function updateAlertStrip() {
   }
 }
 
-// ── SUPABASE CONFIG ──
+// ── i18n TRANSLATIONS ──
+const translations = {
+  en: {
+    search: 'Search your barangay or city...',
+    loading: 'Loading live weather data...',
+    floodPoints: '🌊 Flood Points',
+    rainfall: '🌧️ Rainfall',
+    wind: '💨 Wind',
+    temperature: '🌡️ Temperature',
+    clouds: '☁️ Clouds',
+    reports: 'Reports',
+    all: '🇵🇭 All',
+    map: 'Map',
+    weather: 'Weather',
+    evacuation: 'Evacuation',
+    heavy: 'Heavy',
+    moderate: 'Moderate',
+    light: 'Light',
+    noRain: 'No rain',
+    reportTitle: '🌊 Report Flooding',
+    reportSub: "Help your community. Share what's happening near you.",
+    location: 'Location',
+    locationPlaceholder: 'Barangay or street name...',
+    floodDepth: 'Flood Depth',
+    ankle: 'Ankle-deep',
+    knee: 'Knee-deep',
+    waist: 'Waist-deep',
+    chest: 'Chest-deep+',
+    description: 'Description',
+    descPlaceholder: 'Describe the situation (e.g. road blocked, rising fast...)',
+    photoLabel: '📸 Add photo (deleted after 48 hours)',
+    photoTap: 'Tap to upload a photo',
+    photoSub: 'JPG, PNG · Max 5MB · Deleted after 48h',
+    removePhoto: '✕ Remove photo',
+    youAre: 'You are...',
+    resident: 'Resident / Civilian',
+    barangay: 'Barangay Official',
+    submit: '✅ Submit Report',
+    critical: 'Critical',
+    warning: 'Warning',
+    normal: 'Normal',
+    updatedAt: 'Updated',
+    liveVia: 'Live via OpenWeatherMap',
+    weatherPanel: '🌦️ Live Weather',
+    reportsPanel: '📣 Community Reports',
+    evacPanel: '🏫 Evacuation Centers',
+    noReports: 'No reports yet',
+    noReportsSub: 'Be the first! Tap the 🚨 button to report flooding.',
+    refresh: '🔄 Refresh',
+    verifiedBy: 'Verified',
+    submitting: '⏳ Saving...',
+    uploadingPhoto: '📸 Uploading photo...',
+    submitSuccess: 'Report submitted!',
+    locationRequired: '⚠️ Please enter your location!',
+    photoError: '⚠️ Photo upload failed. Try again.',
+    uploadTooBig: '⚠️ Photo too large. Max 5MB.',
+    expiry: 'Photo expires in',
+    hoursLeft: 'h',
+    liveData: 'Live data',
+    humidity: 'Humidity',
+    windSpeed: 'Wind',
+    condition: 'Condition',
+    riverLevel: 'River level',
+    affected: 'Affected areas',
+  },
+  tl: {
+    search: 'Hanapin ang iyong barangay o lungsod...',
+    loading: 'Nilo-load ang live weather data...',
+    floodPoints: '🌊 Flood Points',
+    rainfall: '🌧️ Ulan',
+    wind: '💨 Hangin',
+    temperature: '🌡️ Temperatura',
+    clouds: '☁️ Ulap',
+    reports: 'Ulat',
+    all: '🇵🇭 Lahat',
+    map: 'Mapa',
+    weather: 'Panahon',
+    evacuation: 'Evacuation',
+    heavy: 'Malakas',
+    moderate: 'Katamtaman',
+    light: 'Magaan',
+    noRain: 'Walang ulan',
+    reportTitle: '🌊 I-report ang Baha',
+    reportSub: 'Tulungan ang iyong komunidad.',
+    location: 'Lokasyon',
+    locationPlaceholder: 'Barangay o kalye...',
+    floodDepth: 'Lalim ng baha',
+    ankle: 'Bukung-buko',
+    knee: 'Tuhod',
+    waist: 'Baywang',
+    chest: 'Dibdib pataas',
+    description: 'Deskripsyon',
+    descPlaceholder: 'Ilarawan ang sitwasyon...',
+    photoLabel: '📸 Magdagdag ng larawan (mabubura pagkatapos ng 48 oras)',
+    photoTap: 'I-tap para mag-upload ng larawan',
+    photoSub: 'JPG, PNG · Max 5MB · Mabubura pagkatapos ng 48h',
+    removePhoto: '✕ Alisin ang larawan',
+    youAre: 'Ikaw ay...',
+    resident: 'Residente / Sibilyan',
+    barangay: 'Opisyal ng Barangay',
+    submit: '✅ Isumite ang Ulat',
+    critical: 'Kritikal',
+    warning: 'Babala',
+    normal: 'Normal',
+    updatedAt: 'Na-update',
+    liveVia: 'Live via OpenWeatherMap',
+    weatherPanel: '🌦️ Live Weather',
+    reportsPanel: '📣 Ulat ng Komunidad',
+    evacPanel: '🏫 Evacuation Centers',
+    noReports: 'Wala pang mga ulat',
+    noReportsSub: 'Maging una! I-tap ang 🚨 button para mag-report ng baha.',
+    refresh: '🔄 I-refresh',
+    verifiedBy: 'Totoo',
+    submitting: '⏳ Nise-save...',
+    uploadingPhoto: '📸 Ina-upload ang larawan...',
+    submitSuccess: 'Naisumite na ang ulat!',
+    locationRequired: '⚠️ Ilagay ang iyong lokasyon!',
+    photoError: '⚠️ Hindi na-upload ang larawan. Subukan ulit.',
+    uploadTooBig: '⚠️ Masyadong malaki ang larawan. Max 5MB lang.',
+    expiry: 'Mabubura ang larawan sa',
+    hoursLeft: 'h',
+    liveData: 'Live data',
+    humidity: 'Humidity',
+    windSpeed: 'Hangin',
+    condition: 'Kondisyon',
+    riverLevel: 'Antas ng ilog',
+    affected: 'Apektadong lugar',
+  }
+};
+
+let currentLang = localStorage.getItem('bahaLang') || 'en';
+
+function t(key) {
+  return translations[currentLang][key] || translations['en'][key] || key;
+}
+
+function applyTranslations() {
+  // Text content
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    el.textContent = t(key);
+  });
+  // Placeholders
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+    const key = el.getAttribute('data-i18n-placeholder');
+    el.placeholder = t(key);
+  });
+  // Toggle buttons
+  document.getElementById('btnEN').classList.toggle('active', currentLang === 'en');
+  document.getElementById('btnTL').classList.toggle('active', currentLang === 'tl');
+  // Update logo sub if not showing update time
+  const sub = document.getElementById('lastUpdated');
+  if (sub && sub.textContent.includes('update')) sub.textContent = t('loading');
+}
+
+function setLang(lang) {
+  currentLang = lang;
+  localStorage.setItem('bahaLang', lang);
+  applyTranslations();
+  // Refresh open panel if any
+  const panel = document.getElementById('sidePanel');
+  if (panel && panel.classList.contains('show')) {
+    const title = document.getElementById('panelTitle').textContent;
+    if (title.includes('Weather') || title.includes('Panahon')) buildWeatherPanel();
+    else if (title.includes('Ulat') || title.includes('Report')) buildReportsPanel();
+    else if (title.includes('Evacuation')) buildEvacPanel();
+  }
+}
 const SUPABASE_URL = 'https://dqjdnjutsxerqkpepbri.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRxamRuanV0c3hlcnFrcGVwYnJpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0OTE3MTcsImV4cCI6MjA5MDA2NzcxN30.nttC3ruA1WfzmS7k0HNOv0cq_PxyRhDLJYxVElbxEEA';
 
@@ -870,8 +1046,8 @@ async function buildReportsPanel() {
     content.innerHTML = `
       <div style="text-align:center;padding:32px 16px;color:var(--muted);">
         <div style="font-size:40px;margin-bottom:12px;">📭</div>
-        <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:6px;">Wala pang mga ulat</div>
-        <div style="font-size:12px;">Maging una! I-tap ang 🚨 button para mag-report ng baha.</div>
+        <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:6px;">${t('noReports')}</div>
+        <div style="font-size:12px;">${t('noReportsSub')}</div>
       </div>`;
     return;
   }
@@ -904,13 +1080,13 @@ async function buildReportsPanel() {
             <img src="${r.photo_url}" class="report-photo"
               onclick="openPhotoModal('${r.photo_url}')"
               onerror="this.style.display='none'" />
-            <div class="photo-expiry">⏳ Mabubura ang larawan sa ${hoursLeft}h</div>
+            <div class="photo-expiry">⏳ ${t('expiry')} ${hoursLeft}${t('hoursLeft')}</div>
           ` : ''}
           ${r.role ? `<div style="font-size:10px;color:var(--blue);margin-top:3px;">👤 ${r.role}</div>` : ''}
           <div class="report-foot">
             <span class="report-ago">${timeAgo(r.created_at)}</span>
             <button class="verify-btn" onclick="handleVerify(this,'${r.id}',${r.votes})">
-              👍 <span>${r.votes || 0}</span> Totoo
+              👍 <span>${r.votes || 0}</span> ${t('verifiedBy')}
             </button>
           </div>
         </div>
@@ -928,7 +1104,7 @@ async function handleVerify(btn, id, currentVotes) {
   btn.style.background = '#dcfce7';
   btn.style.color = '#16a34a';
   await upvoteReport(id, currentVotes);
-  showToast('Na-verify mo na ang ulat 👍');
+  showToast('👍 ' + t('verifiedBy') + '!');
 }
 
 const evacHTML = `
@@ -945,9 +1121,9 @@ function switchNav(el, tab) {
   const panel = document.getElementById('sidePanel');
   if (tab === 'map') { closePanel(); return; }
   const config = {
-    weather: { title:'🌦️ Live Weather',        fn: buildWeatherPanel },
-    reports: { title:'📣 Ulat ng Komunidad',    fn: buildReportsPanel },
-    evac:    { title:'🏫 Evacuation Centers',   fn: buildEvacPanel    },
+    weather: { title: t('weatherPanel'), fn: buildWeatherPanel },
+    reports: { title: t('reportsPanel'), fn: buildReportsPanel },
+    evac:    { title: t('evacPanel'),    fn: buildEvacPanel    },
   };
   const c = config[tab];
   document.getElementById('panelTitle').textContent = c.title;
@@ -1064,6 +1240,7 @@ function openPhotoModal(url) {
 async function init() {
   try {
     initMap();
+    applyTranslations();
 
     const bar = document.getElementById('refreshBar');
     if (bar) { bar.style.display='block'; bar.classList.add('loading'); }
