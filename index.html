@@ -1,0 +1,2712 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BahaAlert — Philippines Flood Monitor</title>
+
+<!-- PWA -->
+<link rel="manifest" href="/manifest.json">
+<!-- OneSignal Push Notifications -->
+<script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+<script>
+  window.OneSignalDeferred = window.OneSignalDeferred || [];
+  OneSignalDeferred.push(async function(OneSignal) {
+    await OneSignal.init({
+      appId: "2d9ddea7-7c90-464f-9c41-de0976793025",
+      safari_web_id: "web.onesignal.auto.2d9ddea7-7c90-464f-9c41-de0976793025",
+      notifyButton: { enable: false },
+      allowLocalhostAsSecureOrigin: true,
+    });
+  });
+</script>
+<script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+<!-- OneSignal Push Notifications -->
+<script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+<script>
+  window.OneSignalDeferred = window.OneSignalDeferred || [];
+  OneSignalDeferred.push(async function(OneSignal) {
+    await OneSignal.init({
+      appId: "2d9ddea7-7c90-464f-9c41-de0976793025",
+      serviceWorkerParam: { scope: "/" },
+      serviceWorkerPath: "/sw.js",
+      notifyButton: { enable: false },
+      welcomeNotification: {
+        title: "🌊 BahaAlert",
+        message: "You'll now receive flood alerts for the Philippines!",
+      },
+      promptOptions: {
+        slidedown: {
+          prompts: [{
+            type: "push",
+            autoPrompt: false,
+            text: {
+              actionMessage: "Get notified about critical floods near you.",
+              acceptButton: "Allow",
+              cancelButton: "Later"
+            }
+          }]
+        }
+      }
+    });
+    window.OneSignalReady = true;
+  });
+</script>
+<meta name="theme-color" content="#2563eb">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="BahaAlert">
+<meta name="description" content="Real-time flood monitoring and community reporting for the Philippines">
+<link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect width='192' height='192' rx='40' fill='%232563eb'/><text y='130' x='96' text-anchor='middle' font-size='120'>🌊</text></svg>">
+
+<!-- Open Graph -->
+<meta property="og:title" content="BahaAlert — Philippines Flood Monitor">
+<meta property="og:description" content="Real-time flood monitoring and community reporting for the Philippines">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://bahaalert.vercel.app">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css"/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css"/>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Lexend:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#f0f4ff; --white:#fff; --border:#e2e8f8;
+    --text:#1a2340; --muted:#7a8aaa; --soft:#f7f9ff;
+    --blue:#2563eb; --blue-light:#eff4ff;
+    --red:#ef4444; --red-light:#fef2f2;
+    --orange:#f97316; --orange-light:#fff7ed;
+    --green:#22c55e; --green-light:#f0fdf4;
+    --yellow:#eab308;
+    --shadow:0 2px 16px rgba(37,99,235,0.08);
+    --radius:16px;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  body{font-family:'Lexend',sans-serif;background:var(--bg);color:var(--text);height:100vh;display:flex;flex-direction:column;overflow:hidden;}
+
+  /* HEADER */
+  .header{background:var(--white);padding:12px 16px;border-bottom:1px solid var(--border);box-shadow:0 2px 12px rgba(37,99,235,0.06);z-index:1000;display:flex;flex-direction:column;gap:10px;flex-shrink:0;position:relative;}
+  .header-top{display:flex;align-items:center;justify-content:space-between;}
+  .logo{display:flex;align-items:center;gap:10px;}
+  .logo-icon{width:38px;height:38px;background:linear-gradient(135deg,#2563eb,#38bdf8);border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:19px;box-shadow:0 3px 10px rgba(37,99,235,0.3);}
+  .logo-name{font-family:'Nunito',sans-serif;font-size:19px;font-weight:900;color:var(--blue);letter-spacing:-0.5px;}
+  .logo-sub{font-size:11px;color:var(--muted);}
+  .live-pill{display:flex;align-items:center;gap:5px;background:var(--red-light);border:1px solid rgba(239,68,68,0.2);border-radius:20px;padding:5px 10px;font-size:11px;font-weight:700;color:var(--red);font-family:'Nunito',sans-serif;}
+  .live-dot{width:7px;height:7px;background:var(--red);border-radius:50%;animation:blink 1.2s infinite;}
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:0.3}}
+  .search-bar{display:flex;align-items:center;gap:8px;background:var(--soft);border:1.5px solid var(--border);border-radius:12px;padding:9px 13px;}
+  .search-bar input{flex:1;border:none;background:transparent;font-family:'Lexend',sans-serif;font-size:13px;color:var(--text);outline:none;}
+  .search-bar input::placeholder{color:var(--muted);}
+
+  /* ALERT STRIP */
+  .alert-strip{background:linear-gradient(90deg,#ef4444,#f97316);color:white;padding:9px 16px;display:flex;align-items:center;gap:8px;font-size:12px;font-weight:600;flex-shrink:0;z-index:999;}
+
+  /* MAP */
+  #map{flex:1;z-index:1;}
+
+  /* WEATHER LAYER TOGGLE */
+  .layer-bar{
+    position:fixed;top:0;left:0;right:0;
+    z-index:800;
+    display:flex;gap:6px;padding:8px 12px;
+    background:rgba(255,255,255,0.92);
+    backdrop-filter:blur(8px);
+    border-bottom:1px solid var(--border);
+    overflow-x:auto;
+    scrollbar-width:none;
+  }
+  .layer-bar::-webkit-scrollbar{display:none;}
+
+  .layer-btn{
+    display:flex;align-items:center;gap:5px;
+    background:var(--soft);border:1.5px solid var(--border);
+    border-radius:10px;padding:6px 11px;
+    font-family:'Lexend',sans-serif;font-size:12px;font-weight:600;
+    color:var(--text);cursor:pointer;white-space:nowrap;
+    transition:all 0.15s;flex-shrink:0;
+  }
+  .layer-btn.active{background:var(--blue);color:white;border-color:var(--blue);}
+  .layer-btn .dot{width:8px;height:8px;border-radius:50%;}
+
+  /* STATS */
+  .stats-bar{
+    position:fixed;bottom:76px;left:50%;transform:translateX(-50%);
+    display:flex;gap:6px;
+    background:var(--white);border-radius:14px;padding:8px 10px;
+    box-shadow:0 4px 20px rgba(0,0,0,0.1);border:1px solid var(--border);
+    z-index:800;
+  }
+  .stat-chip{display:flex;align-items:center;gap:4px;font-size:11px;font-weight:700;padding:4px 8px;border-radius:8px;}
+  .stat-chip.red{background:var(--red-light);color:var(--red);}
+  .stat-chip.orange{background:var(--orange-light);color:var(--orange);}
+  .stat-chip.green{background:var(--green-light);color:var(--green);}
+  .stat-chip.blue{background:var(--blue-light);color:var(--blue);}
+
+  /* REGION FILTER */
+  .region-toggle{position:fixed;top:0;right:12px;display:flex;flex-direction:column;gap:5px;z-index:810;}
+  .toggle-btn{background:var(--white);border:1.5px solid var(--border);border-radius:10px;padding:7px 11px;font-family:'Lexend',sans-serif;font-size:11px;font-weight:600;color:var(--text);cursor:pointer;box-shadow:var(--shadow);transition:all 0.15s;white-space:nowrap;}
+  .toggle-btn:hover,.toggle-btn.active{background:var(--blue);color:white;border-color:var(--blue);}
+
+  /* WEATHER CARD POPUP */
+  .leaflet-popup-content-wrapper{border-radius:14px!important;border:1.5px solid var(--border)!important;box-shadow:0 8px 24px rgba(0,0,0,0.12)!important;padding:0!important;overflow:hidden;}
+  .leaflet-popup-content{margin:0!important;width:240px!important;}
+  .leaflet-popup-tip-container{display:none;}
+
+  .popup-inner{padding:14px 16px;font-family:'Lexend',sans-serif;}
+  .popup-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;}
+  .popup-title{font-size:14px;font-weight:700;color:var(--text);}
+  .popup-region{font-size:11px;color:var(--muted);margin-top:2px;}
+  .popup-badge{font-size:10px;font-weight:700;padding:3px 8px;border-radius:20px;font-family:'Nunito',sans-serif;}
+  .popup-badge.critical{background:var(--red-light);color:var(--red);}
+  .popup-badge.warning{background:var(--orange-light);color:var(--orange);}
+  .popup-badge.normal{background:var(--green-light);color:var(--green);}
+  .popup-badge.loading{background:#f1f5f9;color:var(--muted);}
+
+  .popup-row{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:4px;}
+  .popup-row span:last-child{color:var(--text);font-weight:600;}
+  .popup-divider{height:1px;background:var(--border);margin:8px 0;}
+
+  /* weather row */
+  .weather-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px;}
+  .weather-cell{background:var(--soft);border-radius:10px;padding:8px 10px;text-align:center;}
+  .weather-cell .wval{font-size:16px;font-weight:700;color:var(--text);}
+  .weather-cell .wlbl{font-size:10px;color:var(--muted);margin-top:1px;}
+
+  .rain-badge{
+    display:inline-flex;align-items:center;gap:5px;
+    padding:5px 10px;border-radius:10px;
+    font-size:12px;font-weight:700;margin-top:8px;width:100%;justify-content:center;
+  }
+  .rain-badge.heavy{background:var(--red-light);color:var(--red);}
+  .rain-badge.moderate{background:var(--orange-light);color:var(--orange);}
+  .rain-badge.light{background:#eff6ff;color:#3b82f6;}
+  .rain-badge.none{background:var(--green-light);color:var(--green);}
+
+  .popup-footer{background:var(--soft);padding:8px 16px;display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--border);font-size:10px;color:var(--muted);}
+  .popup-footer strong{color:var(--blue);}
+
+  /* loading spinner */
+  .loading-spinner{display:flex;align-items:center;justify-content:center;gap:8px;padding:16px;font-size:12px;color:var(--muted);}
+  .spinner{width:16px;height:16px;border:2px solid var(--border);border-top-color:var(--blue);border-radius:50%;animation:spin 0.7s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  /* WEATHER LEGEND */
+  .weather-legend{
+    position:fixed;bottom:140px;left:12px;
+    background:var(--white);border:1px solid var(--border);
+    border-radius:12px;padding:10px 14px;
+    box-shadow:var(--shadow);z-index:800;
+    font-size:11px;
+    display:none;
+  }
+  .weather-legend.show{display:block;}
+  .legend-title{font-weight:700;color:var(--text);margin-bottom:7px;font-family:'Nunito',sans-serif;}
+  .legend-row{display:flex;align-items:center;gap:7px;margin-bottom:4px;color:var(--muted);}
+  .legend-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+
+  /* FAB */
+  .fab{position:fixed;bottom:76px;right:20px;width:54px;height:54px;background:linear-gradient(135deg,#ef4444,#f97316);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:22px;box-shadow:0 6px 20px rgba(239,68,68,0.4);cursor:pointer;z-index:900;border:none;transition:transform 0.15s;}
+  .fab:active{transform:scale(0.92);}
+
+  /* BOTTOM NAV */
+  .bottom-nav{position:fixed;bottom:0;left:0;right:0;background:var(--white);border-top:1.5px solid var(--border);display:flex;box-shadow:0 -4px 20px rgba(37,99,235,0.08);z-index:900;}
+  .nav-item{flex:1;display:flex;flex-direction:column;align-items:center;padding:8px 0 10px;font-size:10px;font-weight:600;color:var(--muted);cursor:pointer;gap:2px;}
+  .nav-item .nav-icon{font-size:20px;}
+  .nav-item.active{color:var(--blue);}
+  .nav-item.active::before{content:'';position:absolute;top:0;height:3px;width:40px;background:var(--blue);border-radius:0 0 3px 3px;}
+
+  /* SIDE PANEL */
+  .side-panel{position:fixed;bottom:56px;left:0;right:0;background:var(--white);border-radius:20px 20px 0 0;box-shadow:0 -8px 32px rgba(0,0,0,0.12);z-index:850;max-height:65vh;overflow-y:auto;transform:translateY(100%);transition:transform 0.35s cubic-bezier(0.4,0,0.2,1);}
+  .side-panel.show{transform:translateY(0);}
+  .side-panel::-webkit-scrollbar{display:none;}
+  .panel-handle{width:40px;height:4px;background:var(--border);border-radius:2px;margin:14px auto 0;}
+  .panel-title{font-family:'Nunito',sans-serif;font-size:17px;font-weight:900;padding:12px 16px 8px;display:flex;justify-content:space-between;align-items:center;}
+  .panel-close{font-size:20px;cursor:pointer;color:var(--muted);background:none;border:none;}
+  .panel-content{padding:0 16px 20px;}
+
+  /* report/evac cards */
+  .report-card{background:var(--soft);border:1.5px solid var(--border);border-radius:14px;padding:12px 14px;display:flex;gap:11px;margin-bottom:10px;}
+  .report-sev{width:40px;height:40px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;}
+  .report-sev.critical{background:var(--red-light);}
+  .report-sev.warning{background:var(--orange-light);}
+  .report-sev.safe{background:var(--green-light);}
+  .report-body{flex:1;}
+  .report-place{font-size:13px;font-weight:700;}
+  .report-text{font-size:11px;color:var(--muted);margin-top:2px;line-height:1.5;}
+  .report-foot{display:flex;justify-content:space-between;align-items:center;margin-top:6px;}
+  .report-ago{font-size:10px;color:var(--muted);}
+  .verify-btn{display:flex;align-items:center;gap:4px;background:var(--blue-light);color:var(--blue);border:none;border-radius:8px;padding:4px 9px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Lexend',sans-serif;}
+  .evac-card{background:var(--soft);border:1.5px solid var(--border);border-radius:14px;padding:12px 14px;display:flex;align-items:center;gap:11px;margin-bottom:10px;}
+  .evac-icon{width:42px;height:42px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:21px;flex-shrink:0;}
+  .evac-icon.open{background:var(--green-light);}
+  .evac-icon.full{background:var(--red-light);}
+  .evac-info{flex:1;}
+  .evac-name{font-size:13px;font-weight:700;}
+  .evac-dist{font-size:11px;color:var(--muted);margin-top:1px;}
+  .cap-bar{height:4px;background:var(--border);border-radius:2px;margin-top:5px;overflow:hidden;}
+  .cap-fill{height:100%;border-radius:2px;}
+  .evac-right{text-align:right;}
+  .evac-tag{font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px;font-family:'Nunito',sans-serif;}
+  .evac-tag.open{background:var(--green-light);color:var(--green);}
+  .evac-tag.full{background:var(--red-light);color:var(--red);}
+  .evac-count{font-size:11px;color:var(--muted);margin-top:3px;}
+
+  /* MODAL */
+  .modal-bg{position:fixed;inset:0;background:rgba(15,23,42,0.5);z-index:1000;display:none;align-items:flex-end;justify-content:center;backdrop-filter:blur(4px);}
+  .modal-bg.show{display:flex;}
+  .modal-sheet{background:var(--white);border-radius:24px 24px 0 0;padding:20px 20px 40px;width:100%;max-width:500px;animation:sheetUp 0.3s cubic-bezier(0.4,0,0.2,1);max-height:90vh;overflow-y:auto;}
+  @keyframes sheetUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+  .sheet-handle{width:40px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 18px;}
+  .sheet-title{font-family:'Nunito',sans-serif;font-size:20px;font-weight:900;margin-bottom:3px;}
+  .sheet-sub{font-size:13px;color:var(--muted);margin-bottom:18px;}
+  .form-field{margin-bottom:14px;}
+  .form-field label{display:block;font-size:11px;font-weight:700;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.5px;}
+  .form-field input,.form-field textarea,.form-field select{width:100%;background:var(--soft);border:1.5px solid var(--border);border-radius:12px;padding:11px 13px;font-family:'Lexend',sans-serif;font-size:14px;color:var(--text);outline:none;}
+  .form-field textarea{resize:vertical;min-height:75px;}
+  .depth-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+  .depth-tile{background:var(--soft);border:1.5px solid var(--border);border-radius:12px;padding:11px;text-align:center;cursor:pointer;transition:all 0.15s;}
+  .depth-tile .de{font-size:22px;display:block;margin-bottom:3px;}
+  .depth-tile .dl{font-size:12px;font-weight:600;}
+  .depth-tile.selected{background:var(--blue-light);border-color:var(--blue);color:var(--blue);}
+  .submit-btn{width:100%;padding:15px;background:linear-gradient(90deg,#2563eb,#38bdf8);color:white;border:none;border-radius:14px;font-family:'Nunito',sans-serif;font-size:16px;font-weight:900;cursor:pointer;margin-top:8px;box-shadow:0 4px 16px rgba(37,99,235,0.3);}
+
+  /* CITY MARKERS */
+  .city-marker { display:flex;align-items:center;justify-content:center; }
+  .city-dot { border-radius:50%;border:2px solid white;box-shadow:0 2px 6px rgba(0,0,0,0.2);cursor:pointer;transition:transform 0.15s; }
+  .city-dot:hover { transform:scale(1.3); }
+  .city-dot.weather { background:#3b82f6; }
+  .city-dot.critical { background:#ef4444;animation:dotPulse 1.5s infinite; }
+  .city-dot.warning { background:#f97316; }
+  .city-dot.normal { background:#22c55e; }
+  @keyframes dotPulse {
+    0%,100%{box-shadow:0 0 0 0 rgba(239,68,68,0.5),0 2px 6px rgba(0,0,0,0.2)}
+    50%{box-shadow:0 0 0 8px rgba(239,68,68,0),0 2px 6px rgba(0,0,0,0.2)}
+  }
+  /* CLUSTER */
+  .marker-cluster-small,.marker-cluster-medium,.marker-cluster-large { background:rgba(37,99,235,0.15)!important; }
+  .marker-cluster-small div,.marker-cluster-medium div,.marker-cluster-large div {
+    background:rgba(37,99,235,0.5)!important;
+    color:white!important;font-weight:700!important;
+    font-family:'Lexend',sans-serif!important;font-size:12px!important;
+  }
+  .marker-cluster-small { background:rgba(34,197,94,0.15)!important; }
+  .marker-cluster-small div { background:rgba(34,197,94,0.6)!important; }
+  .marker-cluster-medium { background:rgba(249,115,22,0.15)!important; }
+  .marker-cluster-medium div { background:rgba(249,115,22,0.6)!important; }
+  .marker-cluster-large { background:rgba(239,68,68,0.15)!important; }
+  .marker-cluster-large div { background:rgba(239,68,68,0.6)!important; }
+
+
+  /* NOTIFICATION BELL */
+  .notif-btn{position:relative;background:var(--soft);border:1.5px solid var(--border);border-radius:10px;width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:18px;flex-shrink:0;transition:all 0.2s;}
+  .notif-btn:hover{background:var(--blue-light);border-color:var(--blue);}
+  .notif-btn.subscribed{background:var(--blue-light);border-color:var(--blue);}
+  .notif-dot{position:absolute;top:-3px;right:-3px;width:10px;height:10px;background:var(--red);border-radius:50%;border:2px solid var(--white);display:none;}
+  .notif-dot.show{display:block;}
+
+  /* NOTIFICATION PERMISSION BANNER */
+  .notif-banner{background:linear-gradient(135deg,#1e40af,#2563eb);color:white;padding:12px 16px;display:none;animation:slideDown 0.3s ease;}
+  .notif-banner.show{display:flex;align-items:center;gap:10px;}
+  .notif-banner-text{flex:1;font-size:13px;font-weight:600;}
+  .notif-banner-sub{font-size:11px;opacity:0.85;margin-top:1px;}
+  .notif-allow-btn{background:white;color:#1e40af;border:none;border-radius:8px;padding:8px 14px;font-family:Lexend,sans-serif;font-size:12px;font-weight:700;cursor:pointer;flex-shrink:0;white-space:nowrap;}
+  .notif-dismiss-btn{background:none;border:none;color:white;opacity:0.7;cursor:pointer;font-size:18px;padding:0 4px;flex-shrink:0;}
+
+  /* NOTIFICATION BUTTON */
+  .notif-btn{display:flex;align-items:center;gap:6px;background:var(--blue-light);color:var(--blue);border:1.5px solid var(--blue);border-radius:10px;padding:6px 12px;font-family:'Lexend',sans-serif;font-size:12px;font-weight:700;cursor:pointer;transition:all 0.2s;white-space:nowrap;}
+  .notif-btn:hover{background:var(--blue);color:white;}
+  .notif-btn.subscribed{background:var(--green-light);color:var(--green);border-color:var(--green);}
+  .notif-btn.subscribed:hover{background:var(--green);color:white;}
+
+  /* GPS LOCATION CARD */
+  .gps-card{background:var(--white);border-bottom:1px solid var(--border);padding:10px 16px;flex-shrink:0;display:none;animation:slideDown 0.3s ease;}
+  .gps-card.show{display:block;}
+  @keyframes slideDown{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:none}}
+  .gps-inner{display:flex;align-items:center;gap:10px;}
+  .gps-icon{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+  .gps-icon.safe{background:var(--green-light);}
+  .gps-icon.warning{background:var(--orange-light);}
+  .gps-icon.critical{background:var(--red-light);}
+  .gps-icon.loading{background:var(--blue-light);}
+  .gps-info{flex:1;min-width:0;}
+  .gps-city{font-size:13px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .gps-status{font-size:11px;color:var(--muted);margin-top:1px;}
+  .gps-chips{display:flex;gap:5px;margin-top:6px;flex-wrap:wrap;}
+  .gps-chip{font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;white-space:nowrap;}
+  .gps-chip.safe{background:var(--green-light);color:var(--green);}
+  .gps-chip.warning{background:var(--orange-light);color:var(--orange);}
+  .gps-chip.critical{background:var(--red-light);color:var(--red);}
+  .gps-chip.info{background:var(--blue-light);color:var(--blue);}
+  .gps-btn{background:var(--blue-light);color:var(--blue);border:none;border-radius:8px;padding:6px 10px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Lexend',sans-serif;flex-shrink:0;white-space:nowrap;}
+  .gps-btn.located{background:var(--green-light);color:var(--green);}
+
+  /* USER LOCATION MARKER */
+  .user-location-marker{width:20px;height:20px;border-radius:50%;background:#2563eb;border:3px solid white;box-shadow:0 0 0 4px rgba(37,99,235,0.25);animation:userPulse 2s infinite;}
+  @keyframes userPulse{0%,100%{box-shadow:0 0 0 4px rgba(37,99,235,0.25)}50%{box-shadow:0 0 0 8px rgba(37,99,235,0)}}
+
+  /* SEARCH DROPDOWN */
+  .search-item{padding:10px 16px;cursor:pointer;border-bottom:0.5px solid var(--border);transition:background 0.15s;}
+  .search-item:last-child{border-bottom:none;}
+  .search-item:hover,.search-item.focused{background:var(--blue-light);}
+  #searchDropdown::-webkit-scrollbar{width:4px;}
+  #searchDropdown::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
+
+  /* LANG TOGGLE */
+  .lang-toggle{display:flex;background:var(--soft);border:1.5px solid var(--border);border-radius:10px;padding:3px;gap:3px;}
+  .lang-btn{background:transparent;border:none;border-radius:7px;padding:4px 10px;font-family:'Lexend',sans-serif;font-size:12px;font-weight:700;color:var(--muted);cursor:pointer;transition:all 0.2s;}
+  .lang-btn.active{background:var(--blue);color:white;}
+
+  /* PHOTO UPLOAD */
+  #photoUploadArea:hover { border-color:var(--blue); background:var(--blue-light); }
+  #photoUploadArea.has-photo { border-color:var(--green); border-style:solid; }
+  .report-photo { width:100%; border-radius:10px; margin-top:8px; max-height:160px; object-fit:cover; cursor:pointer; }
+  .photo-expiry { font-size:10px; color:var(--muted); margin-top:3px; display:flex; align-items:center; gap:4px; }
+
+  @keyframes slideUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
+  #notifPrompt.show{display:block!important;}
+
+  /* TOAST */
+  .toast{position:fixed;top:20px;left:50%;transform:translateX(-50%) translateY(-80px);background:var(--text);color:white;border-radius:14px;padding:11px 18px;font-size:13px;font-weight:600;z-index:2000;white-space:nowrap;transition:transform 0.35s cubic-bezier(0.4,0,0.2,1);box-shadow:0 8px 24px rgba(0,0,0,0.2);display:flex;align-items:center;gap:7px;}
+  .toast.show{transform:translateX(-50%) translateY(0);}
+
+  /* REFRESH indicator */
+  .refresh-bar{position:fixed;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--blue),#38bdf8);z-index:2000;transform:scaleX(0);transform-origin:left;transition:transform 2s linear;display:none;}
+  .refresh-bar.loading{display:block;transform:scaleX(0.9);}
+  .refresh-bar.done{transform:scaleX(1);}
+</style>
+<script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+<script>
+  window.OneSignalDeferred = window.OneSignalDeferred || [];
+  OneSignalDeferred.push(async function(OneSignal) {
+    await OneSignal.init({
+      appId: "2d9ddea7-7c90-464f-9c41-de0976793025",
+      safari_web_id: "web.onesignal.auto.2d9ddea7-7c90-464f-9c41-de0976793025",
+      notifyButton: { enable: false },
+      allowLocalhostAsSecureOrigin: true,
+    });
+  });
+</script>
+</head>
+<body>
+
+<div class="refresh-bar" id="refreshBar"></div>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-top">
+    <div class="logo">
+      <div class="logo-icon">🌊</div>
+      <div>
+        <div class="logo-name">BahaAlert</div>
+        <div class="logo-sub" id="lastUpdated">Nag-a-update...</div>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <button class="notif-btn" id="notifBell" onclick="requestNotifPermission()" title="Enable flood alerts">🔔<div class="notif-dot" id="notifDot"></div></button>
+      <button id="notifBtn" onclick="toggleNotifications()"
+  style="background:var(--soft);border:1.5px solid var(--border);border-radius:10px;padding:5px 10px;font-size:16px;cursor:pointer;transition:all 0.2s;"
+  title="Enable flood alerts">🔔</button>
+<div class="lang-toggle" id="langToggle">
+        <button class="lang-btn active" id="btnEN" onclick="setLang('en')">EN</button>
+        <button class="lang-btn" id="btnTL" onclick="setLang('tl')">TL</button>
+      </div>
+      <button class="notif-btn" id="notifBtn" onclick="toggleNotifications()" title="Get flood alerts">
+        🔔 <span id="notifBtnText">Alerts</span>
+      </button>
+      <div class="live-pill"><div class="live-dot"></div>LIVE</div>
+  <!-- NOTIFICATION BELL -->
+  <button id="notifBtn" onclick="toggleNotifications()" title="Enable flood alerts"
+    style="background:var(--soft);border:1.5px solid var(--border);border-radius:10px;padding:4px 10px;font-size:18px;cursor:pointer;transition:all 0.2s;position:relative;">
+    🔔
+    <span id="notifDot" style="display:none;position:absolute;top:2px;right:2px;width:8px;height:8px;background:var(--red);border-radius:50%;border:1.5px solid white;"></span>
+  </button>
+    </div>
+  </div>
+  <div class="search-bar">
+    <span>🔍</span>
+    <input type="text" id="searchInput" data-i18n-placeholder="search" autocomplete="off"/>
+  </div>
+  <!-- SEARCH DROPDOWN -->
+  <div id="searchDropdown" style="display:none;position:absolute;left:0;right:0;top:100%;background:var(--white);border:1.5px solid var(--border);border-top:none;border-radius:0 0 14px 14px;box-shadow:0 8px 24px rgba(37,99,235,0.1);z-index:999;max-height:280px;overflow-y:auto;"></div>
+</div>
+
+<!-- ALERT STRIP -->
+<div class="alert-strip" id="alertStrip">
+  <span>🌧️</span>
+  <span id="alertText">Loading live weather data...</span>
+</div>
+
+
+<!-- NOTIFICATION PERMISSION BANNER -->
+<div class="notif-banner" id="notifBanner">
+  <div style="font-size:22px;flex-shrink:0;">🔔</div>
+  <div class="notif-banner-text">
+    <div id="notifBannerTitle">Get flood alerts for your area</div>
+    <div class="notif-banner-sub" id="notifBannerSub">We'll notify you when critical flooding is reported nearby</div>
+  </div>
+  <button class="notif-allow-btn" onclick="requestNotifPermission()" id="notifAllowBtn">Allow</button>
+  <button class="notif-dismiss-btn" onclick="dismissNotifBanner()">✕</button>
+</div>
+<!-- GPS LOCATION CARD -->
+<div class="gps-card" id="gpsCard">
+  <div class="gps-inner">
+    <div class="gps-icon loading" id="gpsIcon">📍</div>
+    <div class="gps-info">
+      <div class="gps-city" id="gpsCity">Detecting your location...</div>
+      <div class="gps-status" id="gpsStatus">Please allow location access</div>
+      <div class="gps-chips" id="gpsChips"></div>
+    </div>
+    <button class="gps-btn" id="gpsBtn" onclick="requestLocation()">📍 Locate me</button>
+  </div>
+</div>
+
+<!-- MAP -->
+<div id="map"></div>
+
+<!-- LAYER BAR (over map) -->
+<div class="layer-bar" id="layerBar" style="display:none;">
+  <button class="layer-btn active" onclick="switchLayer(this,'flood')" data-i18n="floodPoints">🌊 Flood Points</button>
+  <button class="layer-btn" onclick="switchLayer(this,'rain')" data-i18n="rainfall">🌧️ Rainfall</button>
+  <button class="layer-btn" onclick="switchLayer(this,'wind')" data-i18n="wind">💨 Wind</button>
+  <button class="layer-btn" onclick="switchLayer(this,'temp')" data-i18n="temperature">🌡️ Temperature</button>
+  <button class="layer-btn" onclick="switchLayer(this,'cloud')" data-i18n="clouds">☁️ Clouds</button>
+</div>
+
+<!-- STATS BAR -->
+<div class="stats-bar" id="statsBar">
+  <div class="stat-chip red" id="statCritical">🔴 —</div>
+  <div class="stat-chip orange" id="statWarning">🟠 —</div>
+  <div class="stat-chip green" id="statNormal">🟢 —</div>
+  <div class="stat-chip blue" id="statCities">🌦️ —</div>
+  <div class="stat-chip blue" id="statReports">📝 — <span data-i18n="reports">Reports</span></div>
+</div>
+
+<!-- REGION FILTER -->
+<div class="region-toggle" id="regionToggle" style="display:none;">
+  <button class="toggle-btn active" onclick="filterRegion(this,'all')" data-i18n="all">🇵🇭 All</button>
+  <button class="toggle-btn" onclick="filterRegion(this,'ncr')">Metro Manila</button>
+  <button class="toggle-btn" onclick="filterRegion(this,'luzon')">Luzon</button>
+  <button class="toggle-btn" onclick="filterRegion(this,'visayas')">Visayas</button>
+  <button class="toggle-btn" onclick="filterRegion(this,'mindanao')">Mindanao</button>
+</div>
+
+<!-- WEATHER LEGEND -->
+<div class="weather-legend" id="weatherLegend">
+  <div class="legend-title">🌧️ <span data-i18n="rainfall">Rainfall</span> (mm/hr)</div>
+  <div class="legend-row"><div class="legend-dot" style="background:#ef4444"></div><span data-i18n="heavy">Heavy</span> (&gt;10mm)</div>
+  <div class="legend-row"><div class="legend-dot" style="background:#f97316"></div><span data-i18n="moderate">Moderate</span> (2–10mm)</div>
+  <div class="legend-row"><div class="legend-dot" style="background:#3b82f6"></div><span data-i18n="light">Light</span> (&lt;2mm)</div>
+  <div class="legend-row"><div class="legend-dot" style="background:#22c55e"></div><span data-i18n="noRain">No rain</span></div>
+</div>
+
+<!-- FAB -->
+<button class="fab" onclick="openModal()">🚨</button>
+
+<!-- BOTTOM NAV -->
+<div class="bottom-nav">
+  <div class="nav-item active" onclick="switchNav(this,'map')"><div class="nav-icon">🗺️</div><span data-i18n="map">Map</span></div>
+  <div class="nav-item" onclick="switchNav(this,'weather')"><div class="nav-icon">🌦️</div><span data-i18n="weather">Weather</span></div>
+  <div class="nav-item" onclick="switchNav(this,'reports')"><div class="nav-icon">📣</div><span data-i18n="reports">Reports</span></div>
+  <div class="nav-item" onclick="switchNav(this,'evac')"><div class="nav-icon">🏫</div><span data-i18n="evacuation">Evacuation</span></div>
+</div>
+
+<!-- SIDE PANEL -->
+<div class="side-panel" id="sidePanel">
+  <div class="panel-handle"></div>
+  <div class="panel-title">
+    <span id="panelTitle"></span>
+    <button class="panel-close" onclick="closePanel()">✕</button>
+  </div>
+  <div class="panel-content" id="panelContent"></div>
+</div>
+
+<!-- REPORT MODAL -->
+<div class="modal-bg" id="modalBg" onclick="closeModalOutside(event)">
+  <div class="modal-sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title" data-i18n="reportTitle">🌊 Report Flooding</div>
+    <div class="sheet-sub" data-i18n="reportSub">Help your community. Share what's happening near you.</div>
+    <div class="form-field"><label data-i18n="location">Location</label><input type="text" id="repLoc" data-i18n-placeholder="locationPlaceholder"></div>
+    <div class="form-field">
+      <label data-i18n="floodDepth">Flood Depth</label>
+      <div class="depth-grid">
+        <div class="depth-tile" onclick="pickDepth(this)"><span class="de">🦶</span><span class="dl" data-i18n="ankle">Ankle-deep</span></div>
+        <div class="depth-tile" onclick="pickDepth(this)"><span class="de">🦵</span><span class="dl" data-i18n="knee">Knee-deep</span></div>
+        <div class="depth-tile" onclick="pickDepth(this)"><span class="de">🧍</span><span class="dl" data-i18n="waist">Waist-deep</span></div>
+        <div class="depth-tile" onclick="pickDepth(this)"><span class="de">🌊</span><span class="dl" data-i18n="chest">Chest-deep+</span></div>
+      </div>
+    </div>
+    <div class="form-field"><label data-i18n="description">Description</label><textarea id="repDesc" data-i18n-placeholder="descPlaceholder"></textarea></div>
+    <div class="form-field">
+      <label data-i18n="photoLabel">📸 Add photo (deleted after 48 hours)</label>
+      <div id="photoUploadArea" onclick="document.getElementById('photoInput').click()"
+        style="border:2px dashed var(--border);border-radius:12px;padding:20px;text-align:center;cursor:pointer;background:var(--soft);transition:all 0.2s;">
+        <div id="photoPlaceholder">
+          <div style="font-size:28px;margin-bottom:6px;">📷</div>
+          <div id="photoUploadText" style="font-size:13px;font-weight:600;color:var(--muted);" data-i18n="photoTap">Tap to upload a photo</div>
+          <div id="photoUploadSub" style="font-size:11px;color:var(--muted);margin-top:3px;" data-i18n="photoSub">JPG, PNG · Max 5MB · Deleted after 48h</div>
+        </div>
+        <img id="photoPreview" style="display:none;width:100%;border-radius:8px;max-height:180px;object-fit:cover;" />
+      </div>
+      <input type="file" id="photoInput" accept="image/*" style="display:none;" onchange="previewPhoto(this)">
+      <button id="removePhotoBtn" onclick="removePhoto()" data-i18n="removePhoto" style="display:none;margin-top:8px;background:var(--red-light);color:var(--red);border:none;border-radius:8px;padding:5px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:Lexend,sans-serif;">✕ Remove photo</button>
+    </div>
+    <div class="form-field">
+      <label data-i18n="youAre">You are...</label>
+      <select id="repRole">
+        <option data-i18n="resident">Resident / Civilian</option>
+        <option data-i18n="barangay">Barangay Official</option>
+        <option>BFP / PNP</option>
+        <option>NGO / Relief Worker</option>
+      </select>
+    </div>
+    <button class="submit-btn" onclick="submitReport()" data-i18n="submit">✅ Submit Report</button>
+  </div>
+</div>
+
+<!-- NOTIFICATION PROMPT BANNER -->
+<div id="notifPrompt" style="display:none;position:fixed;bottom:76px;left:12px;right:12px;background:var(--white);border:1.5px solid var(--green);border-radius:16px;padding:14px 16px;box-shadow:0 8px 32px rgba(34,197,94,0.15);z-index:889;animation:slideUp 0.4s cubic-bezier(0.4,0,0.2,1);">
+  <div style="display:flex;align-items:center;gap:12px;">
+    <div style="width:44px;height:44px;background:var(--green-light);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;">🔔</div>
+    <div style="flex:1;">
+      <div style="font-size:14px;font-weight:700;color:var(--text);">Get flood alerts instantly</div>
+      <div style="font-size:11px;color:var(--muted);margin-top:2px;">We'll notify you when flooding is reported near you</div>
+    </div>
+    <button onclick="document.getElementById('notifPrompt').style.display='none'" style="background:none;border:none;font-size:18px;color:var(--muted);cursor:pointer;padding:4px;">✕</button>
+  </div>
+  <div style="display:flex;gap:8px;margin-top:12px;">
+    <button onclick="toggleNotifications();document.getElementById('notifPrompt').style.display='none';" style="flex:1;background:var(--green);color:white;border:none;border-radius:10px;padding:10px;font-family:'Lexend',sans-serif;font-size:13px;font-weight:700;cursor:pointer;">🔔 Enable Alerts</button>
+    <button onclick="document.getElementById('notifPrompt').style.display='none'" style="padding:10px 14px;background:var(--soft);color:var(--muted);border:none;border-radius:10px;font-family:'Lexend',sans-serif;font-size:13px;cursor:pointer;">Later</button>
+  </div>
+</div>
+
+<!-- PWA INSTALL BANNER -->
+<div id="installBanner" style="display:none;position:fixed;bottom:76px;left:12px;right:12px;background:var(--white);border:1.5px solid var(--border);border-radius:16px;padding:14px 16px;box-shadow:0 8px 32px rgba(37,99,235,0.15);z-index:890;animation:slideUp 0.4s cubic-bezier(0.4,0,0.2,1);">
+  <div style="display:flex;align-items:center;gap:12px;">
+    <div style="width:44px;height:44px;background:linear-gradient(135deg,#2563eb,#38bdf8);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">🌊</div>
+    <div style="flex:1;">
+      <div style="font-size:14px;font-weight:700;color:var(--text);" id="installTitle">Install BahaAlert</div>
+      <div style="font-size:11px;color:var(--muted);margin-top:2px;" id="installSub">Add to home screen for quick access</div>    </div>
+    <button onclick="dismissInstall()" style="background:none;border:none;font-size:18px;color:var(--muted);cursor:pointer;padding:4px;">✕</button>
+  </div>
+  <div style="display:flex;gap:8px;margin-top:12px;">
+    <button onclick="installApp()" style="flex:1;background:linear-gradient(90deg,#2563eb,#38bdf8);color:white;border:none;border-radius:10px;padding:10px;font-family:'Lexend',sans-serif;font-size:13px;font-weight:700;cursor:pointer;" id="installBtn">📲 Install App</button>
+    <button onclick="dismissInstall()" style="padding:10px 14px;background:var(--soft);color:var(--muted);border:none;border-radius:10px;font-family:'Lexend',sans-serif;font-size:13px;cursor:pointer;">Later</button>
+  </div>
+</div>
+
+
+<!-- NOTIFICATION PERMISSION MODAL -->
+<div id="notifModal" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,0.6);z-index:2000;align-items:flex-end;justify-content:center;padding:20px;backdrop-filter:blur(4px);">
+  <div style="background:var(--white);border-radius:24px 24px 24px 24px;padding:28px;width:100%;max-width:420px;margin:0 auto;">
+    <div style="font-size:48px;text-align:center;margin-bottom:12px;">🔔</div>
+    <div style="font-family:'Nunito',sans-serif;font-size:20px;font-weight:900;text-align:center;margin-bottom:8px;" id="notifModalTitle">Get Flood Alerts</div>
+    <div style="font-size:13px;color:var(--muted);text-align:center;line-height:1.6;margin-bottom:20px;" id="notifModalSub">
+      Receive instant notifications when there is critical flooding near you — even when the app is closed.
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      <button onclick="enableNotifications()" style="background:linear-gradient(90deg,#2563eb,#38bdf8);color:white;border:none;border-radius:12px;padding:14px;font-family:'Nunito',sans-serif;font-size:15px;font-weight:900;cursor:pointer;">
+        🔔 Enable Flood Alerts
+      </button>
+      <button onclick="closeNotifModal()" style="background:var(--soft);color:var(--muted);border:none;border-radius:12px;padding:12px;font-family:'Lexend',sans-serif;font-size:13px;cursor:pointer;">
+        Not now
+      </button>
+    </div>
+  </div>
+</div>
+<!-- TOAST -->
+<div class="toast" id="toast">✅ <span id="toastMsg"></span></div>
+
+<script>
+const API_KEY = '751e43c3eba5e441f025126d4252c4fc';
+
+// ── MONITORING CITIES ──
+const cities = [
+  // NCR
+  { name:'Marikina',       region:'ncr',      lat:14.6507, lng:121.1029, river:'Marikina River',   riverLevel:19.8, riverMax:20.0, floodStatus:'critical' },
+  { name:'Manila',         region:'ncr',      lat:14.5995, lng:120.9842, river:'Pasig River',      riverLevel:3.1,  riverMax:4.5,  floodStatus:'warning'  },
+  { name:'Caloocan',       region:'ncr',      lat:14.7294, lng:120.9732, river:'Tullahan River',   riverLevel:5.2,  riverMax:5.5,  floodStatus:'critical' },
+  { name:'Quezon City',    region:'ncr',      lat:14.6760, lng:121.0437, river:'San Juan River',   riverLevel:2.8,  riverMax:4.0,  floodStatus:'warning'  },
+  { name:'Pasig',          region:'ncr',      lat:14.5764, lng:121.0851, river:'Pasig River',      riverLevel:3.0,  riverMax:4.5,  floodStatus:'normal'   },
+  // Luzon
+  { name:'Tuguegarao',     region:'luzon',    lat:17.6132, lng:121.7270, river:'Cagayan River',    riverLevel:8.7,  riverMax:10.0, floodStatus:'warning'  },
+  { name:'San Fernando',   region:'luzon',    lat:15.0285, lng:120.6899, river:'Pampanga River',   riverLevel:6.1,  riverMax:8.0,  floodStatus:'warning'  },
+  { name:'Naga',           region:'luzon',    lat:13.6218, lng:123.1945, river:'Bicol River',      riverLevel:7.3,  riverMax:9.5,  floodStatus:'warning'  },
+  { name:'Legazpi',        region:'luzon',    lat:13.1391, lng:123.7438, river:'Yawa River',       riverLevel:3.2,  riverMax:7.0,  floodStatus:'normal'   },
+  { name:'Dagupan',        region:'luzon',    lat:16.0433, lng:120.3333, river:'Agno River',       riverLevel:4.5,  riverMax:9.0,  floodStatus:'normal'   },
+  // Visayas
+  { name:'Cebu City',      region:'visayas',  lat:10.3157, lng:123.8854, river:'Butuanon River',   riverLevel:2.1,  riverMax:5.0,  floodStatus:'normal'   },
+  { name:'Iloilo City',    region:'visayas',  lat:10.7202, lng:122.5621, river:'Jalaur River',     riverLevel:5.5,  riverMax:7.2,  floodStatus:'warning'  },
+  { name:'Tacloban',       region:'visayas',  lat:11.2543, lng:125.0000, river:'Surigao River',    riverLevel:8.9,  riverMax:9.0,  floodStatus:'critical' },
+  { name:'Bacolod',        region:'visayas',  lat:10.6770, lng:122.9570, river:'Ilog River',       riverLevel:2.8,  riverMax:7.0,  floodStatus:'normal'   },
+  // Mindanao
+  { name:'Davao City',     region:'mindanao', lat:7.0644,  lng:125.5978, river:'Davao River',      riverLevel:3.5,  riverMax:9.0,  floodStatus:'normal'   },
+  { name:'Cagayan de Oro', region:'mindanao', lat:8.4822,  lng:124.6472, river:'Cagayan de Oro R.',riverLevel:6.8,  riverMax:10.0, floodStatus:'warning'  },
+  { name:'Cotabato',       region:'mindanao', lat:7.2047,  lng:124.2310, river:'Mindanao River',   riverLevel:9.2,  riverMax:12.0, floodStatus:'warning'  },
+  { name:'Butuan',         region:'mindanao', lat:8.9500,  lng:125.5400, river:'Agusan River',     riverLevel:10.1, riverMax:13.0, floodStatus:'warning'  },
+  { name:'Zamboanga',      region:'mindanao', lat:6.9214,  lng:122.0790, river:'Great Sta. Cruz R.',riverLevel:2.3, riverMax:6.0,  floodStatus:'normal'   },
+  { name:'General Santos', region:'mindanao', lat:6.1164,  lng:125.1716, river:'Buayan River',     riverLevel:1.9,  riverMax:5.5,  floodStatus:'normal'   },
+];
+
+const weatherCache = {};
+let currentLayer = 'flood';
+let currentFilter = 'all';
+let markerLayer, weatherTileLayer;
+let allMarkers = [];
+let map;
+
+// ── INIT MAP (deferred until DOM ready) ──
+function initMap() {
+  map = L.map('map', {
+    center: [12.0, 122.5], zoom: 6,
+    zoomControl: false, attributionControl: true
+  });
+
+  L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
+    attribution:'© Esri © OpenStreetMap contributors',
+    maxZoom: 19
+  }).addTo(map);
+
+  L.control.zoom({ position:'topleft' }).addTo(map);
+  markerLayer = L.layerGroup().addTo(map);
+
+  // Force map to recalculate size after render
+  setTimeout(() => map.invalidateSize(), 300);
+}
+
+// ── FETCH WEATHER ──
+async function fetchWeather(city) {
+  if (weatherCache[city.name] && (Date.now() - weatherCache[city.name].ts) < 600000) {
+    return weatherCache[city.name].data;
+  }
+  try {
+    const res = await fetch(
+      `https://api.openweathermap.org/data/2.5/weather?lat=${city.lat}&lon=${city.lng}&appid=${API_KEY}&units=metric`
+    );
+    const data = await res.json();
+    weatherCache[city.name] = { data, ts: Date.now() };
+    return data;
+  } catch(e) {
+    return null;
+  }
+}
+
+// ── RAIN CLASSIFICATION ──
+function rainInfo(rain1h) {
+  const r = rain1h || 0;
+  if (r >= 10)  return { label: t('heavy'),    cls:'heavy',    emoji:'⛈️' };
+  if (r >= 2)   return { label: t('moderate'),  cls:'moderate', emoji:'🌧️' };
+  if (r > 0)    return { label: t('light'),     cls:'light',    emoji:'🌦️' };
+  return               { label: t('noRain'),    cls:'none',     emoji:'☀️' };
+}
+
+function floodEmoji(status) {
+  return { critical:'🚨', warning:'⚠️', normal:'✅' }[status];
+}
+
+function floodLabel(status) {
+  return { critical: t('critical'), warning: t('warning'), normal: t('normal') }[status] || status;
+}
+
+function floodColor(status) {
+  return { critical:'#ef4444', warning:'#f97316', normal:'#22c55e' }[status];
+}
+
+// ── FULL PH CITY DATABASE ──
+const PH_CITIES = [{"name":"Manila","province":"Metro Manila","region":"ncr","lat":14.5995,"lng":120.9842,"type":"city"},{"name":"Quezon City","province":"Metro Manila","region":"ncr","lat":14.676,"lng":121.0437,"type":"city"},{"name":"Caloocan","province":"Metro Manila","region":"ncr","lat":14.7294,"lng":120.9732,"type":"city"},{"name":"Las Pi\u00f1as","province":"Metro Manila","region":"ncr","lat":14.4453,"lng":120.983,"type":"city"},{"name":"Makati","province":"Metro Manila","region":"ncr","lat":14.5547,"lng":121.0244,"type":"city"},{"name":"Malabon","province":"Metro Manila","region":"ncr","lat":14.6625,"lng":120.9575,"type":"city"},{"name":"Mandaluyong","province":"Metro Manila","region":"ncr","lat":14.5794,"lng":121.0359,"type":"city"},{"name":"Marikina","province":"Metro Manila","region":"ncr","lat":14.6507,"lng":121.1029,"type":"city"},{"name":"Muntinlupa","province":"Metro Manila","region":"ncr","lat":14.4081,"lng":121.0415,"type":"city"},{"name":"Navotas","province":"Metro Manila","region":"ncr","lat":14.6658,"lng":120.9422,"type":"city"},{"name":"Para\u00f1aque","province":"Metro Manila","region":"ncr","lat":14.4793,"lng":121.0198,"type":"city"},{"name":"Pasay","province":"Metro Manila","region":"ncr","lat":14.5378,"lng":121.0014,"type":"city"},{"name":"Pasig","province":"Metro Manila","region":"ncr","lat":14.5764,"lng":121.0851,"type":"city"},{"name":"Pateros","province":"Metro Manila","region":"ncr","lat":14.5433,"lng":121.0685,"type":"municipality"},{"name":"San Juan","province":"Metro Manila","region":"ncr","lat":14.6019,"lng":121.0355,"type":"city"},{"name":"Taguig","province":"Metro Manila","region":"ncr","lat":14.5176,"lng":121.0509,"type":"city"},{"name":"Valenzuela","province":"Metro Manila","region":"ncr","lat":14.7011,"lng":120.983,"type":"city"},{"name":"Laoag","province":"Ilocos Norte","region":"region1","lat":18.1979,"lng":120.5937,"type":"city"},{"name":"Batac","province":"Ilocos Norte","region":"region1","lat":18.0554,"lng":120.5651,"type":"city"},{"name":"Adams","province":"Ilocos Norte","region":"region1","lat":18.4328,"lng":120.7369,"type":"municipality"},{"name":"Bacarra","province":"Ilocos Norte","region":"region1","lat":18.2541,"lng":120.6108,"type":"municipality"},{"name":"Badoc","province":"Ilocos Norte","region":"region1","lat":17.9233,"lng":120.4747,"type":"municipality"},{"name":"Bangui","province":"Ilocos Norte","region":"region1","lat":18.5326,"lng":120.7731,"type":"municipality"},{"name":"Banna","province":"Ilocos Norte","region":"region1","lat":18.0998,"lng":120.6433,"type":"municipality"},{"name":"Burgos","province":"Ilocos Norte","region":"region1","lat":18.5106,"lng":120.6539,"type":"municipality"},{"name":"Carasi","province":"Ilocos Norte","region":"region1","lat":18.3094,"lng":120.8583,"type":"municipality"},{"name":"Currimao","province":"Ilocos Norte","region":"region1","lat":17.9945,"lng":120.4873,"type":"municipality"},{"name":"Dingras","province":"Ilocos Norte","region":"region1","lat":18.1039,"lng":120.6973,"type":"municipality"},{"name":"Dumalneg","province":"Ilocos Norte","region":"region1","lat":18.3847,"lng":120.8427,"type":"municipality"},{"name":"Marcos","province":"Ilocos Norte","region":"region1","lat":18.1631,"lng":120.7583,"type":"municipality"},{"name":"Nueva Era","province":"Ilocos Norte","region":"region1","lat":17.9305,"lng":120.698,"type":"municipality"},{"name":"Pagudpud","province":"Ilocos Norte","region":"region1","lat":18.5635,"lng":120.7924,"type":"municipality"},{"name":"Paoay","province":"Ilocos Norte","region":"region1","lat":18.0551,"lng":120.5253,"type":"municipality"},{"name":"Pasuquin","province":"Ilocos Norte","region":"region1","lat":18.3343,"lng":120.6242,"type":"municipality"},{"name":"Piddig","province":"Ilocos Norte","region":"region1","lat":18.1961,"lng":120.7797,"type":"municipality"},{"name":"Pinili","province":"Ilocos Norte","region":"region1","lat":17.9742,"lng":120.5762,"type":"municipality"},{"name":"San Nicolas","province":"Ilocos Norte","region":"region1","lat":18.1716,"lng":120.6018,"type":"municipality"},{"name":"Sarrat","province":"Ilocos Norte","region":"region1","lat":18.1623,"lng":120.6438,"type":"municipality"},{"name":"Solsona","province":"Ilocos Norte","region":"region1","lat":18.0461,"lng":120.7871,"type":"municipality"},{"name":"Vintar","province":"Ilocos Norte","region":"region1","lat":18.234,"lng":120.6951,"type":"municipality"},{"name":"Vigan","province":"Ilocos Sur","region":"region1","lat":17.5747,"lng":120.3869,"type":"city"},{"name":"Candon","province":"Ilocos Sur","region":"region1","lat":17.1949,"lng":120.4503,"type":"city"},{"name":"Alilem","province":"Ilocos Sur","region":"region1","lat":16.9881,"lng":120.6085,"type":"municipality"},{"name":"Banayoyo","province":"Ilocos Sur","region":"region1","lat":17.0704,"lng":120.502,"type":"municipality"},{"name":"Bantay","province":"Ilocos Sur","region":"region1","lat":17.594,"lng":120.3958,"type":"municipality"},{"name":"Burgos","province":"Ilocos Sur","region":"region1","lat":17.0221,"lng":120.4625,"type":"municipality"},{"name":"Cabugao","province":"Ilocos Sur","region":"region1","lat":17.7896,"lng":120.4074,"type":"municipality"},{"name":"Caoayan","province":"Ilocos Sur","region":"region1","lat":17.5321,"lng":120.3939,"type":"municipality"},{"name":"Cervantes","province":"Ilocos Sur","region":"region1","lat":16.9994,"lng":120.7272,"type":"municipality"},{"name":"Galimuyod","province":"Ilocos Sur","region":"region1","lat":17.1028,"lng":120.4682,"type":"municipality"},{"name":"Gregorio del Pilar","province":"Ilocos Sur","region":"region1","lat":17.0368,"lng":120.6029,"type":"municipality"},{"name":"Lidlidda","province":"Ilocos Sur","region":"region1","lat":17.0568,"lng":120.5602,"type":"municipality"},{"name":"Magsingal","province":"Ilocos Sur","region":"region1","lat":17.6855,"lng":120.4239,"type":"municipality"},{"name":"Nagbukel","province":"Ilocos Sur","region":"region1","lat":17.4427,"lng":120.452,"type":"municipality"},{"name":"Narvacan","province":"Ilocos Sur","region":"region1","lat":17.4147,"lng":120.4281,"type":"municipality"},{"name":"Quirino","province":"Ilocos Sur","region":"region1","lat":17.3028,"lng":120.4639,"type":"municipality"},{"name":"Salcedo","province":"Ilocos Sur","region":"region1","lat":17.128,"lng":120.5062,"type":"municipality"},{"name":"San Emilio","province":"Ilocos Sur","region":"region1","lat":17.4597,"lng":120.5003,"type":"municipality"},{"name":"San Esteban","province":"Ilocos Sur","region":"region1","lat":17.4925,"lng":120.3983,"type":"municipality"},{"name":"San Ildefonso","province":"Ilocos Sur","region":"region1","lat":17.1042,"lng":120.5577,"type":"municipality"},{"name":"San Juan","province":"Ilocos Sur","region":"region1","lat":17.7393,"lng":120.4547,"type":"municipality"},{"name":"San Vicente","province":"Ilocos Sur","region":"region1","lat":17.625,"lng":120.3967,"type":"municipality"},{"name":"Santa","province":"Ilocos Sur","region":"region1","lat":17.4938,"lng":120.4411,"type":"municipality"},{"name":"Santa Catalina","province":"Ilocos Sur","region":"region1","lat":17.3458,"lng":120.427,"type":"municipality"},{"name":"Santa Cruz","province":"Ilocos Sur","region":"region1","lat":17.3028,"lng":120.4367,"type":"municipality"},{"name":"Santa Lucia","province":"Ilocos Sur","region":"region1","lat":16.9987,"lng":120.5355,"type":"municipality"},{"name":"Santa Maria","province":"Ilocos Sur","region":"region1","lat":17.365,"lng":120.4844,"type":"municipality"},{"name":"Santiago","province":"Ilocos Sur","region":"region1","lat":17.2699,"lng":120.4392,"type":"municipality"},{"name":"Sinait","province":"Ilocos Sur","region":"region1","lat":17.8591,"lng":120.4581,"type":"municipality"},{"name":"Sigay","province":"Ilocos Sur","region":"region1","lat":16.8829,"lng":120.4944,"type":"municipality"},{"name":"Sugpon","province":"Ilocos Sur","region":"region1","lat":17.0022,"lng":120.6629,"type":"municipality"},{"name":"Suyo","province":"Ilocos Sur","region":"region1","lat":16.9372,"lng":120.5337,"type":"municipality"},{"name":"Tagudin","province":"Ilocos Sur","region":"region1","lat":16.9351,"lng":120.4428,"type":"municipality"},{"name":"San Fernando","province":"La Union","region":"region1","lat":16.6159,"lng":120.3166,"type":"city"},{"name":"Agoo","province":"La Union","region":"region1","lat":16.3295,"lng":120.3701,"type":"municipality"},{"name":"Aringay","province":"La Union","region":"region1","lat":16.3944,"lng":120.3526,"type":"municipality"},{"name":"Bacnotan","province":"La Union","region":"region1","lat":16.7272,"lng":120.3692,"type":"municipality"},{"name":"Bagulin","province":"La Union","region":"region1","lat":16.563,"lng":120.5087,"type":"municipality"},{"name":"Balaoan","province":"La Union","region":"region1","lat":16.8125,"lng":120.3978,"type":"municipality"},{"name":"Bangar","province":"La Union","region":"region1","lat":16.8928,"lng":120.4478,"type":"municipality"},{"name":"Bauang","province":"La Union","region":"region1","lat":16.5278,"lng":120.3381,"type":"municipality"},{"name":"Burgos","province":"La Union","region":"region1","lat":16.9528,"lng":120.4644,"type":"municipality"},{"name":"Caba","province":"La Union","region":"region1","lat":16.2856,"lng":120.37,"type":"municipality"},{"name":"Luna","province":"La Union","region":"region1","lat":16.8553,"lng":120.3808,"type":"municipality"},{"name":"Naguilian","province":"La Union","region":"region1","lat":16.5394,"lng":120.3881,"type":"municipality"},{"name":"Pugo","province":"La Union","region":"region1","lat":16.3869,"lng":120.4567,"type":"municipality"},{"name":"Rosario","province":"La Union","region":"region1","lat":16.2172,"lng":120.3614,"type":"municipality"},{"name":"San Gabriel","province":"La Union","region":"region1","lat":16.7353,"lng":120.4197,"type":"municipality"},{"name":"San Juan","province":"La Union","region":"region1","lat":16.6744,"lng":120.335,"type":"municipality"},{"name":"Santo Tomas","province":"La Union","region":"region1","lat":16.3469,"lng":120.3814,"type":"municipality"},{"name":"Santol","province":"La Union","region":"region1","lat":16.6211,"lng":120.4708,"type":"municipality"},{"name":"Sudipen","province":"La Union","region":"region1","lat":16.7869,"lng":120.5006,"type":"municipality"},{"name":"Tubao","province":"La Union","region":"region1","lat":16.3369,"lng":120.4133,"type":"municipality"},{"name":"Dagupan","province":"Pangasinan","region":"region1","lat":16.0433,"lng":120.3333,"type":"city"},{"name":"San Carlos","province":"Pangasinan","region":"region1","lat":15.927,"lng":120.3508,"type":"city"},{"name":"Urdaneta","province":"Pangasinan","region":"region1","lat":15.9757,"lng":120.5699,"type":"city"},{"name":"Alaminos","province":"Pangasinan","region":"region1","lat":16.1558,"lng":119.9816,"type":"city"},{"name":"Lingayen","province":"Pangasinan","region":"region1","lat":16.0203,"lng":120.2317,"type":"municipality"},{"name":"Calasiao","province":"Pangasinan","region":"region1","lat":16.0061,"lng":120.3631,"type":"municipality"},{"name":"Binmaley","province":"Pangasinan","region":"region1","lat":16.0322,"lng":120.2708,"type":"municipality"},{"name":"Mangaldan","province":"Pangasinan","region":"region1","lat":16.0667,"lng":120.4003,"type":"municipality"},{"name":"Tuguegarao","province":"Cagayan","region":"region2","lat":17.6132,"lng":121.727,"type":"city"},{"name":"Aparri","province":"Cagayan","region":"region2","lat":18.3553,"lng":121.6361,"type":"municipality"},{"name":"Gonzaga","province":"Cagayan","region":"region2","lat":18.268,"lng":121.9892,"type":"municipality"},{"name":"Lallo","province":"Cagayan","region":"region2","lat":18.1879,"lng":121.6623,"type":"municipality"},{"name":"Lasam","province":"Cagayan","region":"region2","lat":17.8289,"lng":121.5996,"type":"municipality"},{"name":"Pe\u00f1ablanca","province":"Cagayan","region":"region2","lat":17.6297,"lng":121.7919,"type":"municipality"},{"name":"Sanchez-Mira","province":"Cagayan","region":"region2","lat":18.5594,"lng":121.2219,"type":"municipality"},{"name":"Santa Ana","province":"Cagayan","region":"region2","lat":18.4692,"lng":122.1528,"type":"municipality"},{"name":"Ilagan","province":"Isabela","region":"region2","lat":17.1489,"lng":121.8693,"type":"city"},{"name":"Cauayan","province":"Isabela","region":"region2","lat":16.9319,"lng":121.7714,"type":"city"},{"name":"Santiago","province":"Isabela","region":"region2","lat":16.6869,"lng":121.5503,"type":"city"},{"name":"Alicia","province":"Isabela","region":"region2","lat":16.7944,"lng":121.6781,"type":"municipality"},{"name":"Angadanan","province":"Isabela","region":"region2","lat":16.8294,"lng":121.7444,"type":"municipality"},{"name":"Aurora","province":"Isabela","region":"region2","lat":16.9897,"lng":121.8486,"type":"municipality"},{"name":"Cabagan","province":"Isabela","region":"region2","lat":17.4328,"lng":121.7756,"type":"municipality"},{"name":"Cabatuan","province":"Isabela","region":"region2","lat":16.9092,"lng":121.6606,"type":"municipality"},{"name":"Cordon","province":"Isabela","region":"region2","lat":16.6969,"lng":121.4367,"type":"municipality"},{"name":"Delfin Albano","province":"Isabela","region":"region2","lat":16.4911,"lng":121.8056,"type":"municipality"},{"name":"Diffun","province":"Quirino","region":"region2","lat":16.5961,"lng":121.5078,"type":"municipality"},{"name":"Cabarroguis","province":"Quirino","region":"region2","lat":16.5133,"lng":121.5117,"type":"municipality"},{"name":"Bayombong","province":"Nueva Vizcaya","region":"region2","lat":16.4833,"lng":121.15,"type":"municipality"},{"name":"Solano","province":"Nueva Vizcaya","region":"region2","lat":16.5222,"lng":121.1858,"type":"municipality"},{"name":"Bambang","province":"Nueva Vizcaya","region":"region2","lat":16.3875,"lng":121.0806,"type":"municipality"},{"name":"Tuguegarao City","province":"Cagayan","region":"region2","lat":17.6132,"lng":121.727,"type":"city"},{"name":"Batanes","province":"Batanes","region":"region2","lat":20.4486,"lng":121.9707,"type":"municipality"},{"name":"Basco","province":"Batanes","region":"region2","lat":20.4486,"lng":121.9707,"type":"municipality"},{"name":"San Fernando","province":"Pampanga","region":"region3","lat":15.0285,"lng":120.6899,"type":"city"},{"name":"Angeles","province":"Pampanga","region":"region3","lat":15.145,"lng":120.5887,"type":"city"},{"name":"Mabalacat","province":"Pampanga","region":"region3","lat":15.2228,"lng":120.5733,"type":"city"},{"name":"Olongapo","province":"Zambales","region":"region3","lat":14.8293,"lng":120.2822,"type":"city"},{"name":"Cabanatuan","province":"Nueva Ecija","region":"region3","lat":15.4867,"lng":120.9726,"type":"city"},{"name":"Gapan","province":"Nueva Ecija","region":"region3","lat":15.3092,"lng":120.9452,"type":"city"},{"name":"Palayan","province":"Nueva Ecija","region":"region3","lat":15.5361,"lng":121.0839,"type":"city"},{"name":"San Jose","province":"Nueva Ecija","region":"region3","lat":15.7944,"lng":121.1083,"type":"city"},{"name":"Tarlac","province":"Tarlac","region":"region3","lat":15.4755,"lng":120.596,"type":"city"},{"name":"Balanga","province":"Bataan","region":"region3","lat":14.676,"lng":120.536,"type":"city"},{"name":"Malolos","province":"Bulacan","region":"region3","lat":14.8433,"lng":120.8114,"type":"city"},{"name":"Meycauayan","province":"Bulacan","region":"region3","lat":14.7352,"lng":120.9609,"type":"city"},{"name":"San Jose del Monte","province":"Bulacan","region":"region3","lat":14.8138,"lng":121.0453,"type":"city"},{"name":"Iba","province":"Zambales","region":"region3","lat":15.3299,"lng":119.9811,"type":"municipality"},{"name":"Subic","province":"Zambales","region":"region3","lat":14.8883,"lng":120.2353,"type":"municipality"},{"name":"Bataan","province":"Bataan","region":"region3","lat":14.7,"lng":120.4833,"type":"municipality"},{"name":"Abucay","province":"Bataan","region":"region3","lat":14.7267,"lng":120.53,"type":"municipality"},{"name":"Dinalupihan","province":"Bataan","region":"region3","lat":14.8736,"lng":120.4656,"type":"municipality"},{"name":"Hermosa","province":"Bataan","region":"region3","lat":14.8261,"lng":120.5003,"type":"municipality"},{"name":"Limay","province":"Bataan","region":"region3","lat":14.5628,"lng":120.5975,"type":"municipality"},{"name":"Mariveles","province":"Bataan","region":"region3","lat":14.4344,"lng":120.4825,"type":"municipality"},{"name":"Morong","province":"Bataan","region":"region3","lat":14.6817,"lng":120.2683,"type":"municipality"},{"name":"Orani","province":"Bataan","region":"region3","lat":14.8008,"lng":120.5294,"type":"municipality"},{"name":"Orion","province":"Bataan","region":"region3","lat":14.6217,"lng":120.5764,"type":"municipality"},{"name":"Pilar","province":"Bataan","region":"region3","lat":14.6644,"lng":120.5514,"type":"municipality"},{"name":"Samal","province":"Bataan","region":"region3","lat":14.7636,"lng":120.5483,"type":"municipality"},{"name":"Baliuag","province":"Bulacan","region":"region3","lat":14.9522,"lng":120.8975,"type":"municipality"},{"name":"Bocaue","province":"Bulacan","region":"region3","lat":14.8019,"lng":120.9183,"type":"municipality"},{"name":"Bulakan","province":"Bulacan","region":"region3","lat":14.7847,"lng":120.8822,"type":"municipality"},{"name":"Bustos","province":"Bulacan","region":"region3","lat":14.9547,"lng":120.9169,"type":"municipality"},{"name":"Calumpit","province":"Bulacan","region":"region3","lat":14.9147,"lng":120.7664,"type":"municipality"},{"name":"Do\u00f1a Remedios Trinidad","province":"Bulacan","region":"region3","lat":15.0267,"lng":121.0503,"type":"municipality"},{"name":"Guiguinto","province":"Bulacan","region":"region3","lat":14.8367,"lng":120.8811,"type":"municipality"},{"name":"Hagonoy","province":"Bulacan","region":"region3","lat":14.8367,"lng":120.7333,"type":"municipality"},{"name":"Marilao","province":"Bulacan","region":"region3","lat":14.7556,"lng":120.9506,"type":"municipality"},{"name":"Norzagaray","province":"Bulacan","region":"region3","lat":14.9317,"lng":121.0483,"type":"municipality"},{"name":"Obando","province":"Bulacan","region":"region3","lat":14.7117,"lng":120.9236,"type":"municipality"},{"name":"Pandi","province":"Bulacan","region":"region3","lat":14.8706,"lng":120.9506,"type":"municipality"},{"name":"Paombong","province":"Bulacan","region":"region3","lat":14.8217,"lng":120.7889,"type":"municipality"},{"name":"Plaridel","province":"Bulacan","region":"region3","lat":14.8989,"lng":120.8625,"type":"municipality"},{"name":"Pulilan","province":"Bulacan","region":"region3","lat":14.9017,"lng":120.8511,"type":"municipality"},{"name":"San Ildefonso","province":"Bulacan","region":"region3","lat":15.0894,"lng":121.0369,"type":"municipality"},{"name":"San Miguel","province":"Bulacan","region":"region3","lat":15.1333,"lng":121.0333,"type":"municipality"},{"name":"San Rafael","province":"Bulacan","region":"region3","lat":15.0167,"lng":121.0167,"type":"municipality"},{"name":"Santa Maria","province":"Bulacan","region":"region3","lat":14.8022,"lng":121.0,"type":"municipality"},{"name":"Antipolo","province":"Rizal","region":"region4a","lat":14.5871,"lng":121.1763,"type":"city"},{"name":"Calamba","province":"Laguna","region":"region4a","lat":14.2115,"lng":121.1653,"type":"city"},{"name":"San Pablo","province":"Laguna","region":"region4a","lat":14.0683,"lng":121.3228,"type":"city"},{"name":"Santa Rosa","province":"Laguna","region":"region4a","lat":14.3122,"lng":121.1114,"type":"city"},{"name":"Bi\u00f1an","province":"Laguna","region":"region4a","lat":14.3408,"lng":121.0806,"type":"city"},{"name":"Cabuyao","province":"Laguna","region":"region4a","lat":14.2756,"lng":121.1247,"type":"city"},{"name":"Lucena","province":"Quezon","region":"region4a","lat":13.9319,"lng":121.6169,"type":"city"},{"name":"Batangas","province":"Batangas","region":"region4a","lat":13.7565,"lng":121.0583,"type":"city"},{"name":"Lipa","province":"Batangas","region":"region4a","lat":13.9411,"lng":121.1631,"type":"city"},{"name":"Tanauan","province":"Batangas","region":"region4a","lat":14.0861,"lng":121.1483,"type":"city"},{"name":"Imus","province":"Cavite","region":"region4a","lat":14.4297,"lng":120.9367,"type":"city"},{"name":"Bacoor","province":"Cavite","region":"region4a","lat":14.458,"lng":120.9642,"type":"city"},{"name":"Dasmari\u00f1as","province":"Cavite","region":"region4a","lat":14.3294,"lng":120.9367,"type":"city"},{"name":"Cavite","province":"Cavite","region":"region4a","lat":14.4791,"lng":120.8975,"type":"city"},{"name":"Tagaytay","province":"Cavite","region":"region4a","lat":14.1053,"lng":120.9619,"type":"city"},{"name":"Trece Martires","province":"Cavite","region":"region4a","lat":14.2822,"lng":120.8658,"type":"city"},{"name":"General Trias","province":"Cavite","region":"region4a","lat":14.3872,"lng":120.8817,"type":"city"},{"name":"Cainta","province":"Rizal","region":"region4a","lat":14.5766,"lng":121.1189,"type":"municipality"},{"name":"Taytay","province":"Rizal","region":"region4a","lat":14.5569,"lng":121.1325,"type":"municipality"},{"name":"Angono","province":"Rizal","region":"region4a","lat":14.5239,"lng":121.1542,"type":"municipality"},{"name":"Binangonan","province":"Rizal","region":"region4a","lat":14.4667,"lng":121.1936,"type":"municipality"},{"name":"Cardona","province":"Rizal","region":"region4a","lat":14.4869,"lng":121.2297,"type":"municipality"},{"name":"Jalajala","province":"Rizal","region":"region4a","lat":14.3544,"lng":121.3267,"type":"municipality"},{"name":"Morong","province":"Rizal","region":"region4a","lat":14.4094,"lng":121.2319,"type":"municipality"},{"name":"Pililla","province":"Rizal","region":"region4a","lat":14.4892,"lng":121.305,"type":"municipality"},{"name":"Rodriguez","province":"Rizal","region":"region4a","lat":14.7381,"lng":121.115,"type":"municipality"},{"name":"San Mateo","province":"Rizal","region":"region4a","lat":14.6983,"lng":121.1231,"type":"municipality"},{"name":"Tanay","province":"Rizal","region":"region4a","lat":14.4953,"lng":121.2872,"type":"municipality"},{"name":"Teresa","province":"Rizal","region":"region4a","lat":14.5594,"lng":121.2058,"type":"municipality"},{"name":"Quezon","province":"Quezon","region":"region4a","lat":13.9319,"lng":121.6169,"type":"municipality"},{"name":"Infanta","province":"Quezon","region":"region4a","lat":14.7442,"lng":121.6497,"type":"municipality"},{"name":"Real","province":"Quezon","region":"region4a","lat":14.6633,"lng":121.5986,"type":"municipality"},{"name":"Mauban","province":"Quezon","region":"region4a","lat":14.1908,"lng":121.7303,"type":"municipality"},{"name":"Tayabas","province":"Quezon","region":"region4a","lat":14.0208,"lng":121.5922,"type":"municipality"},{"name":"Candelaria","province":"Quezon","region":"region4a","lat":13.9325,"lng":121.4233,"type":"municipality"},{"name":"Sariaya","province":"Quezon","region":"region4a","lat":13.9592,"lng":121.5278,"type":"municipality"},{"name":"Gumaca","province":"Quezon","region":"region4a","lat":13.9194,"lng":122.0992,"type":"municipality"},{"name":"Calapan","province":"Oriental Mindoro","region":"region4b","lat":13.4119,"lng":121.18,"type":"city"},{"name":"Mamburao","province":"Occidental Mindoro","region":"region4b","lat":13.2211,"lng":120.5994,"type":"municipality"},{"name":"San Jose","province":"Occidental Mindoro","region":"region4b","lat":12.3508,"lng":121.0697,"type":"municipality"},{"name":"Puerto Princesa","province":"Palawan","region":"region4b","lat":9.7392,"lng":118.7353,"type":"city"},{"name":"El Nido","province":"Palawan","region":"region4b","lat":11.1833,"lng":119.4167,"type":"municipality"},{"name":"Coron","province":"Palawan","region":"region4b","lat":11.9986,"lng":120.2044,"type":"municipality"},{"name":"Romblon","province":"Romblon","region":"region4b","lat":12.5779,"lng":122.2696,"type":"municipality"},{"name":"Odiongan","province":"Romblon","region":"region4b","lat":12.3997,"lng":122.0003,"type":"municipality"},{"name":"Boac","province":"Marinduque","region":"region4b","lat":13.4467,"lng":121.8403,"type":"municipality"},{"name":"Balanacan","province":"Marinduque","region":"region4b","lat":13.5972,"lng":122.0061,"type":"municipality"},{"name":"Legazpi","province":"Albay","region":"region5","lat":13.1391,"lng":123.7438,"type":"city"},{"name":"Ligao","province":"Albay","region":"region5","lat":13.2197,"lng":123.5233,"type":"city"},{"name":"Tabaco","province":"Albay","region":"region5","lat":13.3592,"lng":123.7322,"type":"city"},{"name":"Naga","province":"Camarines Sur","region":"region5","lat":13.6218,"lng":123.1945,"type":"city"},{"name":"Iriga","province":"Camarines Sur","region":"region5","lat":13.4239,"lng":123.4094,"type":"city"},{"name":"Cabadbaran","province":"Agusan del Norte","region":"region5","lat":13.7558,"lng":122.0275,"type":"municipality"},{"name":"Daet","province":"Camarines Norte","region":"region5","lat":14.1128,"lng":122.955,"type":"municipality"},{"name":"Masbate","province":"Masbate","region":"region5","lat":12.3694,"lng":123.6203,"type":"city"},{"name":"Sorsogon","province":"Sorsogon","region":"region5","lat":12.9736,"lng":124.0072,"type":"city"},{"name":"Bulan","province":"Sorsogon","region":"region5","lat":12.6697,"lng":123.8761,"type":"municipality"},{"name":"Irosin","province":"Sorsogon","region":"region5","lat":12.7044,"lng":124.0297,"type":"municipality"},{"name":"Gubat","province":"Sorsogon","region":"region5","lat":12.9186,"lng":124.1225,"type":"municipality"},{"name":"Pili","province":"Camarines Sur","region":"region5","lat":13.5744,"lng":123.2806,"type":"municipality"},{"name":"Libmanan","province":"Camarines Sur","region":"region5","lat":13.6969,"lng":122.9861,"type":"municipality"},{"name":"Goa","province":"Camarines Sur","region":"region5","lat":13.6981,"lng":123.4939,"type":"municipality"},{"name":"Tigaon","province":"Camarines Sur","region":"region5","lat":13.6356,"lng":123.4931,"type":"municipality"},{"name":"Calabanga","province":"Camarines Sur","region":"region5","lat":13.7044,"lng":123.2208,"type":"municipality"},{"name":"Polangui","province":"Albay","region":"region5","lat":13.2928,"lng":123.4853,"type":"municipality"},{"name":"Guinobatan","province":"Albay","region":"region5","lat":13.1814,"lng":123.5944,"type":"municipality"},{"name":"Daraga","province":"Albay","region":"region5","lat":13.1578,"lng":123.6906,"type":"municipality"},{"name":"Iloilo City","province":"Iloilo","region":"region6","lat":10.7202,"lng":122.5621,"type":"city"},{"name":"Bacolod","province":"Negros Occidental","region":"region6","lat":10.677,"lng":122.957,"type":"city"},{"name":"Roxas","province":"Capiz","region":"region6","lat":11.5858,"lng":122.7517,"type":"city"},{"name":"San Carlos","province":"Negros Occidental","region":"region6","lat":10.493,"lng":123.412,"type":"city"},{"name":"Kabankalan","province":"Negros Occidental","region":"region6","lat":9.9894,"lng":122.8147,"type":"city"},{"name":"Escalante","province":"Negros Occidental","region":"region6","lat":10.8428,"lng":123.4986,"type":"city"},{"name":"Sagay","province":"Negros Occidental","region":"region6","lat":10.95,"lng":123.4333,"type":"city"},{"name":"Silay","province":"Negros Occidental","region":"region6","lat":10.8003,"lng":122.9744,"type":"city"},{"name":"Talisay","province":"Negros Occidental","region":"region6","lat":10.7414,"lng":122.9736,"type":"city"},{"name":"Victorias","province":"Negros Occidental","region":"region6","lat":10.9009,"lng":123.0764,"type":"city"},{"name":"Cadiz","province":"Negros Occidental","region":"region6","lat":10.9528,"lng":123.3044,"type":"city"},{"name":"Himamaylan","province":"Negros Occidental","region":"region6","lat":10.0972,"lng":122.8706,"type":"city"},{"name":"Passi","province":"Iloilo","region":"region6","lat":11.1028,"lng":122.6403,"type":"city"},{"name":"Kalibo","province":"Aklan","region":"region6","lat":11.7069,"lng":122.3722,"type":"municipality"},{"name":"Boracay","province":"Aklan","region":"region6","lat":11.9674,"lng":121.9248,"type":"municipality"},{"name":"Caticlan","province":"Aklan","region":"region6","lat":11.9225,"lng":121.9536,"type":"municipality"},{"name":"Culasi","province":"Antique","region":"region6","lat":11.4256,"lng":122.0511,"type":"municipality"},{"name":"San Jose","province":"Antique","region":"region6","lat":10.7519,"lng":121.9381,"type":"municipality"},{"name":"Pandan","province":"Antique","region":"region6","lat":11.7289,"lng":122.0939,"type":"municipality"},{"name":"Jordan","province":"Guimaras","region":"region6","lat":10.5928,"lng":122.6006,"type":"municipality"},{"name":"Cebu City","province":"Cebu","region":"region7","lat":10.3157,"lng":123.8854,"type":"city"},{"name":"Mandaue","province":"Cebu","region":"region7","lat":10.3236,"lng":123.9223,"type":"city"},{"name":"Lapu-Lapu","province":"Cebu","region":"region7","lat":10.3119,"lng":123.9494,"type":"city"},{"name":"Toledo","province":"Cebu","region":"region7","lat":10.3775,"lng":123.6381,"type":"city"},{"name":"Carcar","province":"Cebu","region":"region7","lat":10.1083,"lng":123.6411,"type":"city"},{"name":"Danao","province":"Cebu","region":"region7","lat":10.5228,"lng":124.0261,"type":"city"},{"name":"Naga","province":"Cebu","region":"region7","lat":10.2119,"lng":123.7572,"type":"city"},{"name":"Tagbilaran","province":"Bohol","region":"region7","lat":9.6536,"lng":123.8553,"type":"city"},{"name":"Talibon","province":"Bohol","region":"region7","lat":10.1508,"lng":124.2806,"type":"municipality"},{"name":"Ubay","province":"Bohol","region":"region7","lat":10.0469,"lng":124.4719,"type":"municipality"},{"name":"Jagna","province":"Bohol","region":"region7","lat":9.6539,"lng":124.3594,"type":"municipality"},{"name":"Carmen","province":"Bohol","region":"region7","lat":9.8358,"lng":124.1942,"type":"municipality"},{"name":"Loay","province":"Bohol","region":"region7","lat":9.6078,"lng":123.9847,"type":"municipality"},{"name":"Dimiao","province":"Bohol","region":"region7","lat":9.6572,"lng":124.1231,"type":"municipality"},{"name":"Dumaguete","province":"Negros Oriental","region":"region7","lat":9.3103,"lng":123.3081,"type":"city"},{"name":"Bayawan","province":"Negros Oriental","region":"region7","lat":9.3675,"lng":122.8017,"type":"city"},{"name":"Bais","province":"Negros Oriental","region":"region7","lat":9.5917,"lng":123.1208,"type":"city"},{"name":"Canlaon","province":"Negros Oriental","region":"region7","lat":10.3833,"lng":123.2,"type":"city"},{"name":"Guihulngan","province":"Negros Oriental","region":"region7","lat":10.1239,"lng":123.2714,"type":"city"},{"name":"Tanjay","province":"Negros Oriental","region":"region7","lat":9.5161,"lng":123.1581,"type":"city"},{"name":"Maasin","province":"Southern Leyte","region":"region7","lat":10.1333,"lng":124.8333,"type":"city"},{"name":"Moalboal","province":"Cebu","region":"region7","lat":9.9356,"lng":123.3997,"type":"municipality"},{"name":"Oslob","province":"Cebu","region":"region7","lat":9.5272,"lng":123.4239,"type":"municipality"},{"name":"Tacloban","province":"Leyte","region":"region8","lat":11.2543,"lng":125.0,"type":"city"},{"name":"Ormoc","province":"Leyte","region":"region8","lat":11.0064,"lng":124.6075,"type":"city"},{"name":"Baybay","province":"Leyte","region":"region8","lat":10.68,"lng":124.8,"type":"city"},{"name":"Abuyog","province":"Leyte","region":"region8","lat":10.7436,"lng":125.0178,"type":"municipality"},{"name":"Burauen","province":"Leyte","region":"region8","lat":10.9878,"lng":124.8925,"type":"municipality"},{"name":"Carigara","province":"Leyte","region":"region8","lat":11.3028,"lng":124.6897,"type":"municipality"},{"name":"Dulag","province":"Leyte","region":"region8","lat":10.9594,"lng":125.0275,"type":"municipality"},{"name":"Palo","province":"Leyte","region":"region8","lat":11.1575,"lng":124.9917,"type":"municipality"},{"name":"Sogod","province":"Southern Leyte","region":"region8","lat":10.3761,"lng":124.9878,"type":"municipality"},{"name":"Calbayog","province":"Samar","region":"region8","lat":12.0717,"lng":124.5989,"type":"city"},{"name":"Catbalogan","province":"Samar","region":"region8","lat":11.7747,"lng":124.8864,"type":"city"},{"name":"Borongan","province":"Eastern Samar","region":"region8","lat":11.6078,"lng":125.4311,"type":"city"},{"name":"Guiuan","province":"Eastern Samar","region":"region8","lat":11.0353,"lng":125.7225,"type":"municipality"},{"name":"Catarman","province":"Northern Samar","region":"region8","lat":12.4983,"lng":124.6442,"type":"municipality"},{"name":"Lavezares","province":"Northern Samar","region":"region8","lat":12.5303,"lng":124.3303,"type":"municipality"},{"name":"Biliran","province":"Biliran","region":"region8","lat":11.5833,"lng":124.4667,"type":"municipality"},{"name":"Naval","province":"Biliran","region":"region8","lat":11.5597,"lng":124.4056,"type":"municipality"},{"name":"Zamboanga","province":"Zamboanga del Sur","region":"region9","lat":6.9214,"lng":122.079,"type":"city"},{"name":"Pagadian","province":"Zamboanga del Sur","region":"region9","lat":7.8258,"lng":123.4372,"type":"city"},{"name":"Dipolog","province":"Zamboanga del Norte","region":"region9","lat":8.5833,"lng":123.3417,"type":"city"},{"name":"Dapitan","province":"Zamboanga del Norte","region":"region9","lat":8.6542,"lng":123.4244,"type":"city"},{"name":"Isabela","province":"Basilan","region":"region9","lat":6.7058,"lng":121.9711,"type":"city"},{"name":"Ipil","province":"Zamboanga Sibugay","region":"region9","lat":7.7833,"lng":122.5833,"type":"municipality"},{"name":"Molave","province":"Zamboanga del Sur","region":"region9","lat":8.0917,"lng":123.4847,"type":"municipality"},{"name":"Buug","province":"Zamboanga Sibugay","region":"region9","lat":7.7,"lng":122.6667,"type":"municipality"},{"name":"Kabasalan","province":"Zamboanga Sibugay","region":"region9","lat":7.7989,"lng":122.7697,"type":"municipality"},{"name":"Alicia","province":"Zamboanga Sibugay","region":"region9","lat":7.8597,"lng":122.9703,"type":"municipality"},{"name":"Pitogo","province":"Zamboanga del Sur","region":"region9","lat":7.7483,"lng":123.1378,"type":"municipality"},{"name":"Cagayan de Oro","province":"Misamis Oriental","region":"region10","lat":8.4822,"lng":124.6472,"type":"city"},{"name":"Iligan","province":"Lanao del Norte","region":"region10","lat":8.228,"lng":124.2452,"type":"city"},{"name":"Ozamiz","province":"Misamis Occidental","region":"region10","lat":8.15,"lng":123.85,"type":"city"},{"name":"Oroquieta","province":"Misamis Occidental","region":"region10","lat":8.4853,"lng":123.8053,"type":"city"},{"name":"Gingoog","province":"Misamis Oriental","region":"region10","lat":8.8192,"lng":125.1078,"type":"city"},{"name":"El Salvador","province":"Misamis Oriental","region":"region10","lat":8.5586,"lng":124.5225,"type":"city"},{"name":"Tangub","province":"Misamis Occidental","region":"region10","lat":8.06,"lng":123.7517,"type":"city"},{"name":"Baungon","province":"Bukidnon","region":"region10","lat":8.2133,"lng":124.5969,"type":"municipality"},{"name":"Malaybalay","province":"Bukidnon","region":"region10","lat":8.1575,"lng":125.1275,"type":"city"},{"name":"Valencia","province":"Bukidnon","region":"region10","lat":7.9061,"lng":125.0939,"type":"city"},{"name":"Maramag","province":"Bukidnon","region":"region10","lat":7.7622,"lng":124.9875,"type":"municipality"},{"name":"Quezon","province":"Bukidnon","region":"region10","lat":7.7333,"lng":125.1,"type":"municipality"},{"name":"Talakag","province":"Bukidnon","region":"region10","lat":8.2333,"lng":124.6,"type":"municipality"},{"name":"Camiguin","province":"Camiguin","region":"region10","lat":9.1717,"lng":124.7269,"type":"municipality"},{"name":"Mambajao","province":"Camiguin","region":"region10","lat":9.2542,"lng":124.7189,"type":"municipality"},{"name":"Marawi","province":"Lanao del Norte","region":"region10","lat":7.9986,"lng":124.2928,"type":"city"},{"name":"Lanao del Norte","province":"Lanao del Norte","region":"region10","lat":7.8722,"lng":124.2289,"type":"municipality"},{"name":"Kapatagan","province":"Lanao del Norte","region":"region10","lat":7.8722,"lng":123.8844,"type":"municipality"},{"name":"Davao City","province":"Davao del Sur","region":"region11","lat":7.0644,"lng":125.5978,"type":"city"},{"name":"Digos","province":"Davao del Sur","region":"region11","lat":6.7497,"lng":125.3572,"type":"city"},{"name":"Tagum","province":"Davao del Norte","region":"region11","lat":7.4478,"lng":125.8077,"type":"city"},{"name":"Panabo","province":"Davao del Norte","region":"region11","lat":7.3086,"lng":125.685,"type":"city"},{"name":"Samal","province":"Davao del Norte","region":"region11","lat":7.0717,"lng":125.7233,"type":"city"},{"name":"Mati","province":"Davao Oriental","region":"region11","lat":6.95,"lng":126.2167,"type":"city"},{"name":"Malita","province":"Davao Occidental","region":"region11","lat":5.9942,"lng":125.6075,"type":"municipality"},{"name":"Santa Cruz","province":"Davao del Sur","region":"region11","lat":6.8744,"lng":125.4139,"type":"municipality"},{"name":"Bansalan","province":"Davao del Sur","region":"region11","lat":6.7833,"lng":125.2167,"type":"municipality"},{"name":"Hagonoy","province":"Davao del Sur","region":"region11","lat":6.6731,"lng":125.5344,"type":"municipality"},{"name":"Kiblawan","province":"Davao del Sur","region":"region11","lat":6.5894,"lng":125.2578,"type":"municipality"},{"name":"Magsaysay","province":"Davao del Sur","region":"region11","lat":6.7817,"lng":125.1619,"type":"municipality"},{"name":"Sulop","province":"Davao del Sur","region":"region11","lat":6.6708,"lng":125.3739,"type":"municipality"},{"name":"Compostela","province":"Davao de Oro","region":"region11","lat":7.6681,"lng":126.0847,"type":"municipality"},{"name":"Monkayo","province":"Davao de Oro","region":"region11","lat":7.8175,"lng":126.0503,"type":"municipality"},{"name":"Nabunturan","province":"Davao de Oro","region":"region11","lat":7.6061,"lng":125.9686,"type":"municipality"},{"name":"Trento","province":"Agusan del Sur","region":"region11","lat":8.05,"lng":126.0667,"type":"municipality"},{"name":"Tarragona","province":"Davao Oriental","region":"region11","lat":6.7039,"lng":126.2369,"type":"municipality"},{"name":"Baganga","province":"Davao Oriental","region":"region11","lat":7.5772,"lng":126.5397,"type":"municipality"},{"name":"Boston","province":"Davao Oriental","region":"region11","lat":7.8644,"lng":126.3656,"type":"municipality"},{"name":"Caraga","province":"Davao Oriental","region":"region11","lat":7.3344,"lng":126.5669,"type":"municipality"},{"name":"Cateel","province":"Davao Oriental","region":"region11","lat":7.7911,"lng":126.4489,"type":"municipality"},{"name":"Governor Generoso","province":"Davao Oriental","region":"region11","lat":6.6211,"lng":126.1714,"type":"municipality"},{"name":"Lupon","province":"Davao Oriental","region":"region11","lat":6.8994,"lng":126.0114,"type":"municipality"},{"name":"Manay","province":"Davao Oriental","region":"region11","lat":7.2233,"lng":126.5225,"type":"municipality"},{"name":"San Isidro","province":"Davao Oriental","region":"region11","lat":7.1019,"lng":126.2694,"type":"municipality"},{"name":"Cotabato","province":"Maguindanao","region":"region12","lat":7.2047,"lng":124.231,"type":"city"},{"name":"General Santos","province":"South Cotabato","region":"region12","lat":6.1164,"lng":125.1716,"type":"city"},{"name":"Koronadal","province":"South Cotabato","region":"region12","lat":6.5036,"lng":124.8444,"type":"city"},{"name":"Kidapawan","province":"Cotabato","region":"region12","lat":7.0083,"lng":125.0894,"type":"city"},{"name":"Tacurong","province":"Sultan Kudarat","region":"region12","lat":6.6933,"lng":124.6769,"type":"city"},{"name":"Isulan","province":"Sultan Kudarat","region":"region12","lat":6.6272,"lng":124.5972,"type":"municipality"},{"name":"Lebak","province":"Sultan Kudarat","region":"region12","lat":6.9333,"lng":124.05,"type":"municipality"},{"name":"Bagumbayan","province":"Sultan Kudarat","region":"region12","lat":6.5286,"lng":124.2594,"type":"municipality"},{"name":"Columbio","province":"Sultan Kudarat","region":"region12","lat":6.7167,"lng":124.8333,"type":"municipality"},{"name":"Esperanza","province":"Sultan Kudarat","region":"region12","lat":6.7667,"lng":124.5167,"type":"municipality"},{"name":"Kalamansig","province":"Sultan Kudarat","region":"region12","lat":6.5694,"lng":124.0481,"type":"municipality"},{"name":"Lambayong","province":"Sultan Kudarat","region":"region12","lat":6.6667,"lng":124.6333,"type":"municipality"},{"name":"Lutayan","province":"Sultan Kudarat","region":"region12","lat":6.58,"lng":124.88,"type":"municipality"},{"name":"Palimbang","province":"Sultan Kudarat","region":"region12","lat":6.3508,"lng":124.1786,"type":"municipality"},{"name":"President Quirino","province":"Sultan Kudarat","region":"region12","lat":6.6833,"lng":124.75,"type":"municipality"},{"name":"Senator Ninoy Aquino","province":"Sultan Kudarat","region":"region12","lat":6.5833,"lng":124.4833,"type":"municipality"},{"name":"T'boli","province":"South Cotabato","region":"region12","lat":6.1,"lng":124.5833,"type":"municipality"},{"name":"Surallah","province":"South Cotabato","region":"region12","lat":6.3667,"lng":124.7333,"type":"municipality"},{"name":"Lake Sebu","province":"South Cotabato","region":"region12","lat":6.2167,"lng":124.6667,"type":"municipality"},{"name":"Norala","province":"South Cotabato","region":"region12","lat":6.5333,"lng":124.6667,"type":"municipality"},{"name":"Polomolok","province":"South Cotabato","region":"region12","lat":6.2167,"lng":125.0667,"type":"municipality"},{"name":"Santo Ni\u00f1o","province":"South Cotabato","region":"region12","lat":6.6167,"lng":124.8333,"type":"municipality"},{"name":"Sto. Ni\u00f1o","province":"South Cotabato","region":"region12","lat":6.3833,"lng":124.7833,"type":"municipality"},{"name":"Tupi","province":"South Cotabato","region":"region12","lat":6.3333,"lng":125.0167,"type":"municipality"},{"name":"Butuan","province":"Agusan del Norte","region":"region13","lat":8.95,"lng":125.54,"type":"city"},{"name":"Surigao","province":"Surigao del Norte","region":"region13","lat":9.7597,"lng":125.4931,"type":"city"},{"name":"Bislig","province":"Surigao del Sur","region":"region13","lat":8.1958,"lng":126.3197,"type":"city"},{"name":"Tandag","province":"Surigao del Sur","region":"region13","lat":9.0778,"lng":126.1983,"type":"city"},{"name":"Bayugan","province":"Agusan del Sur","region":"region13","lat":8.7133,"lng":125.7486,"type":"city"},{"name":"Siargao","province":"Surigao del Norte","region":"region13","lat":9.8483,"lng":126.0458,"type":"municipality"},{"name":"General Luna","province":"Surigao del Norte","region":"region13","lat":9.7992,"lng":126.1583,"type":"municipality"},{"name":"Dapa","province":"Surigao del Norte","region":"region13","lat":9.7564,"lng":126.0544,"type":"municipality"},{"name":"Del Carmen","province":"Surigao del Norte","region":"region13","lat":9.8617,"lng":125.9764,"type":"municipality"},{"name":"Pilar","province":"Surigao del Norte","region":"region13","lat":9.8167,"lng":125.9667,"type":"municipality"},{"name":"San Benito","province":"Surigao del Norte","region":"region13","lat":9.8833,"lng":125.95,"type":"municipality"},{"name":"San Isidro","province":"Surigao del Norte","region":"region13","lat":9.8833,"lng":126.0167,"type":"municipality"},{"name":"Socorro","province":"Surigao del Norte","region":"region13","lat":9.6167,"lng":125.9667,"type":"municipality"},{"name":"Burgos","province":"Surigao del Norte","region":"region13","lat":10.0167,"lng":125.5333,"type":"municipality"},{"name":"Gigaquit","province":"Surigao del Norte","region":"region13","lat":9.5833,"lng":125.6667,"type":"municipality"},{"name":"Tubod","province":"Surigao del Norte","region":"region13","lat":9.75,"lng":125.3833,"type":"municipality"},{"name":"Tagana-an","province":"Surigao del Norte","region":"region13","lat":9.6667,"lng":125.55,"type":"municipality"},{"name":"Agusan del Sur","province":"Agusan del Sur","region":"region13","lat":8.1472,"lng":126.0117,"type":"municipality"},{"name":"Prosperidad","province":"Agusan del Sur","region":"region13","lat":8.5997,"lng":125.9139,"type":"municipality"},{"name":"San Francisco","province":"Agusan del Sur","region":"region13","lat":8.5136,"lng":125.9714,"type":"municipality"},{"name":"Veruela","province":"Agusan del Sur","region":"region13","lat":8.2833,"lng":126.05,"type":"municipality"},{"name":"Lianga","province":"Surigao del Sur","region":"region13","lat":8.6333,"lng":126.0833,"type":"municipality"},{"name":"Marihatag","province":"Surigao del Sur","region":"region13","lat":8.7833,"lng":126.2833,"type":"municipality"},{"name":"San Agustin","province":"Surigao del Sur","region":"region13","lat":8.8,"lng":126.1833,"type":"municipality"},{"name":"Lingig","province":"Surigao del Sur","region":"region13","lat":8.0333,"lng":126.45,"type":"municipality"},{"name":"Marawi","province":"Lanao del Sur","region":"barmm","lat":7.9986,"lng":124.2928,"type":"city"},{"name":"Lamitan","province":"Basilan","region":"barmm","lat":6.6544,"lng":122.1289,"type":"city"},{"name":"Jolo","province":"Sulu","region":"barmm","lat":6.0522,"lng":121.0003,"type":"municipality"},{"name":"Bongao","province":"Tawi-Tawi","region":"barmm","lat":5.0297,"lng":119.7731,"type":"municipality"},{"name":"Parang","province":"Maguindanao","region":"barmm","lat":7.3694,"lng":124.2694,"type":"municipality"},{"name":"Sultan Kudarat","province":"Maguindanao","region":"barmm","lat":7.25,"lng":124.2167,"type":"municipality"},{"name":"Datu Odin Sinsuat","province":"Maguindanao","region":"barmm","lat":7.25,"lng":124.0,"type":"municipality"},{"name":"Buldon","province":"Maguindanao","region":"barmm","lat":7.3833,"lng":124.0333,"type":"municipality"},{"name":"Datu Piang","province":"Maguindanao","region":"barmm","lat":7.0167,"lng":124.4167,"type":"municipality"},{"name":"Talayan","province":"Maguindanao","region":"barmm","lat":6.95,"lng":124.2667,"type":"municipality"},{"name":"General Salipada K. Pendatun","province":"Maguindanao","region":"barmm","lat":7.1,"lng":124.35,"type":"municipality"},{"name":"Mamasapano","province":"Maguindanao","region":"barmm","lat":7.0167,"lng":124.3833,"type":"municipality"},{"name":"Shariff Aguak","province":"Maguindanao","region":"barmm","lat":6.8667,"lng":124.4667,"type":"municipality"},{"name":"Talitay","province":"Maguindanao","region":"barmm","lat":6.7333,"lng":124.55,"type":"municipality"},{"name":"Paglat","province":"Maguindanao","region":"barmm","lat":6.95,"lng":124.5167,"type":"municipality"},{"name":"Baguio","province":"Benguet","region":"car","lat":16.4023,"lng":120.596,"type":"city"},{"name":"La Trinidad","province":"Benguet","region":"car","lat":16.4617,"lng":120.5878,"type":"municipality"},{"name":"Itogon","province":"Benguet","region":"car","lat":16.3625,"lng":120.6572,"type":"municipality"},{"name":"Mankayan","province":"Benguet","region":"car","lat":16.8622,"lng":120.7875,"type":"municipality"},{"name":"Sablan","province":"Benguet","region":"car","lat":16.5028,"lng":120.5219,"type":"municipality"},{"name":"Tuba","province":"Benguet","region":"car","lat":16.3822,"lng":120.4978,"type":"municipality"},{"name":"Tublay","province":"Benguet","region":"car","lat":16.4894,"lng":120.6281,"type":"municipality"},{"name":"Bangued","province":"Abra","region":"car","lat":17.5951,"lng":120.6199,"type":"municipality"},{"name":"Lagayan","province":"Abra","region":"car","lat":17.6694,"lng":120.7261,"type":"municipality"},{"name":"Tayum","province":"Abra","region":"car","lat":17.6208,"lng":120.5978,"type":"municipality"},{"name":"Bucay","province":"Abra","region":"car","lat":17.5333,"lng":120.6167,"type":"municipality"},{"name":"Tabuk","province":"Kalinga","region":"car","lat":17.4119,"lng":121.4436,"type":"city"},{"name":"Bontoc","province":"Mountain Province","region":"car","lat":17.0883,"lng":120.9772,"type":"municipality"},{"name":"Sagada","province":"Mountain Province","region":"car","lat":17.0869,"lng":120.9011,"type":"municipality"},{"name":"Lagawe","province":"Ifugao","region":"car","lat":16.8306,"lng":121.1131,"type":"municipality"},{"name":"Banaue","province":"Ifugao","region":"car","lat":16.9178,"lng":121.0592,"type":"municipality"},{"name":"Kabugao","province":"Apayao","region":"car","lat":18.0225,"lng":121.1894,"type":"municipality"},{"name":"Aguilar","province":"Pangasinan","region":"region1","lat":15.89,"lng":120.2317,"type":"municipality"},{"name":"Alcala","province":"Pangasinan","region":"region1","lat":15.8553,"lng":120.5422,"type":"municipality"},{"name":"Anda","province":"Pangasinan","region":"region1","lat":16.2811,"lng":119.9533,"type":"municipality"},{"name":"Asingan","province":"Pangasinan","region":"region1","lat":16.005,"lng":120.6633,"type":"municipality"},{"name":"Balungao","province":"Pangasinan","region":"region1","lat":15.8928,"lng":120.6883,"type":"municipality"},{"name":"Bani","province":"Pangasinan","region":"region1","lat":16.1933,"lng":119.8719,"type":"municipality"},{"name":"Basista","province":"Pangasinan","region":"region1","lat":15.8342,"lng":120.3461,"type":"municipality"},{"name":"Bautista","province":"Pangasinan","region":"region1","lat":15.8253,"lng":120.5253,"type":"municipality"},{"name":"Bayambang","province":"Pangasinan","region":"region1","lat":15.8156,"lng":120.4497,"type":"municipality"},{"name":"Binalonan","province":"Pangasinan","region":"region1","lat":16.0533,"lng":120.5917,"type":"municipality"},{"name":"Bolinao","province":"Pangasinan","region":"region1","lat":16.3783,"lng":119.8897,"type":"municipality"},{"name":"Bugallon","province":"Pangasinan","region":"region1","lat":15.8156,"lng":120.2183,"type":"municipality"},{"name":"Burgos","province":"Pangasinan","region":"region1","lat":16.0517,"lng":120.0556,"type":"municipality"},{"name":"Dasol","province":"Pangasinan","region":"region1","lat":16.0017,"lng":119.88,"type":"municipality"},{"name":"Infanta","province":"Pangasinan","region":"region1","lat":15.7575,"lng":119.9119,"type":"municipality"},{"name":"Labrador","province":"Pangasinan","region":"region1","lat":16.0211,"lng":120.1511,"type":"municipality"},{"name":"Laoac","province":"Pangasinan","region":"region1","lat":15.9811,"lng":120.5353,"type":"municipality"},{"name":"Mabini","province":"Pangasinan","region":"region1","lat":15.7067,"lng":120.7633,"type":"municipality"},{"name":"Malasiqui","province":"Pangasinan","region":"region1","lat":15.9147,"lng":120.4144,"type":"municipality"},{"name":"Manaoag","province":"Pangasinan","region":"region1","lat":16.0453,"lng":120.4839,"type":"municipality"},{"name":"Mapandan","province":"Pangasinan","region":"region1","lat":16.0303,"lng":120.4631,"type":"municipality"},{"name":"Natividad","province":"Pangasinan","region":"region1","lat":15.8992,"lng":120.6864,"type":"municipality"},{"name":"Pozorrubio","province":"Pangasinan","region":"region1","lat":16.1156,"lng":120.5447,"type":"municipality"},{"name":"Rosales","province":"Pangasinan","region":"region1","lat":15.8914,"lng":120.6258,"type":"municipality"},{"name":"San Fabian","province":"Pangasinan","region":"region1","lat":16.1181,"lng":120.4364,"type":"municipality"},{"name":"San Jacinto","province":"Pangasinan","region":"region1","lat":15.8414,"lng":120.4297,"type":"municipality"},{"name":"San Manuel","province":"Pangasinan","region":"region1","lat":15.9428,"lng":120.6639,"type":"municipality"},{"name":"San Nicolas","province":"Pangasinan","region":"region1","lat":15.9783,"lng":120.5833,"type":"municipality"},{"name":"San Quintin","province":"Pangasinan","region":"region1","lat":15.9867,"lng":120.7411,"type":"municipality"},{"name":"Santa Barbara","province":"Pangasinan","region":"region1","lat":15.9853,"lng":120.3922,"type":"municipality"},{"name":"Santa Maria","province":"Pangasinan","region":"region1","lat":15.9561,"lng":119.9681,"type":"municipality"},{"name":"Santo Tomas","province":"Pangasinan","region":"region1","lat":16.1117,"lng":120.4769,"type":"municipality"},{"name":"Sison","province":"Pangasinan","region":"region1","lat":16.1706,"lng":120.5278,"type":"municipality"},{"name":"Sual","province":"Pangasinan","region":"region1","lat":16.0744,"lng":120.0944,"type":"municipality"},{"name":"Tayug","province":"Pangasinan","region":"region1","lat":15.9428,"lng":120.7411,"type":"municipality"},{"name":"Umingan","province":"Pangasinan","region":"region1","lat":15.9128,"lng":120.7644,"type":"municipality"},{"name":"Urbiztondo","province":"Pangasinan","region":"region1","lat":15.8264,"lng":120.3222,"type":"municipality"},{"name":"Villasis","province":"Pangasinan","region":"region1","lat":15.9003,"lng":120.5886,"type":"municipality"},{"name":"Alfonso","province":"Cavite","region":"region4a","lat":14.1269,"lng":120.9339,"type":"municipality"},{"name":"Amadeo","province":"Cavite","region":"region4a","lat":14.1722,"lng":120.9222,"type":"municipality"},{"name":"Carmona","province":"Cavite","region":"region4a","lat":14.3167,"lng":121.05,"type":"municipality"},{"name":"Kawit","province":"Cavite","region":"region4a","lat":14.4353,"lng":120.9028,"type":"municipality"},{"name":"Magallanes","province":"Cavite","region":"region4a","lat":14.1778,"lng":120.7111,"type":"municipality"},{"name":"Maragondon","province":"Cavite","region":"region4a","lat":14.2636,"lng":120.7414,"type":"municipality"},{"name":"Mendez","province":"Cavite","region":"region4a","lat":14.1283,"lng":120.9044,"type":"municipality"},{"name":"Naic","province":"Cavite","region":"region4a","lat":14.3194,"lng":120.7644,"type":"municipality"},{"name":"Noveleta","province":"Cavite","region":"region4a","lat":14.4278,"lng":120.8756,"type":"municipality"},{"name":"Rosario","province":"Cavite","region":"region4a","lat":14.4164,"lng":120.8508,"type":"municipality"},{"name":"Silang","province":"Cavite","region":"region4a","lat":14.2303,"lng":120.9769,"type":"municipality"},{"name":"Tanza","province":"Cavite","region":"region4a","lat":14.3947,"lng":120.8511,"type":"municipality"},{"name":"Ternate","province":"Cavite","region":"region4a","lat":14.2869,"lng":120.7194,"type":"municipality"},{"name":"Alaminos","province":"Laguna","region":"region4a","lat":14.0631,"lng":121.2447,"type":"municipality"},{"name":"Bay","province":"Laguna","region":"region4a","lat":14.1839,"lng":121.2944,"type":"municipality"},{"name":"Calauan","province":"Laguna","region":"region4a","lat":14.1506,"lng":121.3167,"type":"municipality"},{"name":"Cavinti","province":"Laguna","region":"region4a","lat":14.2419,"lng":121.5139,"type":"municipality"},{"name":"Famy","province":"Laguna","region":"region4a","lat":14.4375,"lng":121.4697,"type":"municipality"},{"name":"Kalayaan","province":"Laguna","region":"region4a","lat":14.3122,"lng":121.4853,"type":"municipality"},{"name":"Liliw","province":"Laguna","region":"region4a","lat":14.1261,"lng":121.4417,"type":"municipality"},{"name":"Los Ba\u00f1os","province":"Laguna","region":"region4a","lat":14.1703,"lng":121.2419,"type":"municipality"},{"name":"Luisiana","province":"Laguna","region":"region4a","lat":14.1653,"lng":121.5028,"type":"municipality"},{"name":"Lumban","province":"Laguna","region":"region4a","lat":14.2939,"lng":121.4681,"type":"municipality"},{"name":"Mabitac","province":"Laguna","region":"region4a","lat":14.43,"lng":121.4281,"type":"municipality"},{"name":"Magdalena","province":"Laguna","region":"region4a","lat":14.1972,"lng":121.4314,"type":"municipality"},{"name":"Majayjay","province":"Laguna","region":"region4a","lat":14.1428,"lng":121.4714,"type":"municipality"},{"name":"Nagcarlan","province":"Laguna","region":"region4a","lat":14.1322,"lng":121.4097,"type":"municipality"},{"name":"Paete","province":"Laguna","region":"region4a","lat":14.3653,"lng":121.4808,"type":"municipality"},{"name":"Pagsanjan","province":"Laguna","region":"region4a","lat":14.2736,"lng":121.4578,"type":"municipality"},{"name":"Pakil","province":"Laguna","region":"region4a","lat":14.3736,"lng":121.4658,"type":"municipality"},{"name":"Pangil","province":"Laguna","region":"region4a","lat":14.4017,"lng":121.4619,"type":"municipality"},{"name":"Pila","province":"Laguna","region":"region4a","lat":14.2292,"lng":121.3672,"type":"municipality"},{"name":"Rizal","province":"Laguna","region":"region4a","lat":14.1078,"lng":121.3989,"type":"municipality"},{"name":"San Pedro","province":"Laguna","region":"region4a","lat":14.3583,"lng":121.0472,"type":"city"},{"name":"Santa Cruz","province":"Laguna","region":"region4a","lat":14.2792,"lng":121.4175,"type":"city"},{"name":"Santa Maria","province":"Laguna","region":"region4a","lat":14.4833,"lng":121.42,"type":"municipality"},{"name":"Siniloan","province":"Laguna","region":"region4a","lat":14.4297,"lng":121.4458,"type":"municipality"},{"name":"Victoria","province":"Laguna","region":"region4a","lat":14.2242,"lng":121.3308,"type":"municipality"},{"name":"Agoncillo","province":"Batangas","region":"region4a","lat":13.9331,"lng":120.9275,"type":"municipality"},{"name":"Alitagtag","province":"Batangas","region":"region4a","lat":13.8856,"lng":121.0806,"type":"municipality"},{"name":"Balayan","province":"Batangas","region":"region4a","lat":13.9419,"lng":120.7278,"type":"municipality"},{"name":"Balete","province":"Batangas","region":"region4a","lat":13.8814,"lng":121.1111,"type":"municipality"},{"name":"Bauan","province":"Batangas","region":"region4a","lat":13.7917,"lng":121.0108,"type":"municipality"},{"name":"Calaca","province":"Batangas","region":"region4a","lat":13.9328,"lng":120.8131,"type":"municipality"},{"name":"Calatagan","province":"Batangas","region":"region4a","lat":13.8339,"lng":120.6311,"type":"municipality"},{"name":"Cuenca","province":"Batangas","region":"region4a","lat":13.9014,"lng":121.0467,"type":"municipality"},{"name":"Ibaan","province":"Batangas","region":"region4a","lat":13.8231,"lng":121.1317,"type":"municipality"},{"name":"Laurel","province":"Batangas","region":"region4a","lat":14.065,"lng":121.0194,"type":"municipality"},{"name":"Lemery","province":"Batangas","region":"region4a","lat":13.8753,"lng":120.9122,"type":"municipality"},{"name":"Lian","province":"Batangas","region":"region4a","lat":14.035,"lng":120.6622,"type":"municipality"},{"name":"Lobo","province":"Batangas","region":"region4a","lat":13.6394,"lng":121.2253,"type":"municipality"},{"name":"Mabini","province":"Batangas","region":"region4a","lat":13.7361,"lng":120.9178,"type":"municipality"},{"name":"Malvar","province":"Batangas","region":"region4a","lat":14.0469,"lng":121.1561,"type":"municipality"},{"name":"Mataasnakahoy","province":"Batangas","region":"region4a","lat":13.9231,"lng":121.1064,"type":"municipality"},{"name":"Nasugbu","province":"Batangas","region":"region4a","lat":14.0678,"lng":120.6267,"type":"municipality"},{"name":"Padre Garcia","province":"Batangas","region":"region4a","lat":13.8817,"lng":121.2036,"type":"municipality"},{"name":"Perez","province":"Batangas","region":"region4a","lat":13.8183,"lng":121.2547,"type":"municipality"},{"name":"Rosario","province":"Batangas","region":"region4a","lat":13.8375,"lng":121.1906,"type":"municipality"},{"name":"San Jose","province":"Batangas","region":"region4a","lat":14.0444,"lng":121.0808,"type":"municipality"},{"name":"San Juan","province":"Batangas","region":"region4a","lat":13.8289,"lng":121.3958,"type":"municipality"},{"name":"San Luis","province":"Batangas","region":"region4a","lat":13.7989,"lng":121.0906,"type":"municipality"},{"name":"San Nicolas","province":"Batangas","region":"region4a","lat":13.7781,"lng":121.1683,"type":"municipality"},{"name":"San Pascual","province":"Batangas","region":"region4a","lat":13.8286,"lng":121.0228,"type":"municipality"},{"name":"Santa Teresita","province":"Batangas","region":"region4a","lat":13.7333,"lng":121.0667,"type":"municipality"},{"name":"Santo Tomas","province":"Batangas","region":"region4a","lat":14.1089,"lng":121.1408,"type":"city"},{"name":"Taysan","province":"Batangas","region":"region4a","lat":13.8694,"lng":121.2578,"type":"municipality"},{"name":"Tingloy","province":"Batangas","region":"region4a","lat":13.6594,"lng":120.8572,"type":"municipality"},{"name":"Tuy","province":"Batangas","region":"region4a","lat":14.0186,"lng":120.7358,"type":"municipality"},{"name":"Alcantara","province":"Cebu","region":"region7","lat":10.05,"lng":123.4833,"type":"municipality"},{"name":"Alcoy","province":"Cebu","region":"region7","lat":9.6833,"lng":123.5,"type":"municipality"},{"name":"Alegria","province":"Cebu","region":"region7","lat":9.7833,"lng":123.3833,"type":"municipality"},{"name":"Aloguinsan","province":"Cebu","region":"region7","lat":10.2333,"lng":123.5333,"type":"municipality"},{"name":"Argao","province":"Cebu","region":"region7","lat":9.8833,"lng":123.6,"type":"municipality"},{"name":"Asturias","province":"Cebu","region":"region7","lat":10.5333,"lng":123.7,"type":"municipality"},{"name":"Badian","province":"Cebu","region":"region7","lat":9.8667,"lng":123.3833,"type":"municipality"},{"name":"Balamban","province":"Cebu","region":"region7","lat":10.5,"lng":123.7167,"type":"municipality"},{"name":"Bantayan","province":"Cebu","region":"region7","lat":11.1667,"lng":123.7167,"type":"municipality"},{"name":"Barili","province":"Cebu","region":"region7","lat":10.1167,"lng":123.5333,"type":"municipality"},{"name":"Bogo","province":"Cebu","region":"region7","lat":11.0508,"lng":124.0008,"type":"city"},{"name":"Boljoon","province":"Cebu","region":"region7","lat":9.6333,"lng":123.4333,"type":"municipality"},{"name":"Borbon","province":"Cebu","region":"region7","lat":10.8333,"lng":124.0167,"type":"municipality"},{"name":"Carmen","province":"Cebu","region":"region7","lat":10.5833,"lng":124.0167,"type":"municipality"},{"name":"Catmon","province":"Cebu","region":"region7","lat":10.7167,"lng":124.0167,"type":"municipality"},{"name":"Compostela","province":"Cebu","region":"region7","lat":10.45,"lng":124.0,"type":"municipality"},{"name":"Consolacion","province":"Cebu","region":"region7","lat":10.3833,"lng":123.95,"type":"municipality"},{"name":"Cordova","province":"Cebu","region":"region7","lat":10.25,"lng":123.9667,"type":"municipality"},{"name":"Dalaguete","province":"Cebu","region":"region7","lat":9.7667,"lng":123.5333,"type":"municipality"},{"name":"Dumanjug","province":"Cebu","region":"region7","lat":10.0667,"lng":123.45,"type":"municipality"},{"name":"Ginatilan","province":"Cebu","region":"region7","lat":9.6167,"lng":123.35,"type":"municipality"},{"name":"Liloan","province":"Cebu","region":"region7","lat":10.4,"lng":123.9833,"type":"municipality"},{"name":"Madridejos","province":"Cebu","region":"region7","lat":11.25,"lng":123.7333,"type":"municipality"},{"name":"Malabuyoc","province":"Cebu","region":"region7","lat":9.6167,"lng":123.4,"type":"municipality"},{"name":"Medellin","province":"Cebu","region":"region7","lat":11.1167,"lng":123.9667,"type":"municipality"},{"name":"Minglanilla","province":"Cebu","region":"region7","lat":10.2333,"lng":123.7833,"type":"municipality"},{"name":"Pilar","province":"Cebu","region":"region7","lat":10.5667,"lng":124.0167,"type":"municipality"},{"name":"Pinamungajan","province":"Cebu","region":"region7","lat":10.2667,"lng":123.5833,"type":"municipality"},{"name":"Poro","province":"Cebu","region":"region7","lat":10.6333,"lng":124.0333,"type":"municipality"},{"name":"Ronda","province":"Cebu","region":"region7","lat":9.9833,"lng":123.4167,"type":"municipality"},{"name":"Samboan","province":"Cebu","region":"region7","lat":9.5333,"lng":123.35,"type":"municipality"},{"name":"San Fernando","province":"Cebu","region":"region7","lat":10.1667,"lng":123.7,"type":"municipality"},{"name":"San Francisco","province":"Cebu","region":"region7","lat":10.65,"lng":124.0333,"type":"municipality"},{"name":"San Remigio","province":"Cebu","region":"region7","lat":11.0667,"lng":123.95,"type":"municipality"},{"name":"Santa Fe","province":"Cebu","region":"region7","lat":11.15,"lng":123.7833,"type":"municipality"},{"name":"Santander","province":"Cebu","region":"region7","lat":9.5167,"lng":123.3667,"type":"municipality"},{"name":"Sibonga","province":"Cebu","region":"region7","lat":10.0167,"lng":123.5667,"type":"municipality"},{"name":"Sogod","province":"Cebu","region":"region7","lat":10.75,"lng":124.0,"type":"municipality"},{"name":"Tabogon","province":"Cebu","region":"region7","lat":10.9333,"lng":123.9833,"type":"municipality"},{"name":"Tabuelan","province":"Cebu","region":"region7","lat":10.8,"lng":123.85,"type":"municipality"},{"name":"Tuburan","province":"Cebu","region":"region7","lat":10.7333,"lng":123.8333,"type":"municipality"},{"name":"Tudela","province":"Cebu","region":"region7","lat":10.6167,"lng":124.0,"type":"municipality"},{"name":"Astorga","province":"Davao del Sur","region":"region11","lat":7.0,"lng":125.4833,"type":"municipality"},{"name":"Carmen","province":"Davao del Norte","region":"region11","lat":7.2,"lng":125.7,"type":"municipality"},{"name":"Kapalong","province":"Davao del Norte","region":"region11","lat":7.5833,"lng":125.6167,"type":"municipality"},{"name":"New Corella","province":"Davao del Norte","region":"region11","lat":7.5833,"lng":125.8167,"type":"municipality"},{"name":"San Isidro","province":"Davao del Norte","region":"region11","lat":7.6667,"lng":125.7833,"type":"municipality"},{"name":"Santo Tomas","province":"Davao del Norte","region":"region11","lat":7.5333,"lng":125.6333,"type":"municipality"},{"name":"Talaingod","province":"Davao del Norte","region":"region11","lat":7.6667,"lng":125.5,"type":"municipality"},{"name":"Diplahan","province":"Zamboanga Sibugay","region":"region9","lat":7.8167,"lng":122.6333,"type":"municipality"},{"name":"Imelda","province":"Zamboanga Sibugay","region":"region9","lat":7.7167,"lng":122.5667,"type":"municipality"},{"name":"Mabuhay","province":"Zamboanga Sibugay","region":"region9","lat":7.6833,"lng":122.7667,"type":"municipality"},{"name":"Naga","province":"Zamboanga Sibugay","region":"region9","lat":7.9,"lng":122.6667,"type":"municipality"},{"name":"Olutanga","province":"Zamboanga Sibugay","region":"region9","lat":7.35,"lng":122.8667,"type":"municipality"},{"name":"Payao","province":"Zamboanga Sibugay","region":"region9","lat":7.5833,"lng":122.7833,"type":"municipality"},{"name":"Ramon Magsaysay","province":"Zamboanga Sibugay","region":"region9","lat":7.6667,"lng":122.7,"type":"municipality"},{"name":"Roseller T. Lim","province":"Zamboanga Sibugay","region":"region9","lat":7.8333,"lng":122.4167,"type":"municipality"},{"name":"Siay","province":"Zamboanga Sibugay","region":"region9","lat":7.95,"lng":122.9167,"type":"municipality"},{"name":"Talusan","province":"Zamboanga Sibugay","region":"region9","lat":7.7667,"lng":122.9,"type":"municipality"},{"name":"Titay","province":"Zamboanga Sibugay","region":"region9","lat":7.85,"lng":122.5833,"type":"municipality"},{"name":"Tungawan","province":"Zamboanga Sibugay","region":"region9","lat":7.6833,"lng":122.4667,"type":"municipality"}];
+
+// ── FLOOD CITY LOOKUP (by name) ──
+const floodCityMap = {};
+cities.forEach(c => { floodCityMap[c.name.toLowerCase()] = c; });
+
+// ── MARKER ICON (for flood sensor cities) ──
+function makeIcon(status, emoji) {
+  const colors = { critical:'#ef4444', warning:'#f97316', normal:'#22c55e' };
+  const pulse = status === 'critical' ? 'animation:pinPulse 1.5s infinite;' : '';
+  return L.divIcon({
+    className:'',
+    html:`<div style="width:36px;height:36px;border-radius:50%;background:${colors[status]};
+          display:flex;align-items:center;justify-content:center;font-size:16px;
+          border:3px solid white;box-shadow:0 3px 10px rgba(0,0,0,0.2);${pulse}">${emoji}</div>`,
+    iconSize:[36,36], iconAnchor:[18,18], popupAnchor:[0,-22]
+  });
+}
+
+// ── SMALL DOT ICON (for all other PH cities) ──
+function makeCityDotIcon(size=10) {
+  return L.divIcon({
+    className:'city-marker',
+    html:`<div class="city-dot weather" style="width:${size}px;height:${size}px;"></div>`,
+    iconSize:[size,size], iconAnchor:[size/2,size/2], popupAnchor:[0,-size]
+  });
+}
+
+// ── BUILD CITY POPUP (weather only) ──
+function buildCityPopup(phCity, weather) {
+  const hasWeather = weather && weather.main;
+  const rain = safeRain(weather);
+  const ri = rainInfo(rain);
+  const timeStr = new Date().toLocaleTimeString('en-PH', {hour:'2-digit',minute:'2-digit'});
+  return `
+    <div class="popup-inner">
+      <div class="popup-header">
+        <div>
+          <div class="popup-title">${phCity.name}</div>
+          <div class="popup-region">📍 ${phCity.province}</div>
+        </div>
+        <div class="popup-badge loading">🌦️ WEATHER</div>
+      </div>
+      <div class="popup-divider"></div>
+      ${hasWeather ? `
+        <div class="rain-badge ${ri.cls}">${ri.emoji} ${ri.label}${rain>0?` (${rain.toFixed(1)}mm/hr)`:''}</div>
+        <div class="weather-grid">
+          <div class="weather-cell"><div class="wval">${safeTemp(weather)}</div><div class="wlbl">${t('temperature')}</div></div>
+          <div class="weather-cell"><div class="wval">${safeHumidity(weather)}</div><div class="wlbl">${t('humidity')}</div></div>
+          <div class="weather-cell"><div class="wval">${safeWind(weather)}</div><div class="wlbl">${t('windSpeed')}</div></div>
+          <div class="weather-cell"><div class="wval" style="font-size:11px;text-transform:capitalize;">${safeDesc(weather)}</div><div class="wlbl">${t('condition')}</div></div>
+        </div>
+      ` : `<div style="padding:10px;text-align:center;font-size:12px;color:var(--muted);">⏳ ${t('loading')}</div>`}
+    </div>
+    <div class="popup-footer"><span>${t('liveData')} · ${timeStr}</span><strong>OpenWeatherMap</strong></div>`;
+}
+
+// ── WEATHER ICON ──
+function makeWeatherIcon(rain, temp) {
+  const r = rainInfo(rain);
+  const bg = { heavy:'#ef4444', moderate:'#f97316', light:'#3b82f6', none:'#22c55e' }[r.cls];
+  return L.divIcon({
+    className:'',
+    html:`<div style="background:${bg};color:white;border-radius:20px;padding:4px 8px;
+          font-size:11px;font-weight:700;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,0.15);
+          border:2px solid white;font-family:Lexend,sans-serif;">${r.emoji} ${Math.round(temp||0)}°</div>`,
+    iconSize:[70,26], iconAnchor:[35,13], popupAnchor:[0,-18]
+  });
+}
+
+// ── SAFE DATA HELPERS ──
+function safeTemp(w)     { return (w && w.main && w.main.temp     != null) ? Math.round(w.main.temp) + '°C'               : '—'; }
+function safeHumidity(w) { return (w && w.main && w.main.humidity != null) ? w.main.humidity + '%'                        : '—'; }
+function safeWind(w)     { return (w && w.wind && w.wind.speed    != null) ? (w.wind.speed * 3.6).toFixed(1) + ' kph'     : '—'; }
+function safeDesc(w)     { return (w && w.weather && w.weather[0]) ? w.weather[0].description                             : '—'; }
+function safeRain(w)     { return (w && w.rain  && w.rain['1h']   != null) ? w.rain['1h']                                 : 0;   }
+
+// ── BUILD POPUP HTML ──
+function buildFloodPopup(city, weather) {
+  const pct  = Math.round((city.riverLevel / city.riverMax) * 100);
+  const rain = safeRain(weather);
+  const ri   = rainInfo(rain);
+  const timeStr = new Date().toLocaleTimeString('en-PH', {hour:'2-digit', minute:'2-digit'});
+
+  const hasWeather = weather && weather.main;
+
+  return `
+    <div class="popup-inner">
+      <div class="popup-header">
+        <div>
+          <div class="popup-title">${city.name}</div>
+          <div class="popup-region">📍 ${city.river}</div>
+        </div>
+        <div class="popup-badge ${city.floodStatus}">${floodLabel(city.floodStatus)}</div>
+      </div>
+
+      <div class="popup-row"><span>${t('riverLevel')}</span><span>${city.riverLevel}m / ${city.riverMax}m</span></div>
+      <div style="height:6px;background:#f1f5f9;border-radius:3px;margin:6px 0;overflow:hidden;">
+        <div style="height:100%;width:${pct}%;background:${floodColor(city.floodStatus)};border-radius:3px;"></div>
+      </div>
+
+      <div class="popup-divider"></div>
+
+      ${hasWeather ? `
+      <div style="font-size:11px;font-weight:700;color:var(--muted);margin-bottom:7px;text-transform:uppercase;letter-spacing:0.5px;">🌤️ Live Weather</div>
+      <div class="rain-badge ${ri.cls}">${ri.emoji} ${ri.label}${rain > 0 ? ` (${rain.toFixed(1)}mm/hr)` : ''}</div>
+      <div class="weather-grid">
+        <div class="weather-cell"><div class="wval">${safeTemp(weather)}</div><div class="wlbl">${t('temperature')}</div></div>
+        <div class="weather-cell"><div class="wval">${safeHumidity(weather)}</div><div class="wlbl">${t('humidity')}</div></div>
+        <div class="weather-cell"><div class="wval">${safeWind(weather)}</div><div class="wlbl">${t('windSpeed')}</div></div>
+        <div class="weather-cell"><div class="wval" style="font-size:11px;text-transform:capitalize;">${safeDesc(weather)}</div><div class="wlbl">${t('condition')}</div></div>
+      </div>
+      ` : `
+      <div style="background:#f1f5f9;border-radius:10px;padding:12px;text-align:center;">
+        <div style="font-size:13px;color:var(--muted);margin-bottom:4px;">⏳ Weather data loading...</div>
+        <div style="font-size:11px;color:var(--muted);">API key may still be activating (10–30 min after signup). Try again shortly.</div>
+      </div>
+      `}
+    </div>
+    <div class="popup-footer">
+      <span>Live data · ${timeStr}</span>
+      <strong>${hasWeather ? 'OpenWeatherMap ✅' : 'Pending activation'}</strong>
+    </div>
+  `;
+}
+
+// ── RENDER MARKERS ──
+let clusterGroup = null;
+
+async function renderMarkers(filter = 'all') {
+  // Remove old cluster group
+  if (clusterGroup) { map.removeLayer(clusterGroup); clusterGroup = null; }
+  markerLayer.clearLayers();
+  allMarkers = [];
+
+  // Create cluster group
+  clusterGroup = L.markerClusterGroup({
+    maxClusterRadius: 50,
+    spiderfyOnMaxZoom: true,
+    showCoverageOnHover: false,
+    zoomToBoundsOnClick: true,
+    disableClusteringAtZoom: 11,
+    iconCreateFunction: function(cluster) {
+      const count = cluster.getChildCount();
+      let cls = count < 10 ? 'small' : count < 50 ? 'medium' : 'large';
+      return L.divIcon({
+        html: `<div><span>${count}</span></div>`,
+        className: `marker-cluster marker-cluster-${cls}`,
+        iconSize: L.point(40, 40)
+      });
+    }
+  });
+
+  let critical = 0, warning = 0, normal = 0;
+
+  // ── Layer 1: Flood sensor cities (big icons, high priority) ──
+  const filtered = cities.filter(c => filter === 'all' || c.region === filter);
+  for (const city of filtered) {
+    if (city.floodStatus === 'critical') critical++;
+    else if (city.floodStatus === 'warning') warning++;
+    else normal++;
+
+    const icon = makeIcon(city.floodStatus, floodEmoji(city.floodStatus));
+    const marker = L.marker([city.lat, city.lng], { icon, zIndexOffset: 1000 });
+    marker.bindPopup(`<div class="loading-spinner"><div class="spinner"></div>Loading data...</div>`, { minWidth: 220 });
+    marker.on('click', async () => {
+      const weather = await fetchWeather(city);
+      marker.setPopupContent(buildFloodPopup(city, weather));
+      checkAndNotifyUser(weather, city);
+    });
+    clusterGroup.addLayer(marker);
+    allMarkers.push({ marker, city, isFloodCity: true });
+  }
+
+  // ── Layer 2: All other PH cities (small dots, weather on click) ──
+  const floodCityNames = new Set(cities.map(c => c.name.toLowerCase()));
+  const phFiltered = PH_CITIES.filter(c => {
+    if (floodCityNames.has(c.name.toLowerCase())) return false; // skip duplicates
+    if (filter === 'all') return true;
+    const regionMap = {
+      ncr: 'ncr', luzon: ['region1','region2','region3','region4a','region4b','region5','car'],
+      visayas: ['region6','region7','region8'], mindanao: ['region9','region10','region11','region12','region13','barmm']
+    };
+    const allowed = regionMap[filter];
+    if (!allowed) return true;
+    return Array.isArray(allowed) ? allowed.includes(c.region) : c.region === allowed;
+  });
+
+  for (const phCity of phFiltered) {
+    const dot = makeCityDotIcon(9);
+    const marker = L.marker([phCity.lat, phCity.lng], { icon: dot });
+    marker.bindPopup(`<div class="loading-spinner"><div class="spinner"></div>Loading weather...</div>`, { minWidth: 200 });
+    marker.on('click', async () => {
+      const weather = await fetchWeather(phCity);
+      marker.setPopupContent(buildCityPopup(phCity, weather));
+    });
+    clusterGroup.addLayer(marker);
+    allMarkers.push({ marker, city: phCity, isFloodCity: false });
+  }
+
+  map.addLayer(clusterGroup);
+
+  const totalCities = filtered.length + phFiltered.length;
+  document.getElementById('statCritical').textContent = `🔴 ${critical} ${t("critical")}`;
+  document.getElementById('statWarning').textContent  = `🟠 ${warning} ${t("warning")}`;
+  document.getElementById('statNormal').textContent   = `🟢 ${normal} ${t("normal")}`;
+  document.getElementById('statCities').textContent   = `🌦️ ${totalCities} ${currentLang === "tl" ? "Lungsod" : "Cities"}`;
+}
+
+// ── WEATHER TILE LAYER ──
+const WEATHER_LAYERS = {
+  rain:  'precipitation_new',
+  wind:  'wind_new',
+  temp:  'temp_new',
+  cloud: 'clouds_new',
+};
+
+function applyWeatherTile(type) {
+  if (weatherTileLayer) map.removeLayer(weatherTileLayer);
+  if (!WEATHER_LAYERS[type]) return;
+  weatherTileLayer = L.tileLayer(
+    `https://tile.openweathermap.org/map/${WEATHER_LAYERS[type]}/{z}/{x}/{y}.png?appid=${API_KEY}`,
+    { opacity: 0.6, maxZoom: 19 }
+  );
+  weatherTileLayer.addTo(map);
+}
+
+// ── LAYER SWITCHER ──
+function switchLayer(btn, type) {
+  document.querySelectorAll('.layer-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  currentLayer = type;
+
+  const legend = document.getElementById('weatherLegend');
+
+  if (type === 'flood') {
+    if (weatherTileLayer) map.removeLayer(weatherTileLayer);
+    if (clusterGroup) map.addLayer(clusterGroup);
+    legend.classList.remove('show');
+  } else {
+    applyWeatherTile(type);
+    if (clusterGroup) map.addLayer(clusterGroup);
+    if (type === 'rain') legend.classList.add('show');
+    else legend.classList.remove('show');
+  }
+}
+
+// ── REGION FILTER ──
+const regionBounds = {
+  all:      [[4.5,116.0],[21.5,127.5]],
+  ncr:      [[14.38,120.87],[14.78,121.20]],
+  luzon:    [[12.0,119.5],[18.5,124.0]],
+  visayas:  [[9.0,121.5],[12.5,125.5]],
+  mindanao: [[5.5,121.0],[9.5,127.0]],
+};
+
+function filterRegion(btn, region) {
+  document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  currentFilter = region;
+  renderMarkers(region);
+  map.fitBounds(regionBounds[region], { padding:[40,40] });
+}
+
+// ── SEARCH WITH DROPDOWN ──
+const regionLabels = { ncr:'Metro Manila', luzon:'Luzon', visayas:'Visayas', mindanao:'Mindanao' };
+const statusColors = { critical:'var(--red)', warning:'var(--orange)', normal:'var(--green)' };
+const statusEmoji  = { critical:'🚨', warning:'⚠️', normal:'✅' };
+
+let searchDebounce = null;
+
+function initSearch() {
+  const input = document.getElementById('searchInput');
+  const dropdown = document.getElementById('searchDropdown');
+
+  input.addEventListener('input', function() {
+    clearTimeout(searchDebounce);
+    const q = this.value.trim();
+    if (!q || q.length < 2) { hideDropdown(); return; }
+
+    // Debounce — wait 400ms after user stops typing
+    searchDebounce = setTimeout(() => {
+      const q = this.value.toLowerCase().trim();
+      // Search flood sensor cities
+      const floodResults = cities.filter(c =>
+        c.name.toLowerCase().includes(q) ||
+        c.river.toLowerCase().includes(q) ||
+        (regionLabels[c.region] || '').toLowerCase().includes(q)
+      );
+      showDropdown(floodResults, this.value.trim());
+    }, 400);
+  });
+
+  // Hide dropdown when clicking outside
+  document.addEventListener('click', e => {
+    if (!e.target.closest('.search-bar') && !e.target.closest('#searchDropdown')) {
+      hideDropdown();
+    }
+  });
+
+  // Keyboard nav
+  input.addEventListener('keydown', e => {
+    const items = dropdown.querySelectorAll('.search-item');
+    const active = dropdown.querySelector('.search-item.focused');
+    if (e.key === 'Escape') { hideDropdown(); input.blur(); }
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      const next = active ? active.nextElementSibling : items[0];
+      if (next) { active?.classList.remove('focused'); next.classList.add('focused'); next.scrollIntoView({block:'nearest'}); }
+    }
+    if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      const prev = active ? active.previousElementSibling : items[items.length - 1];
+      if (prev) { active?.classList.remove('focused'); prev.classList.add('focused'); prev.scrollIntoView({block:'nearest'}); }
+    }
+    if (e.key === 'Enter' && active) { active.click(); }
+  });
+}
+
+// ── GPS LOCATION DETECTION ──
+let userLocationMarker = null;
+let userLat = null, userLng = null;
+
+function requestLocation() {
+  const card = document.getElementById('gpsCard');
+  const btn  = document.getElementById('gpsBtn');
+  const city = document.getElementById('gpsCity');
+  const status = document.getElementById('gpsStatus');
+  const icon = document.getElementById('gpsIcon');
+
+  card.classList.add('show');
+  city.textContent = currentLang === 'tl' ? 'Hinahanap ang iyong lokasyon...' : 'Finding your location...';
+  status.textContent = currentLang === 'tl' ? 'Sandali lang...' : 'Please wait...';
+  btn.textContent = '⏳';
+  btn.disabled = true;
+
+  if (!navigator.geolocation) {
+    city.textContent = currentLang === 'tl' ? 'Hindi sinusuportahan' : 'Not supported';
+    status.textContent = currentLang === 'tl' ? 'Hindi available sa iyong browser' : 'Geolocation not available in your browser';
+    btn.textContent = '❌'; btn.disabled = false;
+    return;
+  }
+
+  navigator.geolocation.getCurrentPosition(
+    pos => onLocationSuccess(pos.coords.latitude, pos.coords.longitude),
+    err => onLocationError(err),
+    { enableHighAccuracy: true, timeout: 10000, maximumAge: 300000 }
+  );
+}
+
+async function onLocationSuccess(lat, lng) {
+  userLat = lat; userLng = lng;
+
+  // Place user marker on map
+  placeUserMarker(lat, lng);
+
+  // Reverse geocode using OpenWeatherMap
+  let cityName = 'Your Location';
+  let provinceName = '';
+  try {
+    const res = await fetch(
+      `https://api.openweathermap.org/geo/1.0/reverse?lat=${lat}&lon=${lng}&limit=1&appid=${API_KEY}`
+    );
+    const data = await res.json();
+    if (data && data[0]) {
+      cityName = data[0].name || 'Your Location';
+      provinceName = data[0].state || '';
+    }
+  } catch(e) {}
+
+  // Find nearest PH city from our database
+  const nearest = findNearestCities(lat, lng, 5);
+
+  // Find nearest flood sensor city
+  const nearestFlood = findNearestFloodCity(lat, lng);
+
+  // Get weather for user location
+  const weather = await fetchWeather({ lat, lng, name: cityName });
+
+  // Update GPS card
+  updateGpsCard(cityName, provinceName, nearest, nearestFlood, weather);
+
+  // Pan map to user location
+  map.setView([lat, lng], 12, { animate: true });
+
+  // Auto-fill location in report form
+  const repLoc = document.getElementById('repLoc');
+  if (repLoc && !repLoc.value) repLoc.value = cityName;
+
+  showToast(`📍 ${currentLang === 'tl' ? 'Nahanap ka na!' : 'Location found!'} ${cityName}`);
+  checkAndNotifyCriticalFlood();
+  tagUserLocation();
+}
+
+function onLocationError(err) {
+  const btn = document.getElementById('gpsBtn');
+  const city = document.getElementById('gpsCity');
+  const status = document.getElementById('gpsStatus');
+  const msgs = {
+    1: { en: 'Location access denied', tl: 'Hindi pinayagan ang lokasyon' },
+    2: { en: 'Location unavailable', tl: 'Hindi ma-detect ang lokasyon' },
+    3: { en: 'Request timed out', tl: 'Nag-timeout ang request' },
+  };
+  const msg = msgs[err.code] || { en: 'Location error', tl: 'Error sa lokasyon' };
+  city.textContent = msg[currentLang] || msg.en;
+  status.textContent = currentLang === 'tl' ? 'I-try ulit' : 'Tap to try again';
+  btn.textContent = '🔄 Retry'; btn.disabled = false;
+  btn.onclick = requestLocation;
+}
+
+function placeUserMarker(lat, lng) {
+  if (userLocationMarker) map.removeLayer(userLocationMarker);
+  const icon = L.divIcon({
+    className: '',
+    html: `<div class="user-location-marker"></div>`,
+    iconSize: [20, 20], iconAnchor: [10, 10], popupAnchor: [0, -14]
+  });
+  userLocationMarker = L.marker([lat, lng], { icon, zIndexOffset: 2000 });
+  userLocationMarker.bindPopup(`
+    <div class="popup-inner">
+      <div class="popup-title">📍 ${currentLang === 'tl' ? 'Ikaw ay narito' : 'You are here'}</div>
+      <div class="popup-region" style="margin-top:4px;">${currentLang === 'tl' ? 'Iyong kasalukuyang lokasyon' : 'Your current location'}</div>
+    </div>`);
+  userLocationMarker.addTo(map);
+}
+
+// Find N nearest cities from our full PH database
+function findNearestCities(lat, lng, n = 3) {
+  return PH_CITIES
+    .map(c => ({ ...c, dist: haversine(lat, lng, c.lat, c.lng) }))
+    .sort((a, b) => a.dist - b.dist)
+    .slice(0, n);
+}
+
+// Find nearest flood sensor city
+function findNearestFloodCity(lat, lng) {
+  return cities
+    .map(c => ({ ...c, dist: haversine(lat, lng, c.lat, c.lng) }))
+    .sort((a, b) => a.dist - b.dist)[0];
+}
+
+// Haversine distance in km
+function haversine(lat1, lng1, lat2, lng2) {
+  const R = 6371;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLng = (lng2 - lng1) * Math.PI / 180;
+  const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180) * Math.cos(lat2*Math.PI/180) * Math.sin(dLng/2)**2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
+
+function updateGpsCard(cityName, province, nearestCities, nearestFlood, weather) {
+  const icon  = document.getElementById('gpsIcon');
+  const city  = document.getElementById('gpsCity');
+  const status = document.getElementById('gpsStatus');
+  const chips = document.getElementById('gpsChips');
+  const btn   = document.getElementById('gpsBtn');
+
+  // Determine local flood status
+  const floodDist = nearestFlood ? haversine(userLat, userLng, nearestFlood.lat, nearestFlood.lng) : 999;
+  const floodStatus = nearestFlood?.floodStatus || 'normal';
+  const isNearby = floodDist < 30;
+  const localStatus = isNearby ? floodStatus : 'normal';
+
+  // Update icon
+  icon.className = `gps-icon ${localStatus}`;
+  icon.textContent = localStatus === 'critical' ? '🚨' : localStatus === 'warning' ? '⚠️' : '📍';
+
+  // City name
+  city.textContent = province ? `${cityName}, ${province}` : cityName;
+
+  // Status text
+  if (localStatus === 'critical' && isNearby) {
+    status.textContent = currentLang === 'tl'
+      ? `⚠️ May kritikal na baha ${floodDist.toFixed(1)}km mula sa iyo`
+      : `⚠️ Critical flooding ${floodDist.toFixed(1)}km away`;
+  } else if (localStatus === 'warning' && isNearby) {
+    status.textContent = currentLang === 'tl'
+      ? `${t('warning')}: ${nearestFlood.name} ${floodDist.toFixed(1)}km ${currentLang === 'tl' ? 'mula sa iyo' : 'away'}`
+      : `Warning: ${nearestFlood.name} is ${floodDist.toFixed(1)}km away`;
+  } else {
+    status.textContent = currentLang === 'tl'
+      ? '✅ Walang aktibong baha malapit sa iyo'
+      : '✅ No active flooding near you';
+  }
+
+  // Chips
+  const rain = safeRain(weather);
+  const temp = weather?.main?.temp ? Math.round(weather.main.temp) + '°C' : '';
+  const ri = rainInfo(rain);
+  let chipsHTML = '';
+
+  if (temp) chipsHTML += `<span class="gps-chip info">🌡️ ${temp}</span>`;
+  if (rain > 0) chipsHTML += `<span class="gps-chip warning">${ri.emoji} ${rain.toFixed(1)}mm/hr</span>`;
+  else chipsHTML += `<span class="gps-chip safe">☀️ ${currentLang === 'tl' === 'tl' ? 'Walang ulan' : 'No rain'}</span>`;
+
+  if (isNearby && nearestFlood) {
+    const statusLabel = currentLang === 'tl'
+      === 'tl' ? { critical:'Kritikal', warning:'Babala', normal:'Normal' }[floodStatus]
+      : floodStatus.charAt(0).toUpperCase() + floodStatus.slice(1);
+    chipsHTML += `<span class="gps-chip ${floodStatus}">🌊 ${nearestFlood.name}: ${statusLabel}</span>`;
+  }
+
+  chips.innerHTML = chipsHTML;
+
+  // Button
+  btn.textContent = '🔄';
+  btn.disabled = false;
+  btn.className = 'gps-btn located';
+  btn.onclick = requestLocation;
+  btn.title = 'Refresh location';
+}
+
+function showDropdown(results, query) {
+  // Search both flood cities and all PH cities
+  const phResults = PH_CITIES.filter(c => {
+    const q = query.toLowerCase();
+    return c.name.toLowerCase().includes(q) ||
+           c.province.toLowerCase().includes(q);
+  });
+
+  // Merge: flood cities first, then PH cities (no duplicates)
+  const floodNames = new Set(results.map(r => r.name.toLowerCase()));
+  const merged = [...results, ...phResults.filter(c => !floodNames.has(c.name.toLowerCase()))];
+  const limitedResults = merged.slice(0, 10); // max 10 results
+  const dropdown = document.getElementById('searchDropdown');
+  if (limitedResults.length === 0) {
+    dropdown.innerHTML = `<div style="padding:14px 16px;font-size:13px;color:var(--muted);text-align:center;">No results for "${query}"</div>`;
+    dropdown.style.display = 'block';
+    return;
+  }
+
+  let html = '';
+  limitedResults.forEach(city => {
+    const isFlood = !!city.floodStatus;
+    const col = isFlood ? statusColors[city.floodStatus] : '#3b82f6';
+    const emoji = isFlood ? statusEmoji[city.floodStatus] : '🌦️';
+    const region = city.province || regionLabels[city.region] || city.region;
+    // Highlight matching part of name
+    const re = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')})`, 'gi');
+    const highlightedName = city.name.replace(re, '<mark style="background:#fef08a;border-radius:3px;padding:0 1px;">$1</mark>');
+
+    html += `
+      <div class="search-item" onclick="selectSearchResult(${city.lat}, ${city.lng}, '${city.name.replace(/'/g,"\\'")}')">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div style="width:32px;height:32px;border-radius:50%;background:${col}20;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;">${emoji}</div>
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:13px;font-weight:700;color:var(--text);">${highlightedName}</div>
+            <div style="font-size:11px;color:var(--muted);margin-top:1px;">📍 ${region}${city.river ? ' · ' + city.river : ''}</div>
+          </div>
+          <div style="text-align:right;flex-shrink:0;">
+            ${isFlood ? `
+              <div style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px;background:${col}20;color:${col};">${city.floodStatus.toUpperCase()}</div>
+              <div style="font-size:10px;color:var(--muted);margin-top:2px;">${city.riverLevel}m / ${city.riverMax}m</div>
+            ` : `
+              <div style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px;background:#eff6ff;color:#3b82f6;">WEATHER</div>
+              <div style="font-size:10px;color:var(--muted);margin-top:2px;">${city.type || 'municipality'}</div>
+            `}
+          </div>
+        </div>
+      </div>`;
+  });
+
+  // Show count header
+  if (limitedResults.length > 1) {
+    html = `<div style="padding:8px 16px 4px;font-size:11px;color:var(--muted);font-weight:600;">${limitedResults.length} RESULTS</div>` + html;
+  }
+
+  dropdown.innerHTML = html;
+  dropdown.style.display = 'block';
+}
+
+function hideDropdown() {
+  const dropdown = document.getElementById('searchDropdown');
+  if (dropdown) dropdown.style.display = 'none';
+}
+
+function selectSearchResult(lat, lng, name) {
+  hideDropdown();
+  document.getElementById('searchInput').value = name;
+  map.setView([lat, lng], 13, { animate: true });
+  // Open the marker popup after map settles
+  setTimeout(() => {
+    allMarkers.forEach(({ marker, city }) => {
+      if (city.name.toLowerCase() === name.toLowerCase()) {
+        if (clusterGroup) clusterGroup.zoomToShowLayer(marker, () => marker.openPopup());
+        else marker.openPopup();
+      }
+    });
+  }, 600);
+}
+
+// ── WEATHER PANEL ──
+async function buildWeatherPanel() {
+  const panel = document.getElementById('panelContent');
+  panel.innerHTML = `<div class="loading-spinner"><div class="spinner"></div>${t('loading')}</div>`;
+
+  const topCities = cities.filter(c => currentFilter === 'all' || c.region === currentFilter).slice(0, 8);
+  const results = await Promise.all(topCities.map(c => fetchWeather(c)));
+
+  let html = '';
+  topCities.forEach((city, i) => {
+    const w = results[i];
+    const rain = safeRain(w);
+    const ri = rainInfo(rain);
+    const bg = { heavy:'var(--red-light)', moderate:'var(--orange-light)', light:'#eff6ff', none:'var(--green-light)' }[ri.cls];
+    const col = { heavy:'var(--red)', moderate:'var(--orange)', light:'#3b82f6', none:'var(--green)' }[ri.cls];
+    html += `
+      <div style="background:${bg};border:1.5px solid ${col}30;border-radius:14px;padding:13px 15px;margin-bottom:10px;cursor:pointer;"
+           onclick="jumpToCity(${city.lat},${city.lng})">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+          <div>
+            <div style="font-size:14px;font-weight:700;">${city.name}</div>
+            <div style="font-size:11px;color:var(--muted);">${city.river}</div>
+          </div>
+          <div style="text-align:right;">
+            <div style="font-size:22px;">${ri.emoji}</div>
+            <div style="font-size:12px;font-weight:700;color:${col};">${safeTemp(w)}</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <span style="background:white;border-radius:8px;padding:3px 8px;font-size:11px;font-weight:600;">${ri.label}</span>
+          ${w && w.main ? `<span style="background:white;border-radius:8px;padding:3px 8px;font-size:11px;font-weight:600;">💧 ${safeHumidity(w)}</span>` : ''}
+          ${w && w.wind ? `<span style="background:white;border-radius:8px;padding:3px 8px;font-size:11px;font-weight:600;">💨 ${safeWind(w)}</span>` : ''}
+        </div>
+      </div>`;
+  });
+
+  panel.innerHTML = html;
+}
+
+function jumpToCity(lat, lng) {
+  closePanel();
+  map.setView([lat, lng], 12, { animate:true });
+}
+
+// ── LIVE ALERT UPDATE ──
+async function updateAlertStrip() {
+  const critical = cities.filter(c => c.floodStatus === 'critical');
+  if (critical.length > 0) {
+    const weatherData = await fetchWeather(critical[0]);
+    const rain = safeRain(weatherData);
+    const ri = rainInfo(rain);
+    document.getElementById('alertText').textContent =
+      `🚨 ${t('critical')}: ${critical[0].river} (${critical[0].name}) — ${ri.label}${rain > 0 ? ` ${rain.toFixed(1)}mm/hr` : ''} · ${critical.length} ${currentLang === 'tl' ? 'kritikal na ilog' : 'critical rivers'}`;
+  }
+}
+
+// ── i18n TRANSLATIONS ──
+const translations = {
+  en: {
+    search: 'Search your barangay or city...',
+    loading: 'Loading live weather data...',
+    floodPoints: '🌊 Flood Points',
+    rainfall: '🌧️ Rainfall',
+    wind: '💨 Wind',
+    temperature: '🌡️ Temperature',
+    clouds: '☁️ Clouds',
+    reports: 'Reports',
+    all: '🇵🇭 All',
+    map: 'Map',
+    weather: 'Weather',
+    evacuation: 'Evacuation',
+    heavy: 'Heavy',
+    moderate: 'Moderate',
+    light: 'Light',
+    noRain: 'No rain',
+    reportTitle: '🌊 Report Flooding',
+    reportSub: "Help your community. Share what's happening near you.",
+    location: 'Location',
+    locationPlaceholder: 'Barangay or street name...',
+    floodDepth: 'Flood Depth',
+    ankle: 'Ankle-deep',
+    knee: 'Knee-deep',
+    waist: 'Waist-deep',
+    chest: 'Chest-deep+',
+    description: 'Description',
+    descPlaceholder: 'Describe the situation (e.g. road blocked, rising fast...)',
+    photoLabel: '📸 Add photo (deleted after 48 hours)',
+    photoTap: 'Tap to upload a photo',
+    photoSub: 'JPG, PNG · Max 5MB · Deleted after 48h',
+    removePhoto: '✕ Remove photo',
+    youAre: 'You are...',
+    resident: 'Resident / Civilian',
+    barangay: 'Barangay Official',
+    submit: '✅ Submit Report',
+    critical: 'Critical',
+    warning: 'Warning',
+    normal: 'Normal',
+    updatedAt: 'Updated',
+    liveVia: 'Live via OpenWeatherMap',
+    weatherPanel: '🌦️ Live Weather',
+    reportsPanel: '📣 Community Reports',
+    evacPanel: '🏫 Evacuation Centers',
+    noReports: 'No reports yet',
+    noReportsSub: 'Be the first! Tap the 🚨 button to report flooding.',
+    refresh: '🔄 Refresh',
+    verifiedBy: 'Verified',
+    submitting: '⏳ Saving...',
+    uploadingPhoto: '📸 Uploading photo...',
+    submitSuccess: 'Report submitted!',
+    locationRequired: '⚠️ Please enter your location!',
+    photoError: '⚠️ Photo upload failed. Try again.',
+    uploadTooBig: '⚠️ Photo too large. Max 5MB.',
+    expiry: 'Photo expires in',
+    hoursLeft: 'h',
+    liveData: 'Live data',
+    humidity: 'Humidity',
+    windSpeed: 'Wind',
+    condition: 'Condition',
+    riverLevel: 'River level',
+    affected: 'Affected areas',
+    critical: 'CRITICAL',
+    warning: 'WARNING',
+    normal: 'NORMAL',
+    temperature: 'Temperature',
+    installTitle: 'Install BahaAlert',
+    installSub: 'Add to home screen for quick access',
+    installBtn: '📲 Install App',
+    open: 'OPEN',
+    full: 'FULL',
+    closed: 'CLOSED',
+  },
+  tl: {
+    search: 'Hanapin ang iyong barangay o lungsod...',
+    loading: 'Nilo-load ang live weather data...',
+    floodPoints: '🌊 Flood Points',
+    rainfall: '🌧️ Ulan',
+    wind: '💨 Hangin',
+    temperature: '🌡️ Temperatura',
+    clouds: '☁️ Ulap',
+    reports: 'Ulat',
+    all: '🇵🇭 Lahat',
+    map: 'Mapa',
+    weather: 'Panahon',
+    evacuation: 'Evacuation',
+    heavy: 'Malakas',
+    moderate: 'Katamtaman',
+    light: 'Magaan',
+    noRain: 'Walang ulan',
+    reportTitle: '🌊 I-report ang Baha',
+    reportSub: 'Tulungan ang iyong komunidad.',
+    location: 'Lokasyon',
+    locationPlaceholder: 'Barangay o kalye...',
+    floodDepth: 'Lalim ng baha',
+    ankle: 'Bukung-buko',
+    knee: 'Tuhod',
+    waist: 'Baywang',
+    chest: 'Dibdib pataas',
+    description: 'Deskripsyon',
+    descPlaceholder: 'Ilarawan ang sitwasyon...',
+    photoLabel: '📸 Magdagdag ng larawan (mabubura pagkatapos ng 48 oras)',
+    photoTap: 'I-tap para mag-upload ng larawan',
+    photoSub: 'JPG, PNG · Max 5MB · Mabubura pagkatapos ng 48h',
+    removePhoto: '✕ Alisin ang larawan',
+    youAre: 'Ikaw ay...',
+    resident: 'Residente / Sibilyan',
+    barangay: 'Opisyal ng Barangay',
+    submit: '✅ Isumite ang Ulat',
+    critical: 'Kritikal',
+    warning: 'Babala',
+    normal: 'Normal',
+    updatedAt: 'Na-update',
+    liveVia: 'Live via OpenWeatherMap',
+    weatherPanel: '🌦️ Live Weather',
+    reportsPanel: '📣 Ulat ng Komunidad',
+    evacPanel: '🏫 Evacuation Centers',
+    noReports: 'Wala pang mga ulat',
+    noReportsSub: 'Maging una! I-tap ang 🚨 button para mag-report ng baha.',
+    refresh: '🔄 I-refresh',
+    verifiedBy: 'Totoo',
+    submitting: '⏳ Nise-save...',
+    uploadingPhoto: '📸 Ina-upload ang larawan...',
+    submitSuccess: 'Naisumite na ang ulat!',
+    locationRequired: '⚠️ Ilagay ang iyong lokasyon!',
+    photoError: '⚠️ Hindi na-upload ang larawan. Subukan ulit.',
+    uploadTooBig: '⚠️ Masyadong malaki ang larawan. Max 5MB lang.',
+    expiry: 'Mabubura ang larawan sa',
+    hoursLeft: 'h',
+    liveData: 'Live data',
+    humidity: 'Humidity',
+    windSpeed: 'Hangin',
+    condition: 'Kondisyon',
+    riverLevel: 'Antas ng ilog',
+    affected: 'Apektadong lugar',
+    critical: 'KRITIKAL',
+    warning: 'BABALA',
+    normal: 'NORMAL',
+    temperature: 'Temperatura',
+    installTitle: 'I-install ang BahaAlert',
+    installSub: 'Idagdag sa home screen para sa mabilis na access',
+    installBtn: '📲 I-install',
+    open: 'BUKAS',
+    full: 'PUNO',
+    closed: 'SARADO',
+  }
+};
+
+let currentLang = localStorage.getItem('bahaLang') || 'en';
+
+function t(key) {
+  return translations[currentLang][key] || translations['en'][key] || key;
+}
+
+function applyTranslations() {
+  // Text content
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    el.textContent = t(key);
+  });
+  // Placeholders
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+    const key = el.getAttribute('data-i18n-placeholder');
+    el.placeholder = t(key);
+  });
+  // Toggle buttons
+  document.getElementById('btnEN').classList.toggle('active', currentLang === 'en');
+  document.getElementById('btnTL').classList.toggle('active', currentLang === 'tl');
+  // Update logo sub if not showing update time
+  const sub = document.getElementById('lastUpdated');
+  if (sub && sub.textContent.includes('update')) sub.textContent = t('loading');
+  // Update install banner
+  const installTitle = document.getElementById('installTitle');
+  const installSub = document.getElementById('installSub');
+  const installBtn = document.getElementById('installBtn');
+  if (installTitle) installTitle.textContent = t('installTitle');
+  if (installSub) installSub.textContent = t('installSub');
+  if (installBtn) installBtn.textContent = t('installBtn');
+  // Fix temperature layer button (has emoji in key)
+  document.querySelectorAll('[data-i18n="temperature"]').forEach(el => {
+    el.textContent = currentLang === 'tl' ? '🌡️ Temperatura' : '🌡️ Temperature';
+  });
+}
+
+function setLang(lang) {
+  currentLang = lang;
+  localStorage.setItem('bahaLang', lang);
+  applyTranslations();
+  updateAlertStrip();
+  // Re-render GPS card if shown
+  if (userLat && userLng) { const gpsCard = document.getElementById('gpsCard'); if (gpsCard && gpsCard.classList.contains('show')) updateGpsCard('','',null,findNearestFloodCity(userLat,userLng),null); }
+  // Refresh open panel if any
+  const panel = document.getElementById('sidePanel');
+  if (panel && panel.classList.contains('show')) {
+    const title = document.getElementById('panelTitle').textContent;
+    if (title.includes('Weather') || title.includes('Panahon') || title.includes('Live')) buildWeatherPanel();
+    else if (title.includes('Ulat') || title.includes('Reports') || title.includes('Community')) buildReportsPanel();
+    else if (title.includes('Evacuation')) buildEvacPanel();
+  }
+}
+const SUPABASE_URL = 'https://dqjdnjutsxerqkpepbri.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRxamRuanV0c3hlcnFrcGVwYnJpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0OTE3MTcsImV4cCI6MjA5MDA2NzcxN30.nttC3ruA1WfzmS7k0HNOv0cq_PxyRhDLJYxVElbxEEA';
+
+const sbHeaders = {
+  'Content-Type': 'application/json',
+  'apikey': SUPABASE_KEY,
+  'Authorization': `Bearer ${SUPABASE_KEY}`,
+  'Prefer': 'return=representation'
+};
+
+// ── FETCH REPORTS FROM SUPABASE ──
+async function fetchReports() {
+  try {
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/reports?order=created_at.desc&limit=30`,
+      { headers: sbHeaders }
+    );
+    return await res.json();
+  } catch(e) {
+    console.error('Failed to fetch reports:', e);
+    return [];
+  }
+}
+
+// ── SAVE REPORT TO SUPABASE ──
+async function saveReport(report) {
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/reports`, {
+      method: 'POST',
+      headers: sbHeaders,
+      body: JSON.stringify(report)
+    });
+    return await res.json();
+  } catch(e) {
+    console.error('Failed to save report:', e);
+    return null;
+  }
+}
+
+// ── UPVOTE REPORT IN SUPABASE ──
+async function upvoteReport(id, currentVotes) {
+  try {
+    await fetch(`${SUPABASE_URL}/rest/v1/reports?id=eq.${id}`, {
+      method: 'PATCH',
+      headers: sbHeaders,
+      body: JSON.stringify({ votes: currentVotes + 1 })
+    });
+  } catch(e) {
+    console.error('Failed to upvote:', e);
+  }
+}
+
+// ── PHOTO PREVIEW ──
+function previewPhoto(input) {
+  const file = input.files[0];
+  if (!file) return;
+  if (file.size > 5 * 1024 * 1024) {
+    showToast(t('uploadTooBig'));
+    input.value = '';
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = e => {
+    document.getElementById('photoPreview').src = e.target.result;
+    document.getElementById('photoPreview').style.display = 'block';
+    document.getElementById('photoPlaceholder').style.display = 'none';
+    document.getElementById('removePhotoBtn').style.display = 'inline-block';
+    document.getElementById('photoUploadArea').classList.add('has-photo');
+  };
+  reader.readAsDataURL(file);
+}
+
+function removePhoto() {
+  document.getElementById('photoInput').value = '';
+  document.getElementById('photoPreview').style.display = 'none';
+  document.getElementById('photoPreview').src = '';
+  document.getElementById('photoPlaceholder').style.display = 'block';
+  document.getElementById('removePhotoBtn').style.display = 'none';
+  document.getElementById('photoUploadArea').classList.remove('has-photo');
+}
+
+// ── UPLOAD PHOTO TO SUPABASE STORAGE ──
+async function uploadPhoto(file) {
+  try {
+    const ext = file.name.split('.').pop();
+    const fileName = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+    const res = await fetch(
+      `${SUPABASE_URL}/storage/v1/object/report-photos/${fileName}`,
+      {
+        method: 'POST',
+        headers: {
+          'apikey': SUPABASE_KEY,
+          'Authorization': `Bearer ${SUPABASE_KEY}`,
+          'Content-Type': file.type,
+          'x-upsert': 'false'
+        },
+        body: file
+      }
+    );
+    if (!res.ok) throw new Error('Upload failed');
+    return `${SUPABASE_URL}/storage/v1/object/public/report-photos/${fileName}`;
+  } catch(e) {
+    console.error('Photo upload error:', e);
+    return null;
+  }
+}
+
+// ── CLEANUP EXPIRED PHOTOS (48h) ──
+async function cleanupExpiredPhotos() {
+  try {
+    // Fetch reports older than 48h that still have photos
+    const cutoff = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString();
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/reports?photo_url=not.is.null&created_at=lt.${cutoff}&select=id,photo_url`,
+      { headers: sbHeaders }
+    );
+    const expired = await res.json();
+    if (!expired || !expired.length) return;
+
+    for (const r of expired) {
+      // Extract filename from URL
+      const fileName = r.photo_url.split('/report-photos/')[1];
+      if (!fileName) continue;
+      // Delete from storage
+      await fetch(`${SUPABASE_URL}/storage/v1/object/report-photos/${fileName}`, {
+        method: 'DELETE',
+        headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
+      });
+      // Null out photo_url in DB
+      await fetch(`${SUPABASE_URL}/rest/v1/reports?id=eq.${r.id}`, {
+        method: 'PATCH',
+        headers: sbHeaders,
+        body: JSON.stringify({ photo_url: null })
+      });
+    }
+    if (expired.length > 0) console.log(`🧹 Cleaned up ${expired.length} expired photos`);
+  } catch(e) {
+    console.error('Cleanup error:', e);
+  }
+}
+function depthToSeverity(depth) {
+  if (!depth) return 'warning';
+  if (depth.includes('Dibdib') || depth.includes('Baywang') || depth.includes('Chest') || depth.includes('Waist')) return 'critical';
+  if (depth.includes('Tuhod') || depth.includes('Knee')) return 'warning';
+  return 'safe';
+}
+
+function depthToEmoji(depth) {
+  if (!depth) return '⚠️';
+  if (depth.includes('Dibdib') || depth.includes('Chest')) return '🌊';
+  if (depth.includes('Baywang') || depth.includes('Waist')) return '🌊';
+  if (depth.includes('Tuhod') || depth.includes('Knee')) return '⚠️';
+  return '💧';
+}
+
+// ── TIME AGO ──
+function timeAgo(dateStr) {
+  const diff = Math.floor((Date.now() - new Date(dateStr)) / 1000);
+  if (currentLang === 'tl') {
+    if (diff < 60) return `${diff} seg nakaraon`;
+    if (diff < 3600) return `${Math.floor(diff/60)} min nakaraon`;
+    if (diff < 86400) return `${Math.floor(diff/3600)} oras nakaraon`;
+    return `${Math.floor(diff/86400)} araw nakaraon`;
+  }
+  if (diff < 60) return `${diff}s ago`;
+  if (diff < 3600) return `${Math.floor(diff/60)}m ago`;
+  if (diff < 86400) return `${Math.floor(diff/3600)}h ago`;
+  return `${Math.floor(diff/86400)}d ago`;
+}
+
+// ── BUILD REPORTS PANEL ──
+async function buildReportsPanel() {
+  const content = document.getElementById('panelContent');
+  content.innerHTML = `<div class="loading-spinner"><div class="spinner"></div>${t('loading')}</div>`;
+
+  const reports = await fetchReports();
+
+  if (!reports || reports.length === 0) {
+    content.innerHTML = `
+      <div style="text-align:center;padding:32px 16px;color:var(--muted);">
+        <div style="font-size:40px;margin-bottom:12px;">📭</div>
+        <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:6px;">${t('noReports')}</div>
+        <div style="font-size:12px;">${t('noReportsSub')}</div>
+      </div>`;
+    return;
+  }
+
+  // Update report count badge
+  document.getElementById('statReports').textContent = `📝 ${reports.length} ${t("reports")}`;
+
+  let html = `<div style="margin-bottom:12px;font-size:12px;color:var(--muted);display:flex;justify-content:space-between;align-items:center;">
+    <span>${reports.length} ${currentLang === "tl" ? "ulat mula sa komunidad" : "community reports"}</span>
+    <button onclick="buildReportsPanel()" style="background:var(--blue-light);color:var(--blue);border:none;border-radius:8px;padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer;font-family:Lexend,sans-serif;">${t('refresh')}</button>
+  </div>`;
+
+  const flaggedIds = JSON.parse(localStorage.getItem('baha_flagged') || '[]');
+
+  reports.forEach(r => {
+    // Hide reports with 3+ flags
+    if ((r.flags || 0) >= 3) return;
+
+    const sev = depthToSeverity(r.depth);
+    const emoji = depthToEmoji(r.depth);
+    const createdAt = new Date(r.created_at);
+    const ageMs = Date.now() - createdAt.getTime();
+    const photoExpired = ageMs > 48 * 60 * 60 * 1000;
+    const hoursLeft = Math.max(0, Math.ceil((48 * 60 * 60 * 1000 - ageMs) / (60 * 60 * 1000)));
+    const showPhoto = r.photo_url && !photoExpired;
+    const alreadyFlagged = flaggedIds.includes(r.id);
+
+    // Show location coords badge if available
+    const hasCords = r.lat && r.lng;
+
+    html += `
+      <div class="report-card" id="rcard-${r.id}">
+        <div class="report-sev ${sev}">${emoji}</div>
+        <div class="report-body">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+            <div class="report-place">📍 ${r.location}${hasCords ? ` <span style="font-size:9px;background:var(--green-light);color:var(--green);padding:1px 5px;border-radius:4px;font-weight:700;">GPS ✓</span>` : ''}</div>
+            <button onclick="flagReport('${r.id}',this)" ${alreadyFlagged ? 'data-flagged="1"' : ''}
+              style="background:none;border:none;font-size:13px;color:${alreadyFlagged ? 'var(--red)' : 'var(--muted)'};cursor:pointer;padding:0 2px;flex-shrink:0;"
+              title="${currentLang === 'tl' ? 'I-flag bilang peke' : 'Flag as fake'}">
+              ${alreadyFlagged ? '🚩' : '⚑'}
+            </button>
+          </div>
+          ${r.depth ? `<div style="display:inline-block;background:var(--soft);border-radius:6px;padding:2px 7px;font-size:10px;font-weight:700;color:var(--muted);margin:3px 0;">${r.depth}</div>` : ''}
+          ${r.description ? `<div class="report-text">${r.description}</div>` : ''}
+          ${showPhoto ? `
+            <img src="${r.photo_url}" class="report-photo"
+              onclick="openPhotoModal('${r.photo_url}')"
+              onerror="this.style.display='none'" />
+            <div class="photo-expiry">⏳ ${t('expiry')} ${hoursLeft}${t('hoursLeft')}</div>
+          ` : ''}
+          ${r.role ? `<div style="font-size:10px;color:var(--blue);margin-top:3px;">👤 ${r.role}</div>` : ''}
+          <div class="report-foot">
+            <span class="report-ago">${timeAgo(r.created_at)}</span>
+            <button class="verify-btn" onclick="handleVerify(this,'${r.id}',${r.votes})">
+              👍 <span>${r.votes || 0}</span> ${t('verifiedBy')}
+            </button>
+          </div>
+        </div>
+      </div>`;
+  });
+
+  content.innerHTML = html;
+}
+
+async function handleVerify(btn, id, currentVotes) {
+  if (btn.dataset.voted) return;
+  btn.dataset.voted = '1';
+  const span = btn.querySelector('span');
+  span.textContent = currentVotes + 1;
+  btn.style.background = '#dcfce7';
+  btn.style.color = '#16a34a';
+  await upvoteReport(id, currentVotes);
+  showToast('👍 ' + t('verifiedBy') + '!');
+}
+
+const evacHTML = `
+  <div class="evac-card"><div class="evac-icon open">🏫</div><div class="evac-info"><div class="evac-name">Marikina Elementary School</div><div class="evac-dist">📍 0.8 km · Marikina</div><div class="cap-bar"><div class="cap-fill" style="width:70%;background:var(--green)"></div></div></div><div class="evac-right"><div class="evac-tag open">${t('open')}</div><div class="evac-count">420/600</div></div></div>
+  <div class="evac-card"><div class="evac-icon open">🏟️</div><div class="evac-info"><div class="evac-name">Marikina Sports Center</div><div class="evac-dist">📍 1.4 km · Marikina</div><div class="cap-bar"><div class="cap-fill" style="width:65%;background:var(--yellow)"></div></div></div><div class="evac-right"><div class="evac-tag open">${t('open')}</div><div class="evac-count">780/1200</div></div></div>
+  <div class="evac-card"><div class="evac-icon full">🏢</div><div class="evac-info"><div class="evac-name">Sto. Niño Barangay Hall</div><div class="evac-dist">📍 0.3 km · Marikina</div><div class="cap-bar"><div class="cap-fill" style="width:100%;background:var(--red)"></div></div></div><div class="evac-right"><div class="evac-tag full">${t('full')}</div><div class="evac-count">200/200</div></div></div>
+  <div class="evac-card"><div class="evac-icon open">🏫</div><div class="evac-info"><div class="evac-name">Tacloban Convention Center</div><div class="evac-dist">📍 Tacloban, Leyte</div><div class="cap-bar"><div class="cap-fill" style="width:45%;background:var(--green)"></div></div></div><div class="evac-right"><div class="evac-tag open">${t('open')}</div><div class="evac-count">540/1200</div></div></div>
+`;
+
+// ── NAV ──
+function switchNav(el, tab) {
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  el.classList.add('active');
+  const panel = document.getElementById('sidePanel');
+  if (tab === 'map') { closePanel(); return; }
+  const config = {
+    weather: { title: t('weatherPanel'), fn: buildWeatherPanel },
+    reports: { title: t('reportsPanel'), fn: buildReportsPanel },
+    evac:    { title: t('evacPanel'),    fn: buildEvacPanel    },
+  };
+  const c = config[tab];
+  document.getElementById('panelTitle').textContent = c.title;
+  document.getElementById('panelContent').innerHTML = '';
+  panel.classList.add('show');
+  c.fn();
+}
+
+function closePanel() {
+  document.getElementById('sidePanel').classList.remove('show');
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.querySelector('.nav-item').classList.add('active');
+}
+
+// ── EVAC PANEL ──
+function buildEvacPanel() {
+  document.getElementById('panelContent').innerHTML = `
+    <div class="evac-card"><div class="evac-icon open">🏫</div><div class="evac-info"><div class="evac-name">Marikina Elementary School</div><div class="evac-dist">📍 0.8 km · Marikina</div><div class="cap-bar"><div class="cap-fill" style="width:70%;background:var(--green)"></div></div></div><div class="evac-right"><div class="evac-tag open">${t('open')}</div><div class="evac-count">420/600</div></div></div>
+    <div class="evac-card"><div class="evac-icon open">🏟️</div><div class="evac-info"><div class="evac-name">Marikina Sports Center</div><div class="evac-dist">📍 1.4 km · Marikina</div><div class="cap-bar"><div class="cap-fill" style="width:65%;background:var(--yellow)"></div></div></div><div class="evac-right"><div class="evac-tag open">${t('open')}</div><div class="evac-count">780/1200</div></div></div>
+    <div class="evac-card"><div class="evac-icon full">🏢</div><div class="evac-info"><div class="evac-name">Sto. Niño Barangay Hall</div><div class="evac-dist">📍 0.3 km · Marikina</div><div class="cap-bar"><div class="cap-fill" style="width:100%;background:var(--red)"></div></div></div><div class="evac-right"><div class="evac-tag full">${t('full')}</div><div class="evac-count">200/200</div></div></div>
+    <div class="evac-card"><div class="evac-icon open">🏫</div><div class="evac-info"><div class="evac-name">Tacloban Convention Center</div><div class="evac-dist">📍 Tacloban, Leyte</div><div class="cap-bar"><div class="cap-fill" style="width:45%;background:var(--green)"></div></div></div><div class="evac-right"><div class="evac-tag open">${t('open')}</div><div class="evac-count">540/1200</div></div></div>
+  `;
+}
+
+
+// ── PUSH NOTIFICATIONS ──
+const NOTIF_APP_ID = '2d9ddea7-7c90-464f-9c41-de0976793025';
+
+async function initNotifications() {
+  // Show banner after 5 seconds if not yet subscribed
+  const dismissed = localStorage.getItem('notifDismissed');
+  const subscribed = localStorage.getItem('notifSubscribed');
+  if (!dismissed && !subscribed) {
+    setTimeout(() => {
+      document.getElementById('notifBanner').classList.add('show');
+    }, 5000);
+  }
+  if (subscribed) {
+    updateNotifBell(true);
+  }
+  // Check actual browser permission
+  if (Notification.permission === 'granted') {
+    localStorage.setItem('notifSubscribed', '1');
+    updateNotifBell(true);
+  }
+}
+
+function updateNotifBell(subscribed) {
+  const bell = document.getElementById('notifBell');
+  const dot  = document.getElementById('notifDot');
+  if (!bell) return;
+  if (subscribed) {
+    bell.classList.add('subscribed');
+    bell.title = 'Flood alerts enabled ✅';
+    bell.textContent = '🔔';
+    if (dot) dot.classList.remove('show');
+  } else {
+    bell.classList.remove('subscribed');
+    bell.title = 'Enable flood alerts';
+    if (dot) dot.classList.add('show');
+  }
+}
+
+async function requestNotifPermission() {
+  dismissNotifBanner();
+  try {
+    // Use OneSignal if available
+    if (window.OneSignal) {
+      await window.OneSignal.Notifications.requestPermission();
+      const isSubscribed = await window.OneSignal.User.PushSubscription.optedIn;
+      if (isSubscribed) {
+        localStorage.setItem('notifSubscribed', '1');
+        updateNotifBell(true);
+        showToast('🔔 Flood alerts enabled!');
+        // Tag user with their area for targeted notifications
+        if (userLat && userLng) {
+          tagUserLocation();
+        }
+        return;
+      }
+    }
+    // Fallback: native browser notification permission
+    const perm = await Notification.requestPermission();
+    if (perm === 'granted') {
+      localStorage.setItem('notifSubscribed', '1');
+      updateNotifBell(true);
+      showToast('🔔 ' + (currentLang === 'tl' ? 'Pinagana na ang mga alerto!' : 'Flood alerts enabled!'));
+    } else {
+      showToast('❌ ' + (currentLang === 'tl' ? 'Hindi pinayagan ang notipikasyon' : 'Notifications blocked. Enable in browser settings.'));
+    }
+  } catch(e) {
+    console.error('Notification permission error:', e);
+  }
+}
+
+function dismissNotifBanner() {
+  document.getElementById('notifBanner').classList.remove('show');
+  localStorage.setItem('notifDismissed', '1');
+}
+
+// Tag the user's area in OneSignal for targeted notifications
+async function tagUserLocation() {
+  if (!window.OneSignal || !userLat || !userLng) return;
+  try {
+    const nearest = findNearestCities(userLat, userLng, 1)[0];
+    if (nearest) {
+      await window.OneSignal.User.addTag('area', nearest.province || nearest.name);
+      await window.OneSignal.User.addTag('city', nearest.name);
+      console.log('Tagged user location:', nearest.name);
+    }
+  } catch(e) {
+    console.error('Tag error:', e);
+  }
+}
+
+// Send a push notification via our secure Vercel API proxy
+async function sendPushNotification(title, message, severity = 'warning', area = null) {
+  try {
+    const res = await fetch('/api/notify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title, message, severity, area, url: 'https://bahaalert.vercel.app' })
+    });
+    const data = await res.json();
+    if (data.success) {
+      console.log(`Push sent to ${data.recipients} subscribers`);
+    }
+    return data;
+  } catch(e) {
+    console.error('Push notification error:', e);
+  }
+}
+
+// Auto-trigger notification when critical flood is detected near user
+async function checkAndNotifyUser(weatherData, city) {
+  if (!localStorage.getItem('notifSubscribed')) return;
+  if (!userLat || !userLng) return;
+
+  const dist = haversine(userLat, userLng, city.lat, city.lng);
+  if (dist > 30) return; // Only notify if within 30km
+
+  const rain = safeRain(weatherData);
+  if (city.floodStatus === 'critical' && rain > 5) {
+    // Show local notification
+    if (Notification.permission === 'granted') {
+      new Notification('🚨 BahaAlert — Critical Flood Warning', {
+        body: `${city.name} (${dist.toFixed(1)}km away) — ${city.river} at critical level. ${rain.toFixed(1)}mm/hr rainfall.`,
+        icon: '/icon-192.png',
+        tag: `flood-${city.name}`,
+        requireInteraction: true,
+      });
+    }
+  }
+}
+
+// Called from admin dashboard broadcast — triggers push to all users
+async function broadcastFloodAlert(title, message, severity, area) {
+  return sendPushNotification(title, message, severity, area);
+}
+
+// ── ABUSE PREVENTION ──
+
+// Generate a stable device fingerprint stored in localStorage
+function getDeviceId() {
+  let id = localStorage.getItem('baha_device_id');
+  if (!id) {
+    id = 'dev_' + Date.now().toString(36) + Math.random().toString(36).slice(2);
+    localStorage.setItem('baha_device_id', id);
+  }
+  return id;
+}
+
+// Rate limiting — max 1 report per hour per device
+function canSubmitReport() {
+  const last = localStorage.getItem('baha_last_report');
+  if (!last) return true;
+  const elapsed = Date.now() - parseInt(last);
+  const oneHour = 60 * 60 * 1000;
+  if (elapsed < oneHour) {
+    const minsLeft = Math.ceil((oneHour - elapsed) / 60000);
+    showToast(`⏳ ${currentLang === 'tl'
+      ? `Maaari kang mag-report ulit sa ${minsLeft} minuto`
+      : `You can report again in ${minsLeft} minute${minsLeft > 1 ? 's' : ''}`}`);
+    return false;
+  }
+  return true;
+}
+
+function markReportSubmitted() {
+  localStorage.setItem('baha_last_report', Date.now().toString());
+}
+
+// Get GPS coordinates for report (uses already-detected location if available)
+function getReportCoords() {
+  return new Promise(resolve => {
+    if (userLat && userLng) {
+      resolve({ lat: userLat, lng: userLng });
+      return;
+    }
+    if (!navigator.geolocation) { resolve(null); return; }
+    navigator.geolocation.getCurrentPosition(
+      pos => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+      () => resolve(null),
+      { timeout: 5000, maximumAge: 300000 }
+    );
+  });
+}
+
+// Flag a report as fake/inappropriate
+async function flagReport(id, btn) {
+  if (btn.dataset.flagged) return;
+  btn.dataset.flagged = '1';
+  btn.textContent = '🚩 Flagged';
+  btn.style.color = 'var(--red)';
+
+  // Track flagged reports locally to prevent re-flagging
+  const flagged = JSON.parse(localStorage.getItem('baha_flagged') || '[]');
+  if (flagged.includes(id)) return;
+  flagged.push(id);
+  localStorage.setItem('baha_flagged', JSON.stringify(flagged));
+
+  // Increment flag count in Supabase
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/reports?id=eq.${id}&select=flags`, { headers: sbHeaders });
+    const data = await res.json();
+    const currentFlags = data[0]?.flags || 0;
+    await fetch(`${SUPABASE_URL}/rest/v1/reports?id=eq.${id}`, {
+      method: 'PATCH',
+      headers: sbHeaders,
+      body: JSON.stringify({ flags: currentFlags + 1 })
+    });
+    showToast(currentLang === 'tl'
+      ? '🚩 Na-flag ang ulat. Salamat sa pag-ulat!'
+      : '🚩 Report flagged. Thank you for keeping the app safe!');
+  } catch(e) {
+    console.error('Flag error:', e);
+  }
+}
+function openModal()  { document.getElementById('modalBg').classList.add('show'); }
+function closeModal() { document.getElementById('modalBg').classList.remove('show'); }
+function closeModalOutside(e) { if(e.target===document.getElementById('modalBg')) closeModal(); }
+function pickDepth(el){ document.querySelectorAll('.depth-tile').forEach(d=>d.classList.remove('selected')); el.classList.add('selected'); }
+
+async function submitReport() {
+  // ── RATE LIMIT CHECK ──
+  if (!canSubmitReport()) return;
+
+  const loc   = document.getElementById('repLoc').value.trim() ||
+                document.getElementById('gpsCity')?.textContent?.split(',')[0] || '';
+  const desc  = document.getElementById('repDesc').value.trim();
+  const role  = document.getElementById('repRole').value;
+  const depth = document.querySelector('.depth-tile.selected')?.querySelector('.dl')?.textContent || '';
+  const photoFile = document.getElementById('photoInput').files[0];
+
+  if (!loc) { showToast(t('locationRequired')); return; }
+  if (desc && desc.length < 5) {
+    showToast(currentLang === 'tl'
+      ? '⚠️ Pakigamit ang mas mahabang deskripsyon'
+      : '⚠️ Please write a longer description');
+    return;
+  }
+
+  const btn = document.querySelector('.submit-btn');
+  btn.disabled = true;
+
+  // Get GPS coords silently
+  btn.textContent = '📍 Getting location...';
+  const coords = await getReportCoords();
+
+  // Upload photo if exists
+  let photo_url = null;
+  if (photoFile) {
+    btn.textContent = t('uploadingPhoto');
+    photo_url = await uploadPhoto(photoFile);
+    if (!photo_url) {
+      showToast(t('photoError'));
+      btn.textContent = t('submit');
+      btn.disabled = false;
+      return;
+    }
+  }
+
+  btn.textContent = t('submitting');
+
+  const report = {
+    location: loc, depth, description: desc, role,
+    votes: 0, photo_url, flags: 0,
+    lat:  coords?.lat  || null,
+    lng:  coords?.lng  || null,
+    device_id: getDeviceId()
+  };
+
+  const result = await saveReport(report);
+  btn.textContent = t('submit');
+  btn.disabled = false;
+
+  if (result && result[0]) {
+    markReportSubmitted();
+    closeModal();
+    document.getElementById('repLoc').value = '';
+    document.getElementById('repDesc').value = '';
+    document.querySelectorAll('.depth-tile').forEach(d => d.classList.remove('selected'));
+    removePhoto();
+    showToast(`✅ ${t('submitSuccess')}${photo_url ? ' 📸' : ''}`);
+    // Send push notification to nearby users if critical
+    notifyNearbyUsers({ ...report, lat: coords?.lat, lng: coords?.lng });
+
+    // Drop a temporary pin on the map
+    if (coords) {
+      const pinIcon = L.divIcon({
+        className: '',
+        html: `<div style="background:#ef4444;color:white;border-radius:20px;padding:4px 10px;font-size:11px;font-weight:700;border:2px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.2);white-space:nowrap;">📍 ${loc}</div>`,
+        iconSize: [120, 28], iconAnchor: [60, 14]
+      });
+      const pin = L.marker([coords.lat, coords.lng], { icon: pinIcon }).addTo(map);
+      map.setView([coords.lat, coords.lng], 14, { animate: true });
+      setTimeout(() => map.removeLayer(pin), 10000);
+    }
+
+    const stat = document.getElementById('statReports');
+    const cur = parseInt(stat.textContent.match(/\d+/) || 0);
+    stat.textContent = `📝 ${cur + 1} ${t('reports')}`;
+  } else {
+    showToast('❌ ' + (currentLang === 'tl' ? 'May error. Subukan ulit.' : 'Error saving. Try again.'));
+  }
+}
+
+function showToast(msg){
+  document.getElementById('toastMsg').textContent=msg;
+  const t=document.getElementById('toast'); t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),3500);
+}
+
+// ── POSITION OVERLAYS ──
+function positionOverlays() {
+  const mapEl = document.getElementById('map');
+  if (!mapEl) return;
+  const mapRect = mapEl.getBoundingClientRect();
+  const layerBar = document.getElementById('layerBar');
+  const regionToggle = document.getElementById('regionToggle');
+  if (layerBar) layerBar.style.cssText = `display:flex;position:fixed;top:${mapRect.top + 8}px;left:8px;right:80px;z-index:800;overflow-x:auto;scrollbar-width:none;gap:6px;`;
+  if (regionToggle) regionToggle.style.cssText = `display:flex;flex-direction:column;gap:5px;position:fixed;top:${mapRect.top + 8}px;right:8px;z-index:810;`;
+}
+
+// ── PHOTO FULLSCREEN VIEWER ──
+function openPhotoModal(url) {
+  const overlay = document.createElement('div');
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:3000;display:flex;align-items:center;justify-content:center;padding:20px;';
+  overlay.innerHTML = `
+    <div style="position:relative;max-width:100%;max-height:100%;">
+      <img src="${url}" style="max-width:100%;max-height:85vh;border-radius:12px;object-fit:contain;" />
+      <button onclick="this.closest('div').parentElement.remove()"
+        style="position:absolute;top:-16px;right:-16px;width:36px;height:36px;border-radius:50%;background:white;border:none;font-size:18px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.3);">✕</button>
+    </div>`;
+  overlay.onclick = e => { if(e.target === overlay) overlay.remove(); };
+  document.body.appendChild(overlay);
+}
+
+// ── INIT ──
+async function init() {
+  try {
+    initMap();
+    applyTranslations();
+    initSearch();
+    initNotifications();
+
+    // Show GPS card and auto-detect if already permitted
+    document.getElementById('gpsCard').classList.add('show');
+    if (navigator.permissions) {
+      navigator.permissions.query({ name: 'geolocation' }).then(result => {
+        if (result.state === 'granted') {
+          requestLocation();
+        }
+      });
+    }
+
+    const bar = document.getElementById('refreshBar');
+    if (bar) { bar.style.display='block'; bar.classList.add('loading'); }
+
+    await renderMarkers('all');
+    await updateAlertStrip();
+
+    const now = new Date().toLocaleTimeString('en-PH', {hour:'2-digit', minute:'2-digit'});
+    const sub = document.getElementById('lastUpdated');
+    if (sub) sub.textContent = `Updated ${now} · Live via OpenWeatherMap`;
+
+    if (bar) { bar.classList.add('done'); setTimeout(() => { bar.style.display='none'; }, 500); }
+
+    showToast('✅ Live data na-load na! 🗄️');
+
+    cleanupExpiredPhotos();
+
+    fetchReports().then(reports => {
+      const el = document.getElementById('statReports');
+      if (el && reports) el.textContent = `📝 ${reports.length} ${t("reports")}`;
+    });
+
+    positionOverlays();
+    window.addEventListener('resize', positionOverlays);
+    initNotificationStatus();
+
+    // Init push notifications
+    setTimeout(initNotifications, 2000);
+
+    // Seed initial statuses so we don't fire on first load
+    cities.forEach(c => { previousStatuses[c.name] = c.floodStatus; });
+
+    setInterval(async () => {
+      Object.keys(weatherCache).forEach(k => delete weatherCache[k]);
+      await renderMarkers(currentFilter);
+      await updateAlertStrip();
+      await checkForNewCriticalAlerts();
+      const t = new Date().toLocaleTimeString('en-PH', {hour:'2-digit', minute:'2-digit'});
+      const s = document.getElementById('lastUpdated');
+      if (s) s.textContent = `Updated ${t} · Live via OpenWeatherMap`;
+    }, 600000);
+
+  } catch(err) {
+    console.error('Init error:', err);
+  }
+}
+
+// ── PUSH NOTIFICATIONS ──
+const ONESIGNAL_APP_ID = '2d9ddea7-7c90-464f-9c41-de0976793025';
+let isSubscribed = false;
+
+async function initNotifications() {
+  if (!window.OneSignalDeferred) return;
+  // Check current subscription status
+  OneSignalDeferred.push(async function(OneSignal) {
+    try {
+      const permission = await OneSignal.Notifications.permission;
+      isSubscribed = permission === true;
+      updateNotifButton();
+      // Listen for subscription changes
+      OneSignal.Notifications.addEventListener('permissionChange', (granted) => {
+        isSubscribed = granted;
+        updateNotifButton();
+        if (granted) showToast('🔔 Flood alerts enabled! You'll be notified of critical floods.');
+      });
+    } catch(e) { console.log('OneSignal init error:', e); }
+  });
+}
+
+function updateNotifButton() {
+  const btn = document.getElementById('notifBtn');
+  const txt = document.getElementById('notifBtnText');
+  if (!btn) return;
+  if (isSubscribed) {
+    btn.className = 'notif-btn subscribed';
+    btn.title = 'Notifications on';
+    if (txt) txt.textContent = currentLang === 'tl' ? 'On' : 'On';
+    btn.innerHTML = '🔔 <span>' + (currentLang === 'tl' ? 'Naka-on' : 'Alerts On') + '</span>';
+  } else {
+    btn.className = 'notif-btn';
+    btn.title = 'Get flood alerts';
+    btn.innerHTML = '🔔 <span>' + (currentLang === 'tl' ? 'Alerto' : 'Alerts') + '</span>';
+  }
+}
+
+async function toggleNotifications() {
+  if (!window.OneSignalDeferred) {
+    showToast('⚠️ Notifications not available. Try reinstalling the app.');
+    return;
+  }
+  OneSignalDeferred.push(async function(OneSignal) {
+    try {
+      if (isSubscribed) {
+        await OneSignal.Notifications.requestPermission();
+        showToast(currentLang === 'tl' ? '🔕 Na-disable ang mga alerto' : '🔕 Alerts disabled');
+      } else {
+        const granted = await OneSignal.Notifications.requestPermission();
+        if (granted) {
+          showToast(currentLang === 'tl'
+            ? '🔔 Makakatanggap ka na ng mga alerto ng baha!'
+            : '🔔 You'll now receive flood alerts!');
+        }
+      }
+    } catch(e) {
+      console.error('Toggle notif error:', e);
+      showToast('⚠️ Could not change notification settings');
+    }
+  });
+}
+
+// Send a push notification via our secure Vercel serverless function
+async function sendFloodNotification(city, severity, riverLevel, riverMax) {
+  try {
+    const pct = Math.round(riverLevel / riverMax * 100);
+    const title = severity === 'critical'
+      ? `🚨 CRITICAL FLOOD — ${city.name}`
+      : `⚠️ Flood Warning — ${city.name}`;
+    const body = severity === 'critical'
+      ? `${city.river} is at ${riverLevel}m (${pct}% capacity). Evacuate immediately!`
+      : `${city.river} is at ${riverLevel}m (${pct}% capacity). Stay alert.`;
+
+    await fetch('/api/notify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        title,
+        message: body,
+        severity,
+        area: city.name,
+        url: `https://bahaalert.vercel.app/?city=${encodeURIComponent(city.name)}`
+      })
+    });
+  } catch(e) {
+    console.log('Notification send error:', e);
+  }
+}
+
+// Check if any cities have changed to critical — trigger notification
+let previousStatuses = {};
+async function checkForNewCriticalAlerts() {
+  for (const city of cities) {
+    const prev = previousStatuses[city.name];
+    const curr = city.floodStatus;
+    // If city just became critical (wasn't before), fire notification
+    if (curr === 'critical' && prev !== 'critical' && prev !== undefined) {
+      console.log(`🚨 ${city.name} just went critical — sending notification`);
+      await sendFloodNotification(city, 'critical', city.riverLevel, city.riverMax);
+    } else if (curr === 'warning' && prev === 'normal') {
+      await sendFloodNotification(city, 'warning', city.riverLevel, city.riverMax);
+    }
+    previousStatuses[city.name] = curr;
+  }
+}
+
+
+// ── ONESIGNAL PUSH NOTIFICATIONS ──
+const ONESIGNAL_APP_ID = '2d9ddea7-7c90-464f-9c41-de0976793025';
+let notificationsEnabled = localStorage.getItem('bahaNotif') === 'enabled';
+
+// Init OneSignal after page load
+async function initOneSignal() {
+  try {
+    await window.OneSignal.init({
+      appId: ONESIGNAL_APP_ID,
+      allowLocalhostAsSecureOrigin: true,
+      notifyButton: { enable: false }, // We use our own bell button
+      welcomeNotification: {
+        title: '🌊 BahaAlert',
+        message: 'You will now receive flood alerts for the Philippines!',
+      },
+      promptOptions: {
+        slidedown: {
+          prompts: [{
+            type: 'push',
+            autoPrompt: false,
+            text: {
+              actionMessage: 'Get instant flood alerts for your area.',
+              acceptButton: 'Enable Alerts',
+              cancelButton: 'Later',
+            },
+          }]
+        }
+      }
+    });
+
+    // Check current permission state
+    const permission = await window.OneSignal.Notifications.permission;
+    updateNotifBtn(permission);
+
+    // Listen for permission changes
+    window.OneSignal.Notifications.addEventListener('permissionChange', (granted) => {
+      updateNotifBtn(granted);
+      if (granted) {
+        localStorage.setItem('bahaNotif', 'enabled');
+        notificationsEnabled = true;
+        showToast('🔔 Flood alerts enabled! You'll be notified of critical flooding.');
+      }
+    });
+
+    // Auto-prompt after 10 seconds if never asked
+    const asked = localStorage.getItem('bahaNotifAsked');
+    if (!asked && !notificationsEnabled) {
+      setTimeout(() => {
+        document.getElementById('notifModal').style.display = 'flex';
+      }, 10000);
+    }
+
+  } catch(e) {
+    console.log('OneSignal init error:', e);
+  }
+}
+
+function updateNotifBtn(granted) {
+  const btn = document.getElementById('notifBtn');
+  const dot = document.getElementById('notifDot');
+  if (!btn) return;
+  if (granted) {
+    btn.textContent = '🔔';
+    btn.style.background = 'var(--blue-light)';
+    btn.style.borderColor = 'var(--blue)';
+    if (dot) dot.style.display = 'none';
+  } else {
+    btn.innerHTML = '🔕<span id="notifDot" style="display:block;position:absolute;top:2px;right:2px;width:8px;height:8px;background:var(--red);border-radius:50%;border:1.5px solid white;"></span>';
+  }
+}
+
+async function toggleNotifications() {
+  if (!window.OneSignal) { showToast('⚠️ Notifications not available'); return; }
+  const permission = await window.OneSignal.Notifications.permission;
+  if (permission) {
+    // Already enabled — show status
+    showToast('🔔 Flood alerts are enabled!');
+  } else {
+    // Show our modal
+    document.getElementById('notifModal').style.display = 'flex';
+  }
+}
+
+async function enableNotifications() {
+  closeNotifModal();
+  localStorage.setItem('bahaNotifAsked', '1');
+  try {
+    await window.OneSignal.Notifications.requestPermission();
+  } catch(e) {
+    showToast('⚠️ Could not enable notifications. Please check browser settings.');
+  }
+}
+
+function closeNotifModal() {
+  document.getElementById('notifModal').style.display = 'none';
+  localStorage.setItem('bahaNotifAsked', '1');
+}
+
+// Send a notification via our secure Vercel API
+async function sendFloodNotification(title, message, severity, area) {
+  try {
+    const res = await fetch('/api/notify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title, message, severity, area, url: '/' })
+    });
+    const data = await res.json();
+    if (data.success) console.log(`Notification sent to ${data.recipients} users`);
+    return data;
+  } catch(e) {
+    console.error('Notification send error:', e);
+  }
+}
+
+// Auto-trigger notification when critical flood is detected near user
+async function checkAndNotifyCriticalFlood() {
+  if (!notificationsEnabled) return;
+  if (!userLat || !userLng) return;
+
+  const nearestFlood = findNearestFloodCity(userLat, userLng);
+  if (!nearestFlood) return;
+
+  const dist = haversine(userLat, userLng, nearestFlood.lat, nearestFlood.lng);
+  if (nearestFlood.floodStatus === 'critical' && dist < 30) {
+    const lastNotif = localStorage.getItem('bahaLastCriticalNotif_' + nearestFlood.name);
+    const oneHour = 60 * 60 * 1000;
+    if (lastNotif && Date.now() - parseInt(lastNotif) < oneHour) return; // Don't spam
+
+    localStorage.setItem('bahaLastCriticalNotif_' + nearestFlood.name, Date.now().toString());
+    await sendFloodNotification(
+      '🚨 Critical Flood Alert Near You!',
+      `${nearestFlood.river} in ${nearestFlood.name} has reached critical level — ${dist.toFixed(1)}km from your location. Take precautions immediately.`,
+      'critical',
+      nearestFlood.name
+    );
+  }
+}
+
+// ── ONESIGNAL PUSH NOTIFICATIONS ──
+const ONESIGNAL_APP_ID = '2d9ddea7-7c90-464f-9c41-de0976793025';
+
+async function toggleNotifications() {
+  const btn = document.getElementById('notifBtn');
+
+  // Check if OneSignal is ready
+  if (!window.OneSignal) {
+    showToast('⏳ Loading notification service...');
+    return;
+  }
+
+  try {
+    const permission = await OneSignal.Notifications.permission;
+
+    if (permission) {
+      // Already subscribed — offer to unsubscribe
+      const confirmed = confirm(currentLang === 'tl'
+        ? 'I-off ang flood alert notifications?'
+        : 'Turn off flood alert notifications?');
+      if (confirmed) {
+        await OneSignal.User.PushSubscription.optOut();
+        btn.textContent = '🔔';
+        btn.style.background = 'var(--soft)';
+        btn.title = 'Enable flood alerts';
+        showToast(currentLang === 'tl' ? '🔕 Notifications na-off' : '🔕 Notifications turned off');
+      }
+    } else {
+      // Not subscribed — request permission
+      await OneSignal.Notifications.requestPermission();
+      const granted = await OneSignal.Notifications.permission;
+      if (granted) {
+        // Tag user with their area for targeted notifications
+        if (userLat && userLng) {
+          const nearest = findNearestFloodCity(userLat, userLng);
+          if (nearest) {
+            await OneSignal.User.addTag('area', nearest.region);
+            await OneSignal.User.addTag('city', nearest.name);
+          }
+        }
+        btn.textContent = '🔔';
+        btn.style.background = 'var(--green-light)';
+        btn.style.borderColor = 'var(--green)';
+        btn.title = 'Notifications ON — tap to turn off';
+        showToast(currentLang === 'tl'
+          ? '✅ Makakatanggap ka na ng flood alerts!'
+          : '✅ You will now receive flood alerts!');
+      } else {
+        showToast(currentLang === 'tl'
+          ? '⚠️ I-allow ang notifications sa browser settings'
+          : '⚠️ Please allow notifications in browser settings');
+      }
+    }
+  } catch(err) {
+    console.error('Notification error:', err);
+    showToast('⚠️ Notification error. Try again.');
+  }
+}
+
+// Check notification status on load and update bell icon
+async function initNotificationStatus() {
+  if (!window.OneSignal) return;
+  try {
+    await new Promise(resolve => setTimeout(resolve, 2000)); // wait for SDK
+    const permission = await OneSignal.Notifications.permission;
+    const btn = document.getElementById('notifBtn');
+    if (btn && permission) {
+      btn.textContent = '🔔';
+      btn.style.background = 'var(--green-light)';
+      btn.style.borderColor = 'var(--green)';
+      btn.title = 'Notifications ON — tap to turn off';
+    }
+  } catch(e) {}
+}
+
+// Send a push notification via our secure Vercel API proxy
+async function sendFloodNotification(title, message, severity = 'warning', area = null) {
+  try {
+    const res = await fetch('/api/notify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title, message, severity, area, url: '/' })
+    });
+    const data = await res.json();
+    if (data.success) console.log(`Notification sent to ${data.recipients} users`);
+  } catch(err) {
+    console.error('Failed to send notification:', err);
+  }
+}
+
+// Auto-send notification when a critical report is submitted
+async function notifyNearbyUsers(report) {
+  if (!report.lat || !report.lng) return;
+  const depth = report.depth || '';
+  const isCritical = depth.includes('Chest') || depth.includes('Waist') ||
+                     depth.includes('Dibdib') || depth.includes('Baywang');
+  if (!isCritical) return;
+
+  const title = currentLang === 'tl'
+    ? `🚨 Kritikal na Baha — ${report.location}`
+    : `🚨 Critical Flooding — ${report.location}`;
+  const message = report.description
+    ? `${depth} · ${report.description.slice(0, 80)}`
+    : `${depth} reported near ${report.location}`;
+
+  await sendFloodNotification(title, message, 'critical', report.location);
+}
+
+// ── PWA: SERVICE WORKER ──
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js')
+      .then(reg => console.log('SW registered:', reg.scope))
+      .catch(err => console.log('SW failed:', err));
+  });
+}
+
+// ── PWA: INSTALL PROMPT ──
+let deferredPrompt = null;
+
+// Show notification prompt after 5s if not yet asked
+setTimeout(async () => {
+  if (!window.OneSignal) return;
+  try {
+    const permission = await OneSignal.Notifications.permission;
+    const asked = localStorage.getItem('notifAsked');
+    if (!permission && !asked) {
+      localStorage.setItem('notifAsked', '1');
+      document.getElementById('notifPrompt')?.classList.add('show');
+    }
+  } catch(e) {}
+}, 5000);
+
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredPrompt = e;
+  // Show install banner after 30 seconds if not dismissed
+  const dismissed = localStorage.getItem('installDismissed');
+  if (!dismissed) {
+    setTimeout(() => {
+      document.getElementById('installBanner').style.display = 'block';
+    }, 30000);
+  }
+});
+
+window.addEventListener('appinstalled', () => {
+  deferredPrompt = null;
+  document.getElementById('installBanner').style.display = 'none';
+  showToast('🎉 BahaAlert installed successfully!');
+});
+
+function installApp() {
+  if (deferredPrompt) {
+    deferredPrompt.prompt();
+    deferredPrompt.userChoice.then(choice => {
+      if (choice.outcome === 'accepted') {
+        showToast('🎉 Installing BahaAlert...');
+      }
+      deferredPrompt = null;
+      document.getElementById('installBanner').style.display = 'none';
+    });
+  } else {
+    // iOS fallback instructions
+    showToast('📱 Tap Share → "Add to Home Screen"');
+    dismissInstall();
+  }
+}
+
+function dismissInstall() {
+  document.getElementById('installBanner').style.display = 'none';
+  localStorage.setItem('installDismissed', '1');
+}
+
+// ── PWA: HANDLE SHORTCUTS ──
+const urlParams = new URLSearchParams(window.location.search);
+if (urlParams.get('action') === 'report') {
+  window.addEventListener('load', () => setTimeout(openModal, 1000));
+}
+if (urlParams.get('action') === 'locate') {
+  window.addEventListener('load', () => setTimeout(requestLocation, 1000));
+}
+
+// ── PWA: OFFLINE INDICATOR ──
+window.addEventListener('online',  () => showToast('✅ Back online!'));
+window.addEventListener('offline', () => showToast('⚠️ You are offline. Some features may not work.'));
+function loadScript(src) {
+  return new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    s.src = src; s.onload = resolve; s.onerror = reject;
+    document.head.appendChild(s);
+  });
+}
+
+window.addEventListener('load', async () => {
+  try {
+    await loadScript('https://unpkg.com/leaflet@1.9.4/dist/leaflet.js');
+    await loadScript('https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js');
+    await init();
+    initOneSignal();
+  } catch(e) {
+    console.error('Load error:', e);
+  }
+});
+</script>
+</body>
+</html>
