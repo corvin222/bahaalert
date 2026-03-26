@@ -777,8 +777,8 @@ async function renderMarkers(filter = 'all') {
   const totalCities = filtered.length + phFiltered.length;
   document.getElementById('statCritical').textContent = `🔴 ${critical} ${t("critical")}`;
   document.getElementById('statWarning').textContent  = `🟠 ${warning} ${t("warning")}`;
-  document.getElementById('statNormal').textContent   = `🟢 ${normal} Normal`;
-  document.getElementById('statCities').textContent   = `🌦️ ${totalCities} Lungsod`;
+  document.getElementById('statNormal').textContent   = `🟢 ${normal} ${t("normal")}`;
+  document.getElementById('statCities').textContent   = `🌦️ ${totalCities} ${currentLang === "tl" ? "Lungsod" : "Cities"}`;
 }
 
 // ── WEATHER TILE LAYER ──
@@ -1047,7 +1047,7 @@ function updateGpsCard(cityName, province, nearestCities, nearestFlood, weather)
       : `⚠️ Critical flooding ${floodDist.toFixed(1)}km away`;
   } else if (localStatus === 'warning' && isNearby) {
     status.textContent = currentLang === 'tl'
-      ? `Babala: ${nearestFlood.name} ${floodDist.toFixed(1)}km mula sa iyo`
+      ? `${t('warning')}: ${nearestFlood.name} ${floodDist.toFixed(1)}km ${currentLang === 'tl' ? 'mula sa iyo' : 'away'}`
       : `Warning: ${nearestFlood.name} is ${floodDist.toFixed(1)}km away`;
   } else {
     status.textContent = currentLang === 'tl'
@@ -1407,6 +1407,9 @@ function setLang(lang) {
   currentLang = lang;
   localStorage.setItem('bahaLang', lang);
   applyTranslations();
+  updateAlertStrip();
+  // Re-render GPS card if shown
+  if (userLat && userLng) { const gpsCard = document.getElementById('gpsCard'); if (gpsCard && gpsCard.classList.contains('show')) updateGpsCard('','',null,findNearestFloodCity(userLat,userLng),null); }
   // Refresh open panel if any
   const panel = document.getElementById('sidePanel');
   if (panel && panel.classList.contains('show')) {
@@ -1604,7 +1607,7 @@ async function buildReportsPanel() {
   }
 
   // Update report count badge
-  document.getElementById('statReports').textContent = `📝 ${reports.length} Ulat`;
+  document.getElementById('statReports').textContent = `📝 ${reports.length} ${t("reports")}`;
 
   let html = `<div style="margin-bottom:12px;font-size:12px;color:var(--muted);display:flex;justify-content:space-between;align-items:center;">
     <span>${reports.length} ${currentLang === "tl" ? "ulat mula sa komunidad" : "community reports"}</span>
@@ -1946,7 +1949,7 @@ async function init() {
 
     fetchReports().then(reports => {
       const el = document.getElementById('statReports');
-      if (el && reports) el.textContent = `📝 ${reports.length} Ulat`;
+      if (el && reports) el.textContent = `📝 ${reports.length} ${t("reports")}`;
     });
 
     positionOverlays();
