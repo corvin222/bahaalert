@@ -1,11 +1,11 @@
 <!DOCTYPE html>
-<!-- saved from url=(0067)file:///Users/corvinmeyer/Downloads/flood-dashboard-v5-photo_4.html -->
-<html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-
+<html lang="en">
+<head>
+<meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>BahaAlert — Philippines Flood Monitor</title>
-<link rel="stylesheet" href="./index_files/leaflet.css">
-<link href="./index_files/css2" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Lexend:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root {
     --bg:#f0f4ff; --white:#fff; --border:#e2e8f8;
@@ -222,10 +222,10 @@
   .refresh-bar.loading{display:block;transform:scaleX(0.9);}
   .refresh-bar.done{transform:scaleX(1);}
 </style>
-<script src="./index_files/leaflet.js"></script></head>
-<body class="">
+</head>
+<body>
 
-<div class="refresh-bar loading done" id="refreshBar" style="display: none;"></div>
+<div class="refresh-bar" id="refreshBar"></div>
 
 <!-- HEADER -->
 <div class="header">
@@ -234,99 +234,59 @@
       <div class="logo-icon">🌊</div>
       <div>
         <div class="logo-name">BahaAlert</div>
-        <div class="logo-sub" id="lastUpdated">Updated 01:22 PM · Live via OpenWeatherMap</div>
+        <div class="logo-sub" id="lastUpdated">Nag-a-update...</div>
       </div>
     </div>
     <div class="live-pill"><div class="live-dot"></div>LIVE</div>
   </div>
   <div class="search-bar">
     <span>🔍</span>
-    <input type="text" id="searchInput" placeholder="Hanapin ang iyong barangay o lungsod...">
+    <input type="text" id="searchInput" placeholder="Hanapin ang iyong barangay o lungsod..."/>
   </div>
 </div>
 
 <!-- ALERT STRIP -->
 <div class="alert-strip" id="alertStrip">
   <span>🌧️</span>
-  <span id="alertText">🚨 KRITIKAL: Marikina River (Marikina) — Walang ulan · 3 kritikal na ilog</span>
+  <span id="alertText">Nilo-load ang live weather data...</span>
 </div>
 
 <!-- MAP -->
-<div id="map" class="leaflet-container leaflet-touch leaflet-retina leaflet-fade-anim leaflet-grab leaflet-touch-drag leaflet-touch-zoom" tabindex="0" style="position: relative; outline-style: none;"><div class="leaflet-pane leaflet-map-pane" style="transform: translate3d(-24px, 4.00314px, 0px);"><div class="leaflet-pane leaflet-tile-pane"><div class="leaflet-layer " style="z-index: 1; opacity: 1;"><div class="leaflet-tile-container leaflet-zoom-animated" style="z-index: 19; transform: translate3d(0px, 0px, 0px) scale(1);"><img crossorigin="" alt="" src="./index_files/29@2x.png" class="leaflet-tile leaflet-tile-loaded" style="width: 256px; height: 256px; transform: translate3d(561px, 101px, 0px); opacity: 1;"><img crossorigin="" alt="" src="./index_files/30@2x.png" class="leaflet-tile leaflet-tile-loaded" style="width: 256px; height: 256px; transform: translate3d(561px, 357px, 0px); opacity: 1;"><img crossorigin="" alt="" src="./index_files/29@2x(1).png" class="leaflet-tile leaflet-tile-loaded" style="width: 256px; height: 256px; transform: translate3d(305px, 101px, 0px); opacity: 1;"><img crossorigin="" alt="" src="./index_files/29@2x(2).png" class="leaflet-tile leaflet-tile-loaded" style="width: 256px; height: 256px; transform: translate3d(817px, 101px, 0px); opacity: 1;"><img crossorigin="" alt="" src="./index_files/30@2x(1).png" class="leaflet-tile leaflet-tile-loaded" style="width: 256px; height: 256px; transform: translate3d(305px, 357px, 0px); opacity: 1;"><img crossorigin="" alt="" src="./index_files/30@2x(2).png" class="leaflet-tile leaflet-tile-loaded" style="width: 256px; height: 256px; transform: translate3d(817px, 357px, 0px); opacity: 1;"><img crossorigin="" alt="" src="./index_files/28@2x.png" class="leaflet-tile leaflet-tile-loaded" style="width: 256px; height: 256px; transform: translate3d(561px, -155px, 0px); opacity: 1;"><img crossorigin="" alt="" src="./index_files/31@2x.png" class="leaflet-tile leaflet-tile-loaded" style="width: 256px; height: 256px; transform: translate3d(561px, 613px, 0px); opacity: 1;"><img crossorigin="" alt="" src="./index_files/28@2x(1).png" class="leaflet-tile leaflet-tile-loaded" style="width: 256px; height: 256px; transform: translate3d(305px, -155px, 0px); opacity: 1;"><img crossorigin="" alt="" src="./index_files/28@2x(2).png" class="leaflet-tile leaflet-tile-loaded" style="width: 256px; height: 256px; transform: translate3d(817px, -155px, 0px); opacity: 1;"><img crossorigin="" alt="" src="./index_files/31@2x(1).png" class="leaflet-tile leaflet-tile-loaded" style="width: 256px; height: 256px; transform: translate3d(305px, 613px, 0px); opacity: 1;"><img crossorigin="" alt="" src="./index_files/31@2x(2).png" class="leaflet-tile leaflet-tile-loaded" style="width: 256px; height: 256px; transform: translate3d(817px, 613px, 0px); opacity: 1;"><img crossorigin="" alt="" src="./index_files/29@2x(3).png" class="leaflet-tile leaflet-tile-loaded" style="width: 256px; height: 256px; transform: translate3d(49px, 101px, 0px); opacity: 1;"><img crossorigin="" alt="" src="./index_files/29@2x(4).png" class="leaflet-tile leaflet-tile-loaded" style="width: 256px; height: 256px; transform: translate3d(1073px, 101px, 0px); opacity: 1;"><img crossorigin="" alt="" src="./index_files/30@2x(3).png" class="leaflet-tile leaflet-tile-loaded" style="width: 256px; height: 256px; transform: translate3d(49px, 357px, 0px); opacity: 1;"><img crossorigin="" alt="" src="./index_files/30@2x(4).png" class="leaflet-tile leaflet-tile-loaded" style="width: 256px; height: 256px; transform: translate3d(1073px, 357px, 0px); opacity: 1;"><img crossorigin="" alt="" src="./index_files/28@2x(3).png" class="leaflet-tile leaflet-tile-loaded" style="width: 256px; height: 256px; transform: translate3d(49px, -155px, 0px); opacity: 1;"><img crossorigin="" alt="" src="./index_files/28@2x(4).png" class="leaflet-tile leaflet-tile-loaded" style="width: 256px; height: 256px; transform: translate3d(1073px, -155px, 0px); opacity: 1;"><img crossorigin="" alt="" src="./index_files/31@2x(3).png" class="leaflet-tile leaflet-tile-loaded" style="width: 256px; height: 256px; transform: translate3d(49px, 613px, 0px); opacity: 1;"><img crossorigin="" alt="" src="./index_files/31@2x(4).png" class="leaflet-tile leaflet-tile-loaded" style="width: 256px; height: 256px; transform: translate3d(1073px, 613px, 0px); opacity: 1;"><img crossorigin="" alt="" src="./index_files/29@2x(5).png" class="leaflet-tile leaflet-tile-loaded" style="width: 256px; height: 256px; transform: translate3d(-207px, 101px, 0px); opacity: 1;"><img crossorigin="" alt="" src="./index_files/29@2x(6).png" class="leaflet-tile leaflet-tile-loaded" style="width: 256px; height: 256px; transform: translate3d(1329px, 101px, 0px); opacity: 1;"><img crossorigin="" alt="" src="./index_files/30@2x(5).png" class="leaflet-tile leaflet-tile-loaded" style="width: 256px; height: 256px; transform: translate3d(-207px, 357px, 0px); opacity: 1;"><img crossorigin="" alt="" src="./index_files/30@2x(6).png" class="leaflet-tile leaflet-tile-loaded" style="width: 256px; height: 256px; transform: translate3d(1329px, 357px, 0px); opacity: 1;"><img crossorigin="" alt="" src="./index_files/28@2x(5).png" class="leaflet-tile leaflet-tile-loaded" style="width: 256px; height: 256px; transform: translate3d(-207px, -155px, 0px); opacity: 1;"><img crossorigin="" alt="" src="./index_files/28@2x(6).png" class="leaflet-tile leaflet-tile-loaded" style="width: 256px; height: 256px; transform: translate3d(1329px, -155px, 0px); opacity: 1;"><img crossorigin="" alt="" src="./index_files/31@2x(5).png" class="leaflet-tile leaflet-tile-loaded" style="width: 256px; height: 256px; transform: translate3d(-207px, 613px, 0px); opacity: 1;"><img crossorigin="" alt="" src="./index_files/31@2x(6).png" class="leaflet-tile leaflet-tile-loaded" style="width: 256px; height: 256px; transform: translate3d(1329px, 613px, 0px); opacity: 1;"></div></div></div><div class="leaflet-pane leaflet-overlay-pane"></div><div class="leaflet-pane leaflet-shadow-pane"></div><div class="leaflet-pane leaflet-marker-pane"><div class="leaflet-marker-icon leaflet-zoom-animated leaflet-interactive" tabindex="0" role="button" style="margin-left: -18px; margin-top: -18px; width: 36px; height: 36px; transform: translate3d(697px, 195px, 0px); z-index: 195;"><div style="width:36px;height:36px;border-radius:50%;background:#ef4444;
-          display:flex;align-items:center;justify-content:center;font-size:16px;
-          border:3px solid white;box-shadow:0 3px 10px rgba(0,0,0,0.2);animation:pinPulse 1.5s infinite;">🚨</div></div><div class="leaflet-marker-icon leaflet-zoom-animated leaflet-interactive" tabindex="0" role="button" style="margin-left: -18px; margin-top: -18px; width: 36px; height: 36px; transform: translate3d(691px, 197px, 0px); z-index: 197;"><div style="width:36px;height:36px;border-radius:50%;background:#f97316;
-          display:flex;align-items:center;justify-content:center;font-size:16px;
-          border:3px solid white;box-shadow:0 3px 10px rgba(0,0,0,0.2);">⚠️</div></div><div class="leaflet-marker-icon leaflet-zoom-animated leaflet-interactive" tabindex="0" role="button" style="margin-left: -18px; margin-top: -18px; width: 36px; height: 36px; transform: translate3d(691px, 191px, 0px); z-index: 191;"><div style="width:36px;height:36px;border-radius:50%;background:#ef4444;
-          display:flex;align-items:center;justify-content:center;font-size:16px;
-          border:3px solid white;box-shadow:0 3px 10px rgba(0,0,0,0.2);animation:pinPulse 1.5s infinite;">🚨</div></div><div class="leaflet-marker-icon leaflet-zoom-animated leaflet-interactive" tabindex="0" role="button" style="margin-left: -18px; margin-top: -18px; width: 36px; height: 36px; transform: translate3d(694px, 194px, 0px); z-index: 194;"><div style="width:36px;height:36px;border-radius:50%;background:#f97316;
-          display:flex;align-items:center;justify-content:center;font-size:16px;
-          border:3px solid white;box-shadow:0 3px 10px rgba(0,0,0,0.2);">⚠️</div></div><div class="leaflet-marker-icon leaflet-zoom-animated leaflet-interactive" tabindex="0" role="button" style="margin-left: -18px; margin-top: -18px; width: 36px; height: 36px; transform: translate3d(696px, 198px, 0px); z-index: 198;"><div style="width:36px;height:36px;border-radius:50%;background:#22c55e;
-          display:flex;align-items:center;justify-content:center;font-size:16px;
-          border:3px solid white;box-shadow:0 3px 10px rgba(0,0,0,0.2);">✅</div></div><div class="leaflet-marker-icon leaflet-zoom-animated leaflet-interactive" tabindex="0" role="button" style="margin-left: -18px; margin-top: -18px; width: 36px; height: 36px; transform: translate3d(725px, 54px, 0px); z-index: 54;"><div style="width:36px;height:36px;border-radius:50%;background:#f97316;
-          display:flex;align-items:center;justify-content:center;font-size:16px;
-          border:3px solid white;box-shadow:0 3px 10px rgba(0,0,0,0.2);">⚠️</div></div><div class="leaflet-marker-icon leaflet-zoom-animated leaflet-interactive" tabindex="0" role="button" style="margin-left: -18px; margin-top: -18px; width: 36px; height: 36px; transform: translate3d(678px, 177px, 0px); z-index: 177;"><div style="width:36px;height:36px;border-radius:50%;background:#f97316;
-          display:flex;align-items:center;justify-content:center;font-size:16px;
-          border:3px solid white;box-shadow:0 3px 10px rgba(0,0,0,0.2);">⚠️</div></div><div class="leaflet-marker-icon leaflet-zoom-animated leaflet-interactive" tabindex="0" role="button" style="margin-left: -18px; margin-top: -18px; width: 36px; height: 36px; transform: translate3d(792px, 243px, 0px); z-index: 243;"><div style="width:36px;height:36px;border-radius:50%;background:#f97316;
-          display:flex;align-items:center;justify-content:center;font-size:16px;
-          border:3px solid white;box-shadow:0 3px 10px rgba(0,0,0,0.2);">⚠️</div></div><div class="leaflet-marker-icon leaflet-zoom-animated leaflet-interactive" tabindex="0" role="button" style="margin-left: -18px; margin-top: -18px; width: 36px; height: 36px; transform: translate3d(817px, 266px, 0px); z-index: 266;"><div style="width:36px;height:36px;border-radius:50%;background:#22c55e;
-          display:flex;align-items:center;justify-content:center;font-size:16px;
-          border:3px solid white;box-shadow:0 3px 10px rgba(0,0,0,0.2);">✅</div></div><div class="leaflet-marker-icon leaflet-zoom-animated leaflet-interactive" tabindex="0" role="button" style="margin-left: -18px; margin-top: -18px; width: 36px; height: 36px; transform: translate3d(662px, 129px, 0px); z-index: 129;"><div style="width:36px;height:36px;border-radius:50%;background:#22c55e;
-          display:flex;align-items:center;justify-content:center;font-size:16px;
-          border:3px solid white;box-shadow:0 3px 10px rgba(0,0,0,0.2);">✅</div></div><div class="leaflet-marker-icon leaflet-zoom-animated leaflet-interactive" tabindex="0" role="button" style="margin-left: -18px; margin-top: -18px; width: 36px; height: 36px; transform: translate3d(823px, 397px, 0px); z-index: 397;"><div style="width:36px;height:36px;border-radius:50%;background:#22c55e;
-          display:flex;align-items:center;justify-content:center;font-size:16px;
-          border:3px solid white;box-shadow:0 3px 10px rgba(0,0,0,0.2);">✅</div></div><div class="leaflet-marker-icon leaflet-zoom-animated leaflet-interactive" tabindex="0" role="button" style="margin-left: -18px; margin-top: -18px; width: 36px; height: 36px; transform: translate3d(763px, 378px, 0px); z-index: 378;"><div style="width:36px;height:36px;border-radius:50%;background:#f97316;
-          display:flex;align-items:center;justify-content:center;font-size:16px;
-          border:3px solid white;box-shadow:0 3px 10px rgba(0,0,0,0.2);">⚠️</div></div><div class="leaflet-marker-icon leaflet-zoom-animated leaflet-interactive" tabindex="0" role="button" style="margin-left: -18px; margin-top: -18px; width: 36px; height: 36px; transform: translate3d(874px, 353px, 0px); z-index: 353;"><div style="width:36px;height:36px;border-radius:50%;background:#ef4444;
-          display:flex;align-items:center;justify-content:center;font-size:16px;
-          border:3px solid white;box-shadow:0 3px 10px rgba(0,0,0,0.2);animation:pinPulse 1.5s infinite;">🚨</div></div><div class="leaflet-marker-icon leaflet-zoom-animated leaflet-interactive" tabindex="0" role="button" style="margin-left: -18px; margin-top: -18px; width: 36px; height: 36px; transform: translate3d(781px, 380px, 0px); z-index: 380;"><div style="width:36px;height:36px;border-radius:50%;background:#22c55e;
-          display:flex;align-items:center;justify-content:center;font-size:16px;
-          border:3px solid white;box-shadow:0 3px 10px rgba(0,0,0,0.2);">✅</div></div><div class="leaflet-marker-icon leaflet-zoom-animated leaflet-interactive" tabindex="0" role="button" style="margin-left: -18px; margin-top: -18px; width: 36px; height: 36px; transform: translate3d(901px, 547px, 0px); z-index: 547;"><div style="width:36px;height:36px;border-radius:50%;background:#22c55e;
-          display:flex;align-items:center;justify-content:center;font-size:16px;
-          border:3px solid white;box-shadow:0 3px 10px rgba(0,0,0,0.2);">✅</div></div><div class="leaflet-marker-icon leaflet-zoom-animated leaflet-interactive" tabindex="0" role="button" style="margin-left: -18px; margin-top: -18px; width: 36px; height: 36px; transform: translate3d(858px, 482px, 0px); z-index: 482;"><div style="width:36px;height:36px;border-radius:50%;background:#f97316;
-          display:flex;align-items:center;justify-content:center;font-size:16px;
-          border:3px solid white;box-shadow:0 3px 10px rgba(0,0,0,0.2);">⚠️</div></div><div class="leaflet-marker-icon leaflet-zoom-animated leaflet-interactive" tabindex="0" role="button" style="margin-left: -18px; margin-top: -18px; width: 36px; height: 36px; transform: translate3d(839px, 540px, 0px); z-index: 540;"><div style="width:36px;height:36px;border-radius:50%;background:#f97316;
-          display:flex;align-items:center;justify-content:center;font-size:16px;
-          border:3px solid white;box-shadow:0 3px 10px rgba(0,0,0,0.2);">⚠️</div></div><div class="leaflet-marker-icon leaflet-zoom-animated leaflet-interactive" tabindex="0" role="button" style="margin-left: -18px; margin-top: -18px; width: 36px; height: 36px; transform: translate3d(898px, 460px, 0px); z-index: 460;"><div style="width:36px;height:36px;border-radius:50%;background:#f97316;
-          display:flex;align-items:center;justify-content:center;font-size:16px;
-          border:3px solid white;box-shadow:0 3px 10px rgba(0,0,0,0.2);">⚠️</div></div><div class="leaflet-marker-icon leaflet-zoom-animated leaflet-interactive" tabindex="0" role="button" style="margin-left: -18px; margin-top: -18px; width: 36px; height: 36px; transform: translate3d(741px, 553px, 0px); z-index: 553;"><div style="width:36px;height:36px;border-radius:50%;background:#22c55e;
-          display:flex;align-items:center;justify-content:center;font-size:16px;
-          border:3px solid white;box-shadow:0 3px 10px rgba(0,0,0,0.2);">✅</div></div><div class="leaflet-marker-icon leaflet-zoom-animated leaflet-interactive" tabindex="0" role="button" style="margin-left: -18px; margin-top: -18px; width: 36px; height: 36px; transform: translate3d(882px, 590px, 0px); z-index: 590;"><div style="width:36px;height:36px;border-radius:50%;background:#22c55e;
-          display:flex;align-items:center;justify-content:center;font-size:16px;
-          border:3px solid white;box-shadow:0 3px 10px rgba(0,0,0,0.2);">✅</div></div></div><div class="leaflet-pane leaflet-tooltip-pane"></div><div class="leaflet-pane leaflet-popup-pane"></div><div class="leaflet-proxy leaflet-zoom-animated" style="transform: translate3d(13791.5px, 7638px, 0px) scale(32);"></div></div><div class="leaflet-control-container"><div class="leaflet-top leaflet-left"><div class="leaflet-control-zoom leaflet-bar leaflet-control"><a class="leaflet-control-zoom-in" href="file:///Users/corvinmeyer/Downloads/flood-dashboard-v5-photo_4.html#" title="Zoom in" role="button" aria-label="Zoom in" aria-disabled="false"><span aria-hidden="true">+</span></a><a class="leaflet-control-zoom-out" href="file:///Users/corvinmeyer/Downloads/flood-dashboard-v5-photo_4.html#" title="Zoom out" role="button" aria-label="Zoom out" aria-disabled="false"><span aria-hidden="true">−</span></a></div></div><div class="leaflet-top leaflet-right"></div><div class="leaflet-bottom leaflet-left"></div><div class="leaflet-bottom leaflet-right"><div class="leaflet-control-attribution leaflet-control"><a href="https://leafletjs.com/" title="A JavaScript library for interactive maps"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="12" height="8" viewBox="0 0 12 8" class="leaflet-attribution-flag"><path fill="#4C7BE1" d="M0 0h12v4H0z"></path><path fill="#FFD500" d="M0 4h12v3H0z"></path><path fill="#E0BC00" d="M0 7h12v1H0z"></path></svg> Leaflet</a> <span aria-hidden="true">|</span> © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> © <a href="https://carto.com/">CARTO</a></div></div></div></div>
+<div id="map"></div>
 
 <!-- LAYER BAR (over map) -->
-<div class="layer-bar" id="layerBar" style="display: flex; position: fixed; top: 158.5px; left: 8px; right: 80px; z-index: 800; overflow-x: auto; scrollbar-width: none; gap: 6px;">
-  <button class="layer-btn active" onclick="switchLayer(this,&#39;flood&#39;)">🌊 Flood Points</button>
-  <button class="layer-btn" onclick="switchLayer(this,&#39;rain&#39;)">🌧️ Rainfall</button>
-  <button class="layer-btn" onclick="switchLayer(this,&#39;wind&#39;)">💨 Hangin</button>
-  <button class="layer-btn" onclick="switchLayer(this,&#39;temp&#39;)">🌡️ Temperatura</button>
-  <button class="layer-btn" onclick="switchLayer(this,&#39;cloud&#39;)">☁️ Ulap</button>
+<div class="layer-bar" id="layerBar" style="display:none;">
+  <button class="layer-btn active" onclick="switchLayer(this,'flood')">🌊 Flood Points</button>
+  <button class="layer-btn" onclick="switchLayer(this,'rain')">🌧️ Rainfall</button>
+  <button class="layer-btn" onclick="switchLayer(this,'wind')">💨 Hangin</button>
+  <button class="layer-btn" onclick="switchLayer(this,'temp')">🌡️ Temperatura</button>
+  <button class="layer-btn" onclick="switchLayer(this,'cloud')">☁️ Ulap</button>
 </div>
 
 <!-- STATS BAR -->
 <div class="stats-bar" id="statsBar">
-  <div class="stat-chip red" id="statCritical">🔴 3 Kritikal</div>
-  <div class="stat-chip orange" id="statWarning">🟠 9 Babala</div>
-  <div class="stat-chip green" id="statNormal">🟢 8 Normal</div>
-  <div class="stat-chip blue" id="statCities">🌦️ 20 Lungsod</div>
-  <div class="stat-chip blue" id="statReports">📝 1 Ulat</div>
+  <div class="stat-chip red" id="statCritical">🔴 —</div>
+  <div class="stat-chip orange" id="statWarning">🟠 —</div>
+  <div class="stat-chip green" id="statNormal">🟢 —</div>
+  <div class="stat-chip blue" id="statCities">🌦️ —</div>
+  <div class="stat-chip blue" id="statReports">📝 — Ulat</div>
 </div>
 
 <!-- REGION FILTER -->
-<div class="region-toggle" id="regionToggle" style="display: flex; flex-direction: column; gap: 5px; position: fixed; top: 158.5px; right: 8px; z-index: 810;">
-  <button class="toggle-btn active" onclick="filterRegion(this,&#39;all&#39;)">🇵🇭 Lahat</button>
-  <button class="toggle-btn" onclick="filterRegion(this,&#39;ncr&#39;)">Metro Manila</button>
-  <button class="toggle-btn" onclick="filterRegion(this,&#39;luzon&#39;)">Luzon</button>
-  <button class="toggle-btn" onclick="filterRegion(this,&#39;visayas&#39;)">Visayas</button>
-  <button class="toggle-btn" onclick="filterRegion(this,&#39;mindanao&#39;)">Mindanao</button>
+<div class="region-toggle" id="regionToggle" style="display:none;">
+  <button class="toggle-btn active" onclick="filterRegion(this,'all')">🇵🇭 Lahat</button>
+  <button class="toggle-btn" onclick="filterRegion(this,'ncr')">Metro Manila</button>
+  <button class="toggle-btn" onclick="filterRegion(this,'luzon')">Luzon</button>
+  <button class="toggle-btn" onclick="filterRegion(this,'visayas')">Visayas</button>
+  <button class="toggle-btn" onclick="filterRegion(this,'mindanao')">Mindanao</button>
 </div>
 
 <!-- WEATHER LEGEND -->
 <div class="weather-legend" id="weatherLegend">
   <div class="legend-title">🌧️ Ulan (mm/hr)</div>
-  <div class="legend-row"><div class="legend-dot" style="background:#ef4444"></div>Malakas (&gt;10mm)</div>
+  <div class="legend-row"><div class="legend-dot" style="background:#ef4444"></div>Malakas (>10mm)</div>
   <div class="legend-row"><div class="legend-dot" style="background:#f97316"></div>Katamtaman (2–10mm)</div>
-  <div class="legend-row"><div class="legend-dot" style="background:#3b82f6"></div>Magaan (&lt;2mm)</div>
+  <div class="legend-row"><div class="legend-dot" style="background:#3b82f6"></div>Magaan (<2mm)</div>
   <div class="legend-row"><div class="legend-dot" style="background:#22c55e"></div>Walang ulan</div>
 </div>
 
@@ -335,10 +295,10 @@
 
 <!-- BOTTOM NAV -->
 <div class="bottom-nav">
-  <div class="nav-item active" onclick="switchNav(this,&#39;map&#39;)"><div class="nav-icon">🗺️</div>Mapa</div>
-  <div class="nav-item" onclick="switchNav(this,&#39;weather&#39;)"><div class="nav-icon">🌦️</div>Panahon</div>
-  <div class="nav-item" onclick="switchNav(this,&#39;reports&#39;)"><div class="nav-icon">📣</div>Ulat</div>
-  <div class="nav-item" onclick="switchNav(this,&#39;evac&#39;)"><div class="nav-icon">🏫</div>Evacuation</div>
+  <div class="nav-item active" onclick="switchNav(this,'map')"><div class="nav-icon">🗺️</div>Mapa</div>
+  <div class="nav-item" onclick="switchNav(this,'weather')"><div class="nav-icon">🌦️</div>Panahon</div>
+  <div class="nav-item" onclick="switchNav(this,'reports')"><div class="nav-icon">📣</div>Ulat</div>
+  <div class="nav-item" onclick="switchNav(this,'evac')"><div class="nav-icon">🏫</div>Evacuation</div>
 </div>
 
 <!-- SIDE PANEL -->
@@ -371,13 +331,14 @@
 
     <div class="form-field">
       <label>📸 Kunan ng larawan (mabubura pagkatapos ng 48 oras)</label>
-      <div id="photoUploadArea" onclick="document.getElementById(&#39;photoInput&#39;).click()" style="border:2px dashed var(--border);border-radius:12px;padding:20px;text-align:center;cursor:pointer;background:var(--soft);transition:all 0.2s;">
+      <div id="photoUploadArea" onclick="document.getElementById('photoInput').click()"
+        style="border:2px dashed var(--border);border-radius:12px;padding:20px;text-align:center;cursor:pointer;background:var(--soft);transition:all 0.2s;">
         <div id="photoPlaceholder">
           <div style="font-size:28px;margin-bottom:6px;">📷</div>
           <div style="font-size:13px;font-weight:600;color:var(--muted);">I-tap para mag-upload ng larawan</div>
           <div style="font-size:11px;color:var(--muted);margin-top:3px;">JPG, PNG · Max 5MB · Mabubura pagkatapos ng 48h</div>
         </div>
-        <img id="photoPreview" style="display:none;width:100%;border-radius:8px;max-height:180px;object-fit:cover;">
+        <img id="photoPreview" style="display:none;width:100%;border-radius:8px;max-height:180px;object-fit:cover;" />
       </div>
       <input type="file" id="photoInput" accept="image/*" style="display:none;" onchange="previewPhoto(this)">
       <button id="removePhotoBtn" onclick="removePhoto()" style="display:none;margin-top:8px;background:var(--red-light);color:var(--red);border:none;border-radius:8px;padding:5px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:Lexend,sans-serif;">✕ Alisin ang larawan</button>
@@ -397,7 +358,7 @@
 </div>
 
 <!-- TOAST -->
-<div class="toast" id="toast">✅ <span id="toastMsg">✅ Live data na-load na! 🗄️</span></div>
+<div class="toast" id="toast">✅ <span id="toastMsg"></span></div>
 
 <script>
 const API_KEY = '751e43c3eba5e441f025126d4252c4fc';
@@ -444,11 +405,9 @@ function initMap() {
     zoomControl: false, attributionControl: true
   });
 
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-    attribution:'© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> © <a href="https://carto.com/">CARTO</a>',
-    subdomains: 'abcd',
-    maxZoom: 19,
-    crossOrigin: true
+  L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
+    attribution:'© Esri © OpenStreetMap contributors',
+    maxZoom: 19
   }).addTo(map);
 
   L.control.zoom({ position:'topleft' }).addTo(map);
@@ -1165,6 +1124,5 @@ window.addEventListener('load', async () => {
   }
 });
 </script>
-
-
-</body></html>
+</body>
+</html>
