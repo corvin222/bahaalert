@@ -235,6 +235,32 @@
   .marker-cluster-large { background:rgba(239,68,68,0.15)!important; }
   .marker-cluster-large div { background:rgba(239,68,68,0.6)!important; }
 
+  /* GPS LOCATION CARD */
+  .gps-card{background:var(--white);border-bottom:1px solid var(--border);padding:10px 16px;flex-shrink:0;display:none;animation:slideDown 0.3s ease;}
+  .gps-card.show{display:block;}
+  @keyframes slideDown{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:none}}
+  .gps-inner{display:flex;align-items:center;gap:10px;}
+  .gps-icon{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+  .gps-icon.safe{background:var(--green-light);}
+  .gps-icon.warning{background:var(--orange-light);}
+  .gps-icon.critical{background:var(--red-light);}
+  .gps-icon.loading{background:var(--blue-light);}
+  .gps-info{flex:1;min-width:0;}
+  .gps-city{font-size:13px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .gps-status{font-size:11px;color:var(--muted);margin-top:1px;}
+  .gps-chips{display:flex;gap:5px;margin-top:6px;flex-wrap:wrap;}
+  .gps-chip{font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;white-space:nowrap;}
+  .gps-chip.safe{background:var(--green-light);color:var(--green);}
+  .gps-chip.warning{background:var(--orange-light);color:var(--orange);}
+  .gps-chip.critical{background:var(--red-light);color:var(--red);}
+  .gps-chip.info{background:var(--blue-light);color:var(--blue);}
+  .gps-btn{background:var(--blue-light);color:var(--blue);border:none;border-radius:8px;padding:6px 10px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Lexend',sans-serif;flex-shrink:0;white-space:nowrap;}
+  .gps-btn.located{background:var(--green-light);color:var(--green);}
+
+  /* USER LOCATION MARKER */
+  .user-location-marker{width:20px;height:20px;border-radius:50%;background:#2563eb;border:3px solid white;box-shadow:0 0 0 4px rgba(37,99,235,0.25);animation:userPulse 2s infinite;}
+  @keyframes userPulse{0%,100%{box-shadow:0 0 0 4px rgba(37,99,235,0.25)}50%{box-shadow:0 0 0 8px rgba(37,99,235,0)}}
+
   /* SEARCH DROPDOWN */
   .search-item{padding:10px 16px;cursor:pointer;border-bottom:0.5px solid var(--border);transition:background 0.15s;}
   .search-item:last-child{border-bottom:none;}
@@ -297,6 +323,19 @@
 <div class="alert-strip" id="alertStrip">
   <span>🌧️</span>
   <span id="alertText">Loading live weather data...</span>
+</div>
+
+<!-- GPS LOCATION CARD -->
+<div class="gps-card" id="gpsCard">
+  <div class="gps-inner">
+    <div class="gps-icon loading" id="gpsIcon">📍</div>
+    <div class="gps-info">
+      <div class="gps-city" id="gpsCity">Detecting your location...</div>
+      <div class="gps-status" id="gpsStatus">Please allow location access</div>
+      <div class="gps-chips" id="gpsChips"></div>
+    </div>
+    <button class="gps-btn" id="gpsBtn" onclick="requestLocation()">📍 Locate me</button>
+  </div>
 </div>
 
 <!-- MAP -->
@@ -818,6 +857,197 @@ function initSearch() {
     }
     if (e.key === 'Enter' && active) { active.click(); }
   });
+}
+
+// ── GPS LOCATION DETECTION ──
+let userLocationMarker = null;
+let userLat = null, userLng = null;
+
+function requestLocation() {
+  const card = document.getElementById('gpsCard');
+  const btn  = document.getElementById('gpsBtn');
+  const city = document.getElementById('gpsCity');
+  const status = document.getElementById('gpsStatus');
+  const icon = document.getElementById('gpsIcon');
+
+  card.classList.add('show');
+  city.textContent = currentLang === 'tl' ? 'Hinahanap ang iyong lokasyon...' : 'Finding your location...';
+  status.textContent = currentLang === 'tl' ? 'Sandali lang...' : 'Please wait...';
+  btn.textContent = '⏳';
+  btn.disabled = true;
+
+  if (!navigator.geolocation) {
+    city.textContent = currentLang === 'tl' ? 'Hindi sinusuportahan' : 'Not supported';
+    status.textContent = currentLang === 'tl' ? 'Hindi available sa iyong browser' : 'Geolocation not available in your browser';
+    btn.textContent = '❌'; btn.disabled = false;
+    return;
+  }
+
+  navigator.geolocation.getCurrentPosition(
+    pos => onLocationSuccess(pos.coords.latitude, pos.coords.longitude),
+    err => onLocationError(err),
+    { enableHighAccuracy: true, timeout: 10000, maximumAge: 300000 }
+  );
+}
+
+async function onLocationSuccess(lat, lng) {
+  userLat = lat; userLng = lng;
+
+  // Place user marker on map
+  placeUserMarker(lat, lng);
+
+  // Reverse geocode using OpenWeatherMap
+  let cityName = 'Your Location';
+  let provinceName = '';
+  try {
+    const res = await fetch(
+      `https://api.openweathermap.org/geo/1.0/reverse?lat=${lat}&lon=${lng}&limit=1&appid=${API_KEY}`
+    );
+    const data = await res.json();
+    if (data && data[0]) {
+      cityName = data[0].name || 'Your Location';
+      provinceName = data[0].state || '';
+    }
+  } catch(e) {}
+
+  // Find nearest PH city from our database
+  const nearest = findNearestCities(lat, lng, 5);
+
+  // Find nearest flood sensor city
+  const nearestFlood = findNearestFloodCity(lat, lng);
+
+  // Get weather for user location
+  const weather = await fetchWeather({ lat, lng, name: cityName });
+
+  // Update GPS card
+  updateGpsCard(cityName, provinceName, nearest, nearestFlood, weather);
+
+  // Pan map to user location
+  map.setView([lat, lng], 12, { animate: true });
+
+  // Auto-fill location in report form
+  const repLoc = document.getElementById('repLoc');
+  if (repLoc && !repLoc.value) repLoc.value = cityName;
+
+  showToast(`📍 ${currentLang === 'tl' ? 'Nahanap ka na!' : 'Location found!'} ${cityName}`);
+}
+
+function onLocationError(err) {
+  const btn = document.getElementById('gpsBtn');
+  const city = document.getElementById('gpsCity');
+  const status = document.getElementById('gpsStatus');
+  const msgs = {
+    1: { en: 'Location access denied', tl: 'Hindi pinayagan ang lokasyon' },
+    2: { en: 'Location unavailable', tl: 'Hindi ma-detect ang lokasyon' },
+    3: { en: 'Request timed out', tl: 'Nag-timeout ang request' },
+  };
+  const msg = msgs[err.code] || { en: 'Location error', tl: 'Error sa lokasyon' };
+  city.textContent = msg[currentLang] || msg.en;
+  status.textContent = currentLang === 'tl' ? 'I-try ulit' : 'Tap to try again';
+  btn.textContent = '🔄 Retry'; btn.disabled = false;
+  btn.onclick = requestLocation;
+}
+
+function placeUserMarker(lat, lng) {
+  if (userLocationMarker) map.removeLayer(userLocationMarker);
+  const icon = L.divIcon({
+    className: '',
+    html: `<div class="user-location-marker"></div>`,
+    iconSize: [20, 20], iconAnchor: [10, 10], popupAnchor: [0, -14]
+  });
+  userLocationMarker = L.marker([lat, lng], { icon, zIndexOffset: 2000 });
+  userLocationMarker.bindPopup(`
+    <div class="popup-inner">
+      <div class="popup-title">📍 ${currentLang === 'tl' ? 'Ikaw ay narito' : 'You are here'}</div>
+      <div class="popup-region" style="margin-top:4px;">${currentLang === 'tl' ? 'Iyong kasalukuyang lokasyon' : 'Your current location'}</div>
+    </div>`);
+  userLocationMarker.addTo(map);
+}
+
+// Find N nearest cities from our full PH database
+function findNearestCities(lat, lng, n = 3) {
+  return PH_CITIES
+    .map(c => ({ ...c, dist: haversine(lat, lng, c.lat, c.lng) }))
+    .sort((a, b) => a.dist - b.dist)
+    .slice(0, n);
+}
+
+// Find nearest flood sensor city
+function findNearestFloodCity(lat, lng) {
+  return cities
+    .map(c => ({ ...c, dist: haversine(lat, lng, c.lat, c.lng) }))
+    .sort((a, b) => a.dist - b.dist)[0];
+}
+
+// Haversine distance in km
+function haversine(lat1, lng1, lat2, lng2) {
+  const R = 6371;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLng = (lng2 - lng1) * Math.PI / 180;
+  const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180) * Math.cos(lat2*Math.PI/180) * Math.sin(dLng/2)**2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
+
+function updateGpsCard(cityName, province, nearestCities, nearestFlood, weather) {
+  const icon  = document.getElementById('gpsIcon');
+  const city  = document.getElementById('gpsCity');
+  const status = document.getElementById('gpsStatus');
+  const chips = document.getElementById('gpsChips');
+  const btn   = document.getElementById('gpsBtn');
+
+  // Determine local flood status
+  const floodDist = nearestFlood ? haversine(userLat, userLng, nearestFlood.lat, nearestFlood.lng) : 999;
+  const floodStatus = nearestFlood?.floodStatus || 'normal';
+  const isNearby = floodDist < 30;
+  const localStatus = isNearby ? floodStatus : 'normal';
+
+  // Update icon
+  icon.className = `gps-icon ${localStatus}`;
+  icon.textContent = localStatus === 'critical' ? '🚨' : localStatus === 'warning' ? '⚠️' : '📍';
+
+  // City name
+  city.textContent = province ? `${cityName}, ${province}` : cityName;
+
+  // Status text
+  if (localStatus === 'critical' && isNearby) {
+    status.textContent = currentLang === 'tl'
+      ? `⚠️ May kritikal na baha ${floodDist.toFixed(1)}km mula sa iyo`
+      : `⚠️ Critical flooding ${floodDist.toFixed(1)}km away`;
+  } else if (localStatus === 'warning' && isNearby) {
+    status.textContent = currentLang === 'tl'
+      ? `Babala: ${nearestFlood.name} ${floodDist.toFixed(1)}km mula sa iyo`
+      : `Warning: ${nearestFlood.name} is ${floodDist.toFixed(1)}km away`;
+  } else {
+    status.textContent = currentLang === 'tl'
+      ? '✅ Walang aktibong baha malapit sa iyo'
+      : '✅ No active flooding near you';
+  }
+
+  // Chips
+  const rain = safeRain(weather);
+  const temp = weather?.main?.temp ? Math.round(weather.main.temp) + '°C' : '';
+  const ri = rainInfo(rain);
+  let chipsHTML = '';
+
+  if (temp) chipsHTML += `<span class="gps-chip info">🌡️ ${temp}</span>`;
+  if (rain > 0) chipsHTML += `<span class="gps-chip warning">${ri.emoji} ${rain.toFixed(1)}mm/hr</span>`;
+  else chipsHTML += `<span class="gps-chip safe">☀️ ${currentLang === 'tl' ? 'Walang ulan' : 'No rain'}</span>`;
+
+  if (isNearby && nearestFlood) {
+    const statusLabel = currentLang === 'tl'
+      ? { critical:'Kritikal', warning:'Babala', normal:'Normal' }[floodStatus]
+      : floodStatus.charAt(0).toUpperCase() + floodStatus.slice(1);
+    chipsHTML += `<span class="gps-chip ${floodStatus}">🌊 ${nearestFlood.name}: ${statusLabel}</span>`;
+  }
+
+  chips.innerHTML = chipsHTML;
+
+  // Button
+  btn.textContent = '🔄';
+  btn.disabled = false;
+  btn.className = 'gps-btn located';
+  btn.onclick = requestLocation;
+  btn.title = 'Refresh location';
 }
 
 function showDropdown(results, query) {
@@ -1407,7 +1637,8 @@ function closeModalOutside(e) { if(e.target===document.getElementById('modalBg')
 function pickDepth(el){ document.querySelectorAll('.depth-tile').forEach(d=>d.classList.remove('selected')); el.classList.add('selected'); }
 
 async function submitReport() {
-  const loc   = document.getElementById('repLoc').value.trim();
+  const loc = document.getElementById('repLoc').value.trim() ||
+              document.getElementById('gpsCity')?.textContent?.split(',')[0] || '';
   const desc  = document.getElementById('repDesc').value.trim();
   const role  = document.getElementById('repRole').value;
   const depth = document.querySelector('.depth-tile.selected')?.querySelector('.dl')?.textContent || '';
@@ -1494,6 +1725,16 @@ async function init() {
     initMap();
     applyTranslations();
     initSearch();
+
+    // Show GPS card and auto-detect if already permitted
+    document.getElementById('gpsCard').classList.add('show');
+    if (navigator.permissions) {
+      navigator.permissions.query({ name: 'geolocation' }).then(result => {
+        if (result.state === 'granted') {
+          requestLocation();
+        }
+      });
+    }
 
     const bar = document.getElementById('refreshBar');
     if (bar) { bar.style.display='block'; bar.classList.add('loading'); }
