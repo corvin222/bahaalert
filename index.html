@@ -775,8 +775,8 @@ async function renderMarkers(filter = 'all') {
   map.addLayer(clusterGroup);
 
   const totalCities = filtered.length + phFiltered.length;
-  document.getElementById('statCritical').textContent = `🔴 ${critical} Kritikal`;
-  document.getElementById('statWarning').textContent  = `🟠 ${warning} Babala`;
+  document.getElementById('statCritical').textContent = `🔴 ${critical} ${t("critical")}`;
+  document.getElementById('statWarning').textContent  = `🟠 ${warning} ${t("warning")}`;
   document.getElementById('statNormal').textContent   = `🟢 ${normal} Normal`;
   document.getElementById('statCities').textContent   = `🌦️ ${totalCities} Lungsod`;
 }
@@ -1063,11 +1063,11 @@ function updateGpsCard(cityName, province, nearestCities, nearestFlood, weather)
 
   if (temp) chipsHTML += `<span class="gps-chip info">🌡️ ${temp}</span>`;
   if (rain > 0) chipsHTML += `<span class="gps-chip warning">${ri.emoji} ${rain.toFixed(1)}mm/hr</span>`;
-  else chipsHTML += `<span class="gps-chip safe">☀️ ${currentLang === 'tl' ? 'Walang ulan' : 'No rain'}</span>`;
+  else chipsHTML += `<span class="gps-chip safe">☀️ ${currentLang === 'tl' === 'tl' ? 'Walang ulan' : 'No rain'}</span>`;
 
   if (isNearby && nearestFlood) {
     const statusLabel = currentLang === 'tl'
-      ? { critical:'Kritikal', warning:'Babala', normal:'Normal' }[floodStatus]
+      === 'tl' ? { critical:'Kritikal', warning:'Babala', normal:'Normal' }[floodStatus]
       : floodStatus.charAt(0).toUpperCase() + floodStatus.slice(1);
     chipsHTML += `<span class="gps-chip ${floodStatus}">🌊 ${nearestFlood.name}: ${statusLabel}</span>`;
   }
@@ -1288,6 +1288,9 @@ const translations = {
     installTitle: 'Install BahaAlert',
     installSub: 'Add to home screen for quick access',
     installBtn: '📲 Install App',
+    open: 'OPEN',
+    full: 'FULL',
+    closed: 'CLOSED',
   },
   tl: {
     search: 'Hanapin ang iyong barangay o lungsod...',
@@ -1358,6 +1361,9 @@ const translations = {
     installTitle: 'I-install ang BahaAlert',
     installSub: 'Idagdag sa home screen para sa mabilis na access',
     installBtn: '📲 I-install',
+    open: 'BUKAS',
+    full: 'PUNO',
+    closed: 'SARADO',
   }
 };
 
@@ -1405,8 +1411,8 @@ function setLang(lang) {
   const panel = document.getElementById('sidePanel');
   if (panel && panel.classList.contains('show')) {
     const title = document.getElementById('panelTitle').textContent;
-    if (title.includes('Weather') || title.includes('Panahon')) buildWeatherPanel();
-    else if (title.includes('Ulat') || title.includes('Report')) buildReportsPanel();
+    if (title.includes('Weather') || title.includes('Panahon') || title.includes('Live')) buildWeatherPanel();
+    else if (title.includes('Ulat') || title.includes('Reports') || title.includes('Community')) buildReportsPanel();
     else if (title.includes('Evacuation')) buildEvacPanel();
   }
 }
@@ -1467,7 +1473,7 @@ function previewPhoto(input) {
   const file = input.files[0];
   if (!file) return;
   if (file.size > 5 * 1024 * 1024) {
-    showToast('⚠️ Masyadong malaki ang larawan. Max 5MB lang.');
+    showToast(t('uploadTooBig'));
     input.value = '';
     return;
   }
@@ -1552,32 +1558,38 @@ async function cleanupExpiredPhotos() {
 }
 function depthToSeverity(depth) {
   if (!depth) return 'warning';
-  if (depth.includes('Dibdib') || depth.includes('Baywang')) return 'critical';
-  if (depth.includes('Tuhod')) return 'warning';
+  if (depth.includes('Dibdib') || depth.includes('Baywang') || depth.includes('Chest') || depth.includes('Waist')) return 'critical';
+  if (depth.includes('Tuhod') || depth.includes('Knee')) return 'warning';
   return 'safe';
 }
 
 function depthToEmoji(depth) {
   if (!depth) return '⚠️';
-  if (depth.includes('Dibdib')) return '🌊';
-  if (depth.includes('Baywang')) return '🌊';
-  if (depth.includes('Tuhod')) return '⚠️';
+  if (depth.includes('Dibdib') || depth.includes('Chest')) return '🌊';
+  if (depth.includes('Baywang') || depth.includes('Waist')) return '🌊';
+  if (depth.includes('Tuhod') || depth.includes('Knee')) return '⚠️';
   return '💧';
 }
 
 // ── TIME AGO ──
 function timeAgo(dateStr) {
   const diff = Math.floor((Date.now() - new Date(dateStr)) / 1000);
-  if (diff < 60) return `${diff} seg nakaraon`;
-  if (diff < 3600) return `${Math.floor(diff/60)} min nakaraon`;
-  if (diff < 86400) return `${Math.floor(diff/3600)} oras nakaraon`;
-  return `${Math.floor(diff/86400)} araw nakaraon`;
+  if (currentLang === 'tl') {
+    if (diff < 60) return `${diff} seg nakaraon`;
+    if (diff < 3600) return `${Math.floor(diff/60)} min nakaraon`;
+    if (diff < 86400) return `${Math.floor(diff/3600)} oras nakaraon`;
+    return `${Math.floor(diff/86400)} araw nakaraon`;
+  }
+  if (diff < 60) return `${diff}s ago`;
+  if (diff < 3600) return `${Math.floor(diff/60)}m ago`;
+  if (diff < 86400) return `${Math.floor(diff/3600)}h ago`;
+  return `${Math.floor(diff/86400)}d ago`;
 }
 
 // ── BUILD REPORTS PANEL ──
 async function buildReportsPanel() {
   const content = document.getElementById('panelContent');
-  content.innerHTML = `<div class="loading-spinner"><div class="spinner"></div>Nilo-load ang mga ulat...</div>`;
+  content.innerHTML = `<div class="loading-spinner"><div class="spinner"></div>${t('loading')}</div>`;
 
   const reports = await fetchReports();
 
@@ -1595,8 +1607,8 @@ async function buildReportsPanel() {
   document.getElementById('statReports').textContent = `📝 ${reports.length} Ulat`;
 
   let html = `<div style="margin-bottom:12px;font-size:12px;color:var(--muted);display:flex;justify-content:space-between;align-items:center;">
-    <span>${reports.length} ulat mula sa komunidad</span>
-    <button onclick="buildReportsPanel()" style="background:var(--blue-light);color:var(--blue);border:none;border-radius:8px;padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer;font-family:Lexend,sans-serif;">🔄 I-refresh</button>
+    <span>${reports.length} ${currentLang === "tl" ? "ulat mula sa komunidad" : "community reports"}</span>
+    <button onclick="buildReportsPanel()" style="background:var(--blue-light);color:var(--blue);border:none;border-radius:8px;padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer;font-family:Lexend,sans-serif;">${t('refresh')}</button>
   </div>`;
 
   const flaggedIds = JSON.parse(localStorage.getItem('baha_flagged') || '[]');
@@ -1663,10 +1675,10 @@ async function handleVerify(btn, id, currentVotes) {
 }
 
 const evacHTML = `
-  <div class="evac-card"><div class="evac-icon open">🏫</div><div class="evac-info"><div class="evac-name">Marikina Elementary School</div><div class="evac-dist">📍 0.8 km · Marikina</div><div class="cap-bar"><div class="cap-fill" style="width:70%;background:var(--green)"></div></div></div><div class="evac-right"><div class="evac-tag open">BUKAS</div><div class="evac-count">420/600</div></div></div>
-  <div class="evac-card"><div class="evac-icon open">🏟️</div><div class="evac-info"><div class="evac-name">Marikina Sports Center</div><div class="evac-dist">📍 1.4 km · Marikina</div><div class="cap-bar"><div class="cap-fill" style="width:65%;background:var(--yellow)"></div></div></div><div class="evac-right"><div class="evac-tag open">BUKAS</div><div class="evac-count">780/1200</div></div></div>
-  <div class="evac-card"><div class="evac-icon full">🏢</div><div class="evac-info"><div class="evac-name">Sto. Niño Barangay Hall</div><div class="evac-dist">📍 0.3 km · Marikina</div><div class="cap-bar"><div class="cap-fill" style="width:100%;background:var(--red)"></div></div></div><div class="evac-right"><div class="evac-tag full">PUNO</div><div class="evac-count">200/200</div></div></div>
-  <div class="evac-card"><div class="evac-icon open">🏫</div><div class="evac-info"><div class="evac-name">Tacloban Convention Center</div><div class="evac-dist">📍 Tacloban, Leyte</div><div class="cap-bar"><div class="cap-fill" style="width:45%;background:var(--green)"></div></div></div><div class="evac-right"><div class="evac-tag open">BUKAS</div><div class="evac-count">540/1200</div></div></div>
+  <div class="evac-card"><div class="evac-icon open">🏫</div><div class="evac-info"><div class="evac-name">Marikina Elementary School</div><div class="evac-dist">📍 0.8 km · Marikina</div><div class="cap-bar"><div class="cap-fill" style="width:70%;background:var(--green)"></div></div></div><div class="evac-right"><div class="evac-tag open">${t('open')}</div><div class="evac-count">420/600</div></div></div>
+  <div class="evac-card"><div class="evac-icon open">🏟️</div><div class="evac-info"><div class="evac-name">Marikina Sports Center</div><div class="evac-dist">📍 1.4 km · Marikina</div><div class="cap-bar"><div class="cap-fill" style="width:65%;background:var(--yellow)"></div></div></div><div class="evac-right"><div class="evac-tag open">${t('open')}</div><div class="evac-count">780/1200</div></div></div>
+  <div class="evac-card"><div class="evac-icon full">🏢</div><div class="evac-info"><div class="evac-name">Sto. Niño Barangay Hall</div><div class="evac-dist">📍 0.3 km · Marikina</div><div class="cap-bar"><div class="cap-fill" style="width:100%;background:var(--red)"></div></div></div><div class="evac-right"><div class="evac-tag full">${t('full')}</div><div class="evac-count">200/200</div></div></div>
+  <div class="evac-card"><div class="evac-icon open">🏫</div><div class="evac-info"><div class="evac-name">Tacloban Convention Center</div><div class="evac-dist">📍 Tacloban, Leyte</div><div class="cap-bar"><div class="cap-fill" style="width:45%;background:var(--green)"></div></div></div><div class="evac-right"><div class="evac-tag open">${t('open')}</div><div class="evac-count">540/1200</div></div></div>
 `;
 
 // ── NAV ──
@@ -1696,10 +1708,10 @@ function closePanel() {
 // ── EVAC PANEL ──
 function buildEvacPanel() {
   document.getElementById('panelContent').innerHTML = `
-    <div class="evac-card"><div class="evac-icon open">🏫</div><div class="evac-info"><div class="evac-name">Marikina Elementary School</div><div class="evac-dist">📍 0.8 km · Marikina</div><div class="cap-bar"><div class="cap-fill" style="width:70%;background:var(--green)"></div></div></div><div class="evac-right"><div class="evac-tag open">BUKAS</div><div class="evac-count">420/600</div></div></div>
-    <div class="evac-card"><div class="evac-icon open">🏟️</div><div class="evac-info"><div class="evac-name">Marikina Sports Center</div><div class="evac-dist">📍 1.4 km · Marikina</div><div class="cap-bar"><div class="cap-fill" style="width:65%;background:var(--yellow)"></div></div></div><div class="evac-right"><div class="evac-tag open">BUKAS</div><div class="evac-count">780/1200</div></div></div>
-    <div class="evac-card"><div class="evac-icon full">🏢</div><div class="evac-info"><div class="evac-name">Sto. Niño Barangay Hall</div><div class="evac-dist">📍 0.3 km · Marikina</div><div class="cap-bar"><div class="cap-fill" style="width:100%;background:var(--red)"></div></div></div><div class="evac-right"><div class="evac-tag full">PUNO</div><div class="evac-count">200/200</div></div></div>
-    <div class="evac-card"><div class="evac-icon open">🏫</div><div class="evac-info"><div class="evac-name">Tacloban Convention Center</div><div class="evac-dist">📍 Tacloban, Leyte</div><div class="cap-bar"><div class="cap-fill" style="width:45%;background:var(--green)"></div></div></div><div class="evac-right"><div class="evac-tag open">BUKAS</div><div class="evac-count">540/1200</div></div></div>
+    <div class="evac-card"><div class="evac-icon open">🏫</div><div class="evac-info"><div class="evac-name">Marikina Elementary School</div><div class="evac-dist">📍 0.8 km · Marikina</div><div class="cap-bar"><div class="cap-fill" style="width:70%;background:var(--green)"></div></div></div><div class="evac-right"><div class="evac-tag open">${t('open')}</div><div class="evac-count">420/600</div></div></div>
+    <div class="evac-card"><div class="evac-icon open">🏟️</div><div class="evac-info"><div class="evac-name">Marikina Sports Center</div><div class="evac-dist">📍 1.4 km · Marikina</div><div class="cap-bar"><div class="cap-fill" style="width:65%;background:var(--yellow)"></div></div></div><div class="evac-right"><div class="evac-tag open">${t('open')}</div><div class="evac-count">780/1200</div></div></div>
+    <div class="evac-card"><div class="evac-icon full">🏢</div><div class="evac-info"><div class="evac-name">Sto. Niño Barangay Hall</div><div class="evac-dist">📍 0.3 km · Marikina</div><div class="cap-bar"><div class="cap-fill" style="width:100%;background:var(--red)"></div></div></div><div class="evac-right"><div class="evac-tag full">${t('full')}</div><div class="evac-count">200/200</div></div></div>
+    <div class="evac-card"><div class="evac-icon open">🏫</div><div class="evac-info"><div class="evac-name">Tacloban Convention Center</div><div class="evac-dist">📍 Tacloban, Leyte</div><div class="cap-bar"><div class="cap-fill" style="width:45%;background:var(--green)"></div></div></div><div class="evac-right"><div class="evac-tag open">${t('open')}</div><div class="evac-count">540/1200</div></div></div>
   `;
 }
 
