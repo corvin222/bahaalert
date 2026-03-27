@@ -2,15 +2,5 @@
   "rewrites": [
     { "source": "/admin", "destination": "/admin.html" },
     { "source": "/", "destination": "/index.html" }
-  ],
-  "crons": [
-    {
-      "path": "/api/auto-classify",
-      "schedule": "*/10 * * * *"
-    },
-    {
-      "path": "/api/scrape-pagasa",
-      "schedule": "*/15 * * * *"
-    }
   ]
 }
