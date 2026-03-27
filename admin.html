@@ -1033,7 +1033,7 @@ async function renderStations() {
                 </span>
               </td>
               <td style="font-size:11px;color:var(--muted);">${ago}</td>
-              <td><button class="btn btn-primary btn-sm" onclick="openStationEditor('${s.id}','${s.name}',${s.river_level},${s.river_max},'${s.flood_status}')">Edit</button></td>
+              <td><button class="btn btn-primary btn-sm" onclick="openStationEditor(this)" data-id="${s.id}" data-name="${s.name}" data-level="${s.river_level}" data-max="${s.river_max}" data-status="${s.flood_status}">Edit</button></td>
             </tr>`;
           }).join('')}
         </tbody>
@@ -1042,7 +1042,13 @@ async function renderStations() {
   `;
 }
 
-function openStationEditor(id, name, level, max, status) {
+function openStationEditor(btn) {
+  const id = btn.dataset.id;
+  const name = btn.dataset.name;
+  const level = parseFloat(btn.dataset.level);
+  const max = parseFloat(btn.dataset.max);
+  const status = btn.dataset.status;
+
   const modal = document.getElementById('modalOverlay');
   const mc = document.getElementById('modalBox');
   mc.innerHTML = `
@@ -1073,15 +1079,17 @@ function openStationEditor(id, name, level, max, status) {
       </div>
 
       <div style="display:flex;gap:8px;">
-        <button onclick="saveStation('${id}')" class="btn btn-primary" style="flex:1;">Save Changes</button>
+        <button onclick="saveStation()" class="btn btn-primary" style="flex:1;">Save Changes</button>
         <button onclick="closeModal()" class="btn btn-secondary">Cancel</button>
       </div>
     </div>
   `;
+  window._editingStationId = id;
   modal.classList.add('show');
 }
 
-async function saveStation(id) {
+async function saveStation() {
+  const id = window._editingStationId;
   const level = parseFloat(document.getElementById('editLevel').value);
   const max = parseFloat(document.getElementById('editMax').value);
   const status = document.getElementById('editStatus').value;
