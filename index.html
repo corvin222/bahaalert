@@ -361,70 +361,98 @@
 
   /* ── MOBILE OPTIMIZATIONS ── */
   @media (max-width: 768px) {
-    /* Compact header — single tight row */
-    .header{padding:8px 12px;gap:0;}
-    .header-top{gap:6px;}
-    .logo-icon{width:32px;height:32px;font-size:16px;border-radius:9px;}
-    .logo-name{font-size:16px;}
-    .logo-sub{font-size:9px;max-width:90px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    /* === HEADER: ultra-slim single row ~40px === */
+    .header{padding:6px 10px;gap:0;border-bottom:none;box-shadow:none;}
+    .header-top{gap:5px;}
+    .logo-icon{width:28px;height:28px;font-size:14px;border-radius:8px;}
+    .logo-name{font-size:15px;}
+    .logo-sub{display:none;}
+    .lang-toggle{padding:2px;gap:2px;}
+    .lang-btn{padding:3px 7px;font-size:10px;}
+    .live-pill{padding:3px 7px;font-size:9px;gap:3px;}
+    .live-dot{width:5px;height:5px;}
 
-    /* Hide search bar by default — show via toggle */
-    .search-bar{display:none;margin-top:8px;}
+    /* === SEARCH: hidden by default, toggled === */
+    .search-bar{display:none;margin-top:6px;}
     .search-bar.show{display:flex;}
     .mobile-search-toggle{display:inline-flex!important;}
 
-    /* Compact alert strip */
-    .alert-strip{padding:6px 12px;font-size:11px;}
+    /* === ALERT STRIP: floating pill overlay on map, not in flow === */
+    .alert-strip{
+      position:fixed;left:10px;right:auto;bottom:120px;top:auto;
+      z-index:815;border-radius:10px;padding:4px 10px;font-size:10px;
+      box-shadow:0 2px 10px rgba(0,0,0,0.15);max-width:70%;
+      white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+      flex-shrink:unset;
+    }
 
-    /* GPS card as floating overlay on the map */
-    .gps-card{position:fixed;top:auto;bottom:130px;left:12px;right:12px;z-index:820;border-radius:14px;border:1.5px solid var(--border);box-shadow:0 4px 20px rgba(0,0,0,0.12);padding:8px 12px;}
-    .gps-inner{gap:8px;}
-    .gps-city{font-size:12px;}
-    .gps-status{font-size:10px;}
-    .gps-btn{padding:5px 8px;font-size:10px;}
-    .gps-chips{margin-top:4px;}
+    /* === NOTIFICATION BANNER: floating bottom === */
+    .notif-banner{position:fixed;bottom:60px;left:8px;right:8px;z-index:920;border-radius:12px;padding:8px 12px;font-size:11px;box-shadow:0 4px 20px rgba(0,0,0,0.15);}
+    .notif-banner-sub{display:none;}
 
-    /* Notification banners — prevent stacking, only show one */
-    .notif-banner{padding:8px 12px;font-size:12px;}
-    .notif-banner.show ~ .gps-card.show{display:none;}
+    /* === GPS CARD: small floating chip on map === */
+    .gps-card{
+      position:fixed;bottom:120px;left:10px;right:auto;top:auto;
+      z-index:820;border-radius:10px;border:1px solid var(--border);
+      box-shadow:0 2px 12px rgba(0,0,0,0.1);padding:6px 10px;
+      background:var(--white);max-width:220px;
+    }
+    .gps-inner{gap:6px;}
+    .gps-icon{width:26px;height:26px;font-size:13px;}
+    .gps-city{font-size:11px;}
+    .gps-status{font-size:9px;}
+    .gps-btn{padding:4px 7px;font-size:9px;border-radius:6px;}
+    .gps-chips{display:none;}
 
-    /* Layer bar — compact within map area */
-    .layer-bar{position:relative;top:auto;left:auto;right:auto;padding:6px 10px;gap:4px;z-index:5;}
-    .layer-btn{padding:5px 9px;font-size:11px;}
+    /* === LAYER BAR: compact floating inside map === */
+    .layer-bar{
+      position:fixed!important;top:auto!important;bottom:auto!important;
+      left:8px!important;right:auto!important;
+      z-index:810;padding:3px;gap:2px;
+      background:rgba(255,255,255,0.95);backdrop-filter:blur(8px);
+      border-radius:10px;border:1px solid var(--border);
+      box-shadow:0 2px 10px rgba(0,0,0,0.08);
+      flex-wrap:nowrap;overflow-x:auto;max-width:calc(100vw - 110px);
+    }
+    .layer-btn{padding:4px 7px;font-size:10px;gap:2px;border-radius:7px;}
 
-    /* Region filter — horizontal row instead of vertical stack */
-    .region-toggle{position:relative;top:auto;right:auto;flex-direction:row;overflow-x:auto;padding:4px 10px;gap:4px;z-index:5;background:var(--white);border-bottom:1px solid var(--border);scrollbar-width:none;}
-    .region-toggle::-webkit-scrollbar{display:none;}
-    .toggle-btn{padding:5px 9px;font-size:10px;}
+    /* === REGION FILTER: compact floating on right === */
+    .region-toggle{
+      position:fixed!important;right:8px!important;left:auto!important;top:auto!important;
+      flex-direction:column;gap:3px;z-index:810;
+      background:transparent;border:none;padding:0;
+    }
+    .toggle-btn{padding:4px 8px;font-size:9px;border-radius:8px;box-shadow:0 1px 6px rgba(0,0,0,0.1);}
 
-    /* Stats bar — smaller */
-    .stats-bar{padding:5px 8px;gap:4px;bottom:68px;}
-    .stat-chip{font-size:10px;padding:3px 6px;}
+    /* === STATS BAR === */
+    .stats-bar{padding:4px 6px;gap:3px;bottom:58px;border-radius:10px;}
+    .stat-chip{font-size:9px;padding:2px 5px;gap:2px;border-radius:6px;}
 
-    /* Bottom nav — compact */
+    /* === BOTTOM NAV === */
     .bottom-nav{padding-bottom:env(safe-area-inset-bottom, 0);}
-    .nav-item{padding:6px 0 8px;font-size:9px;}
-    .nav-item .nav-icon{font-size:18px;}
+    .nav-item{padding:5px 0 7px;font-size:8px;gap:1px;}
+    .nav-item .nav-icon{font-size:17px;}
 
-    /* FAB — smaller */
-    .fab{width:48px;height:48px;font-size:20px;bottom:68px;right:14px;}
+    /* === FAB === */
+    .fab{width:44px;height:44px;font-size:18px;bottom:62px;right:10px;}
 
-    /* Green notification prompt — more compact */
-    #notifPrompt{bottom:68px;left:8px;right:8px;padding:10px 12px;}
+    /* === NOTIFICATION PROMPT === */
+    #notifPrompt{bottom:60px;left:8px;right:8px;padding:10px 12px;border-radius:14px;}
 
-    /* Side panel — full height on mobile */
-    .side-panel{max-height:75vh;bottom:50px;}
-
-    /* Popups — narrower */
-    .leaflet-popup-content{width:220px!important;}
+    /* === SIDE PANEL === */
+    .side-panel{max-height:70vh;bottom:48px;}
+    .leaflet-popup-content{width:210px!important;}
   }
 
   /* Extra small phones */
   @media (max-width: 380px) {
-    .logo-sub{display:none;}
-    .header{padding:6px 10px;}
-    .stat-chip span:not(:first-child){display:none;}
-    .layer-btn{padding:4px 7px;font-size:10px;}
+    .header{padding:4px 8px;}
+    .logo-icon{width:24px;height:24px;font-size:12px;}
+    .logo-name{font-size:13px;}
+    .live-pill{display:none;}
+    .layer-btn{font-size:9px;padding:3px 5px;}
+    .toggle-btn{font-size:8px;padding:3px 6px;}
+    .stat-chip{font-size:8px;}
   }
 </style>
 </head>
@@ -2313,6 +2341,11 @@ async function init() {
       navigator.permissions.query({ name: 'geolocation' }).then(result => {
         if (result.state === 'granted') {
           requestLocation();
+        } else if (window.innerWidth <= 768) {
+          // Auto-hide GPS card on mobile after 8s if not granted
+          setTimeout(() => {
+            if (!userLat) gpsCard.classList.remove('show');
+          }, 8000);
         }
       }).catch(() => {});
     }
