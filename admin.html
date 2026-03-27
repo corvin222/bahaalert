@@ -1049,8 +1049,15 @@ function openStationEditor(btn) {
   const max = parseFloat(btn.dataset.max);
   const status = btn.dataset.status;
 
+  console.log('Opening editor for:', name, id);
+
   const modal = document.getElementById('modalOverlay');
   const mc = document.getElementById('modalBox');
+  
+  if (!modal || !mc) {
+    alert('Modal elements not found! modalOverlay=' + !!modal + ' modalBox=' + !!mc);
+    return;
+  }
   mc.innerHTML = `
     <div style="padding:24px;">
       <div style="font-family:'Nunito',sans-serif;font-size:20px;font-weight:900;margin-bottom:4px;">Edit Station: ${name}</div>
