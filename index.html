@@ -304,25 +304,25 @@
   .notif-btn.subscribed:hover{background:var(--green);color:white;}
 
   /* GPS LOCATION CARD */
-  .gps-card{position:fixed;bottom:140px;left:12px;right:12px;background:var(--white);border:1px solid var(--border);border-radius:14px;padding:10px 16px;display:none;animation:slideDown 0.3s ease;z-index:820;box-shadow:0 4px 16px rgba(0,0,0,0.1);}
+  .gps-card{position:fixed;bottom:110px;left:12px;right:auto;max-width:300px;background:var(--white);border:1px solid var(--border);border-radius:12px;padding:8px 12px;display:none;animation:slideDown 0.3s ease;z-index:820;box-shadow:0 4px 16px rgba(0,0,0,0.1);}
   .gps-card.show{display:block;}
   @keyframes slideDown{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:none}}
-  .gps-inner{display:flex;align-items:center;gap:10px;}
-  .gps-icon{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+  .gps-inner{display:flex;align-items:center;gap:8px;}
+  .gps-icon{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;}
   .gps-icon.safe{background:var(--green-light);}
   .gps-icon.warning{background:var(--orange-light);}
   .gps-icon.critical{background:var(--red-light);}
   .gps-icon.loading{background:var(--blue-light);}
   .gps-info{flex:1;min-width:0;}
-  .gps-city{font-size:13px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-  .gps-status{font-size:11px;color:var(--muted);margin-top:1px;}
-  .gps-chips{display:flex;gap:5px;margin-top:6px;flex-wrap:wrap;}
+  .gps-city{font-size:12px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .gps-status{font-size:10px;color:var(--muted);margin-top:1px;}
+  .gps-chips{display:none;}
   .gps-chip{font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;white-space:nowrap;}
   .gps-chip.safe{background:var(--green-light);color:var(--green);}
   .gps-chip.warning{background:var(--orange-light);color:var(--orange);}
   .gps-chip.critical{background:var(--red-light);color:var(--red);}
   .gps-chip.info{background:var(--blue-light);color:var(--blue);}
-  .gps-btn{background:var(--blue-light);color:var(--blue);border:none;border-radius:8px;padding:6px 10px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Lexend',sans-serif;flex-shrink:0;white-space:nowrap;}
+  .gps-btn{background:var(--blue-light);color:var(--blue);border:none;border-radius:8px;padding:5px 9px;font-size:10px;font-weight:700;cursor:pointer;font-family:'Lexend',sans-serif;flex-shrink:0;white-space:nowrap;}
   .gps-btn.located{background:var(--green-light);color:var(--green);}
 
   /* USER LOCATION MARKER */
