@@ -1,0 +1,1132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BahaAlert Admin Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Lexend:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#f0f4ff; --white:#fff; --border:#e2e8f8;
+  --text:#1a2340; --muted:#7a8aaa; --soft:#f7f9ff;
+  --blue:#2563eb; --blue-light:#eff4ff;
+  --red:#ef4444; --red-light:#fef2f2;
+  --orange:#f97316; --orange-light:#fff7ed;
+  --green:#22c55e; --green-light:#f0fdf4;
+  --yellow:#eab308; --yellow-light:#fefce8;
+  --purple:#7c3aed; --purple-light:#f5f3ff;
+  --shadow:0 2px 16px rgba(37,99,235,0.08);
+  --radius:14px;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Lexend',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+
+/* ── LOGIN ── */
+.login-page{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;}
+.login-card{background:var(--white);border-radius:24px;padding:40px;width:100%;max-width:400px;border:1px solid var(--border);box-shadow:0 8px 40px rgba(37,99,235,0.1);}
+.login-logo{display:flex;align-items:center;gap:12px;margin-bottom:8px;}
+.login-logo-icon{width:48px;height:48px;background:linear-gradient(135deg,#2563eb,#38bdf8);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:24px;}
+.login-logo-name{font-family:'Nunito',sans-serif;font-size:24px;font-weight:900;color:var(--blue);}
+.login-sub{font-size:13px;color:var(--muted);margin-bottom:32px;}
+.login-label{display:block;font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:7px;}
+.login-input{width:100%;background:var(--soft);border:1.5px solid var(--border);border-radius:12px;padding:12px 14px;font-family:'Lexend',sans-serif;font-size:14px;color:var(--text);outline:none;margin-bottom:16px;transition:border-color 0.2s;}
+.login-input:focus{border-color:var(--blue);}
+.login-btn{width:100%;padding:14px;background:linear-gradient(90deg,#2563eb,#38bdf8);color:white;border:none;border-radius:12px;font-family:'Nunito',sans-serif;font-size:16px;font-weight:900;cursor:pointer;transition:opacity 0.2s;}
+.login-btn:hover{opacity:0.9;}
+.login-btn:disabled{opacity:0.6;cursor:not-allowed;}
+.login-error{background:var(--red-light);color:var(--red);border-radius:10px;padding:10px 14px;font-size:13px;margin-top:12px;display:none;}
+.login-back{text-align:center;margin-top:16px;font-size:13px;color:var(--muted);}
+.login-back a{color:var(--blue);text-decoration:none;font-weight:600;}
+
+/* ── MAIN LAYOUT ── */
+.app{display:none;min-height:100vh;}
+.sidebar{width:240px;background:var(--white);border-right:1px solid var(--border);position:fixed;top:0;left:0;bottom:0;display:flex;flex-direction:column;z-index:100;}
+.sidebar-logo{padding:20px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--border);}
+.sidebar-logo-icon{width:36px;height:36px;background:linear-gradient(135deg,#2563eb,#38bdf8);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;}
+.sidebar-logo-text{font-family:'Nunito',sans-serif;font-size:16px;font-weight:900;color:var(--blue);}
+.sidebar-logo-sub{font-size:10px;color:var(--muted);}
+.sidebar-nav{flex:1;padding:12px 8px;overflow-y:auto;}
+.nav-section{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;padding:12px 8px 6px;}
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;cursor:pointer;font-size:13px;font-weight:600;color:var(--muted);transition:all 0.15s;margin-bottom:2px;}
+.nav-item:hover{background:var(--soft);color:var(--text);}
+.nav-item.active{background:var(--blue-light);color:var(--blue);}
+.nav-item .nav-icon{font-size:18px;width:24px;text-align:center;}
+.nav-badge{margin-left:auto;background:var(--red);color:white;border-radius:20px;padding:2px 7px;font-size:10px;font-weight:700;}
+.sidebar-footer{padding:16px;border-top:1px solid var(--border);}
+.admin-info{display:flex;align-items:center;gap:10px;}
+.admin-avatar{width:36px;height:36px;background:var(--blue-light);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:var(--blue);}
+.admin-name{font-size:13px;font-weight:700;}
+.admin-role{font-size:11px;color:var(--muted);}
+.logout-btn{margin-top:8px;width:100%;padding:8px;background:var(--soft);border:1px solid var(--border);border-radius:8px;font-family:'Lexend',sans-serif;font-size:12px;color:var(--muted);cursor:pointer;}
+.logout-btn:hover{background:var(--red-light);color:var(--red);border-color:var(--red);}
+
+/* ── MAIN CONTENT ── */
+.main-content{margin-left:240px;padding:24px;min-height:100vh;}
+.page-header{margin-bottom:24px;}
+.page-title{font-family:'Nunito',sans-serif;font-size:24px;font-weight:900;color:var(--text);}
+.page-sub{font-size:13px;color:var(--muted);margin-top:3px;}
+
+/* ── STAT CARDS ── */
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px;}
+.stat-card{background:var(--white);border-radius:var(--radius);padding:18px;border:1px solid var(--border);box-shadow:var(--shadow);}
+.stat-card-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;}
+.stat-icon{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;}
+.stat-trend{font-size:11px;font-weight:700;padding:3px 8px;border-radius:20px;}
+.stat-trend.up{background:var(--green-light);color:var(--green);}
+.stat-trend.down{background:var(--red-light);color:var(--red);}
+.stat-num{font-family:'Nunito',sans-serif;font-size:32px;font-weight:900;color:var(--text);}
+.stat-label{font-size:12px;color:var(--muted);margin-top:2px;}
+
+/* ── TABLES ── */
+.section-card{background:var(--white);border-radius:var(--radius);border:1px solid var(--border);box-shadow:var(--shadow);margin-bottom:20px;overflow:hidden;}
+.section-header{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;}
+.section-title{font-size:15px;font-weight:700;}
+.section-actions{display:flex;gap:8px;}
+.btn{padding:8px 14px;border-radius:8px;font-family:'Lexend',sans-serif;font-size:12px;font-weight:700;cursor:pointer;border:none;transition:all 0.15s;}
+.btn-primary{background:var(--blue);color:white;}
+.btn-primary:hover{opacity:0.9;}
+.btn-secondary{background:var(--soft);color:var(--muted);border:1px solid var(--border);}
+.btn-secondary:hover{background:var(--border);}
+.btn-danger{background:var(--red-light);color:var(--red);}
+.btn-danger:hover{background:var(--red);color:white;}
+.btn-success{background:var(--green-light);color:var(--green);}
+.btn-success:hover{background:var(--green);color:white;}
+.btn-sm{padding:5px 10px;font-size:11px;}
+
+table{width:100%;border-collapse:collapse;}
+th{padding:10px 16px;text-align:left;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;background:var(--soft);border-bottom:1px solid var(--border);}
+td{padding:12px 16px;font-size:13px;border-bottom:0.5px solid var(--border);vertical-align:middle;}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:var(--soft);}
+
+/* ── BADGES ── */
+.badge{display:inline-block;padding:3px 9px;border-radius:20px;font-size:10px;font-weight:700;}
+.badge-critical{background:var(--red-light);color:var(--red);}
+.badge-warning{background:var(--orange-light);color:var(--orange);}
+.badge-normal{background:var(--green-light);color:var(--green);}
+.badge-flagged{background:var(--yellow-light);color:var(--yellow);}
+.badge-open{background:var(--green-light);color:var(--green);}
+.badge-full{background:var(--red-light);color:var(--red);}
+.badge-closed{background:var(--soft);color:var(--muted);}
+
+/* ── CHARTS ── */
+.charts-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;}
+.chart-card{background:var(--white);border-radius:var(--radius);border:1px solid var(--border);box-shadow:var(--shadow);padding:20px;}
+.chart-title{font-size:14px;font-weight:700;margin-bottom:16px;}
+.bar-chart{display:flex;flex-direction:column;gap:10px;}
+.bar-row{display:flex;align-items:center;gap:10px;}
+.bar-label{font-size:12px;color:var(--muted);width:100px;flex-shrink:0;}
+.bar-track{flex:1;height:10px;background:var(--soft);border-radius:5px;overflow:hidden;}
+.bar-fill{height:100%;border-radius:5px;transition:width 1s ease;}
+.bar-val{font-size:12px;font-weight:700;width:30px;text-align:right;flex-shrink:0;}
+.donut-wrap{display:flex;align-items:center;gap:20px;}
+.donut-legend{display:flex;flex-direction:column;gap:8px;}
+.donut-leg-item{display:flex;align-items:center;gap:8px;font-size:12px;}
+.donut-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+
+/* ── MODAL ── */
+.modal-overlay{position:fixed;inset:0;background:rgba(15,23,42,0.5);z-index:200;display:none;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px);}
+.modal-overlay.show{display:flex;}
+.modal-box{background:var(--white);border-radius:20px;padding:28px;width:100%;max-width:480px;max-height:90vh;overflow-y:auto;}
+.modal-title{font-family:'Nunito',sans-serif;font-size:18px;font-weight:900;margin-bottom:4px;}
+.modal-sub{font-size:13px;color:var(--muted);margin-bottom:20px;}
+.form-group{margin-bottom:14px;}
+.form-group label{display:block;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;}
+.form-group input,.form-group select,.form-group textarea{width:100%;background:var(--soft);border:1.5px solid var(--border);border-radius:10px;padding:10px 13px;font-family:'Lexend',sans-serif;font-size:14px;color:var(--text);outline:none;}
+.form-group textarea{resize:vertical;min-height:80px;}
+.modal-actions{display:flex;gap:10px;margin-top:20px;}
+
+/* ── BROADCAST ── */
+.severity-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;}
+.severity-tile{padding:12px;border:1.5px solid var(--border);border-radius:10px;text-align:center;cursor:pointer;transition:all 0.15s;}
+.severity-tile.selected-critical{background:var(--red-light);border-color:var(--red);}
+.severity-tile.selected-warning{background:var(--orange-light);border-color:var(--orange);}
+.severity-tile.selected-info{background:var(--blue-light);border-color:var(--blue);}
+.severity-tile:hover{transform:scale(1.02);}
+
+/* ── LOADING ── */
+.loading-state{padding:40px;text-align:center;color:var(--muted);}
+.spinner-lg{width:32px;height:32px;border:3px solid var(--border);border-top-color:var(--blue);border-radius:50%;animation:spin 0.7s linear infinite;margin:0 auto 12px;}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── EMPTY STATE ── */
+.empty-state{padding:40px;text-align:center;color:var(--muted);}
+.empty-icon{font-size:40px;margin-bottom:12px;}
+
+/* ── TOAST ── */
+.toast{position:fixed;top:20px;right:20px;background:var(--text);color:white;border-radius:12px;padding:12px 18px;font-size:13px;font-weight:600;z-index:500;display:none;box-shadow:0 8px 24px rgba(0,0,0,0.2);}
+.toast.show{display:flex;align-items:center;gap:8px;}
+
+/* ── RESPONSIVE ── */
+@media(max-width:900px){
+  .sidebar{width:60px;}
+  .sidebar-logo-text,.sidebar-logo-sub,.nav-item span,.admin-name,.admin-role,.logout-btn,.nav-section{display:none;}
+  .nav-item{justify-content:center;padding:12px;}
+  .main-content{margin-left:60px;}
+  .stats-grid{grid-template-columns:1fr 1fr;}
+  .charts-grid{grid-template-columns:1fr;}
+}
+@media(max-width:600px){
+  .stats-grid{grid-template-columns:1fr;}
+  .main-content{padding:16px;}
+}
+</style>
+</head>
+<body>
+
+<!-- LOGIN PAGE -->
+<div class="login-page" id="loginPage">
+  <div class="login-card">
+    <div class="login-logo">
+      <div class="login-logo-icon">🌊</div>
+      <div class="login-logo-name">BahaAlert</div>
+    </div>
+    <div class="login-sub">Admin Dashboard — Authorized personnel only</div>
+
+    <label class="login-label">Email Address</label>
+    <input class="login-input" type="email" id="loginEmail" placeholder="admin@lgu.gov.ph" />
+
+    <label class="login-label">Password</label>
+    <input class="login-input" type="password" id="loginPassword" placeholder="••••••••"
+      onkeydown="if(event.key==='Enter') doLogin()" />
+
+    <button class="login-btn" id="loginBtn" onclick="doLogin()">Sign In →</button>
+    <div class="login-error" id="loginError"></div>
+    <div class="login-back">← <a href="/">Back to BahaAlert</a></div>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div class="app" id="mainApp">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sidebar-logo">
+      <div class="sidebar-logo-icon">🌊</div>
+      <div>
+        <div class="sidebar-logo-text">BahaAlert</div>
+        <div class="sidebar-logo-sub">Admin Panel</div>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section">Main</div>
+      <div class="nav-item active" onclick="showPage('overview',this)">
+        <span class="nav-icon">📊</span><span>Overview</span>
+      </div>
+      <div class="nav-item" onclick="showPage('reports',this)">
+        <span class="nav-icon">📣</span><span>Reports</span>
+        <span class="nav-badge" id="flaggedBadge" style="display:none">!</span>
+      </div>
+      <div class="nav-item" onclick="showPage('evac',this)">
+        <span class="nav-icon">🏫</span><span>Evacuation Centers</span>
+      </div>
+      <div class="nav-item" onclick="showPage('stations',this)">
+        <span class="nav-icon">🌊</span><span>Flood Stations</span>
+      </div>
+      <div class="nav-section">Actions</div>
+      <div class="nav-item" onclick="showPage('broadcast',this)">
+        <span class="nav-icon">📢</span><span>Broadcast Alert</span>
+      </div>
+      <div class="nav-section">Settings</div>
+      <div class="nav-item" onclick="showPage('admins',this)">
+        <span class="nav-icon">👥</span><span>Admin Users</span>
+      </div>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="admin-info">
+        <div class="admin-avatar" id="adminAvatar">A</div>
+        <div>
+          <div class="admin-name" id="adminName">Admin</div>
+          <div class="admin-role" id="adminRole">Administrator</div>
+        </div>
+      </div>
+      <button class="logout-btn" onclick="doLogout()">Sign Out</button>
+    </div>
+  </div>
+
+  <!-- MAIN CONTENT -->
+  <div class="main-content" id="mainContent"></div>
+
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModalOut(event)">
+  <div class="modal-box" id="modalBox"></div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+const SUPABASE_URL = 'https://dqjdnjutsxerqkpepbri.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRxamRuanV0c3hlcnFrcGVwYnJpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0OTE3MTcsImV4cCI6MjA5MDA2NzcxN30.nttC3ruA1WfzmS7k0HNOv0cq_PxyRhDLJYxVElbxEEA';
+const H = { 'Content-Type':'application/json','apikey':SUPABASE_KEY,'Authorization':`Bearer ${SUPABASE_KEY}`,'Prefer':'return=representation' };
+
+let currentAdmin = null;
+
+// ── AUTH ──
+async function doLogin() {
+  const email = document.getElementById('loginEmail').value.trim();
+  const pass  = document.getElementById('loginPassword').value.trim();
+  const btn   = document.getElementById('loginBtn');
+  const err   = document.getElementById('loginError');
+
+  if (!email || !pass) { showLoginError('Please enter email and password.'); return; }
+
+  btn.textContent = 'Signing in...'; btn.disabled = true; err.style.display = 'none';
+
+  try {
+    // Check admin_users table for this email
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/admin_users?email=eq.${encodeURIComponent(email)}&select=*`,
+      { headers: H }
+    );
+    const admins = await res.json();
+
+    if (!admins || admins.length === 0) {
+      showLoginError('No admin account found for this email. Contact your administrator.');
+      btn.textContent = 'Sign In →'; btn.disabled = false;
+      return;
+    }
+
+    // Simple password check using stored hash (for demo: password = "bahaalert2026" or custom)
+    const admin = admins[0];
+    const expectedPass = admin.password_hash || 'bahaalert2026';
+    if (pass !== expectedPass) {
+      showLoginError('Incorrect password. Please try again.');
+      btn.textContent = 'Sign In →'; btn.disabled = false;
+      return;
+    }
+
+    // Success
+    currentAdmin = admin;
+    sessionStorage.setItem('bahaAdmin', JSON.stringify(admin));
+    showApp();
+
+  } catch(e) {
+    showLoginError('Connection error. Please try again.');
+    btn.textContent = 'Sign In →'; btn.disabled = false;
+  }
+}
+
+function showLoginError(msg) {
+  const err = document.getElementById('loginError');
+  err.textContent = msg; err.style.display = 'block';
+}
+
+function doLogout() {
+  sessionStorage.removeItem('bahaAdmin');
+  currentAdmin = null;
+  document.getElementById('mainApp').style.display = 'none';
+  document.getElementById('loginPage').style.display = 'flex';
+}
+
+function showApp() {
+  document.getElementById('loginPage').style.display = 'none';
+  document.getElementById('mainApp').style.display = 'block';
+  document.getElementById('adminName').textContent = currentAdmin.name || currentAdmin.email.split('@')[0];
+  document.getElementById('adminRole').textContent = currentAdmin.role || 'Administrator';
+  document.getElementById('adminAvatar').textContent = (currentAdmin.name || currentAdmin.email)[0].toUpperCase();
+  showPage('overview', document.querySelector('.nav-item'));
+}
+
+// Check existing session
+window.addEventListener('load', () => {
+  const saved = sessionStorage.getItem('bahaAdmin');
+  if (saved) { currentAdmin = JSON.parse(saved); showApp(); }
+});
+
+// ── NAVIGATION ──
+function showPage(page, navEl) {
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  if (navEl) navEl.classList.add('active');
+  const pages = { overview: renderOverview, reports: renderReports, evac: renderEvac, broadcast: renderBroadcast, admins: renderAdmins, stations: renderStations };
+  if (pages[page]) pages[page]();
+}
+
+// ── API HELPERS ──
+async function sb(path, method='GET', body=null) {
+  const opts = { method, headers: H };
+  if (body) opts.body = JSON.stringify(body);
+  const r = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, opts);
+  return r.json();
+}
+
+// ── OVERVIEW ──
+async function renderOverview() {
+  const mc = document.getElementById('mainContent');
+  mc.innerHTML = `<div class="loading-state"><div class="spinner-lg"></div>Loading dashboard...</div>`;
+
+  const [reports, alerts, evacs] = await Promise.all([
+    sb('reports?order=created_at.desc&limit=100'),
+    sb('alerts?order=created_at.desc&limit=10'),
+    sb('evacuation_centers?order=name')
+  ]);
+
+  const total    = reports?.length || 0;
+  const flagged  = reports?.filter(r => (r.flags||0) >= 1).length || 0;
+  const critical = reports?.filter(r => r.depth?.includes('Dibdib') || r.depth?.includes('Baywang') || r.depth?.includes('Chest')).length || 0;
+  const today    = reports?.filter(r => new Date(r.created_at).toDateString() === new Date().toDateString()).length || 0;
+  const openEvac = evacs?.filter(e => e.status === 'open').length || 0;
+
+  if (flagged > 0) {
+    document.getElementById('flaggedBadge').textContent = flagged;
+    document.getElementById('flaggedBadge').style.display = 'inline';
+  }
+
+  // Area breakdown
+  const areaCounts = {};
+  reports?.forEach(r => {
+    const area = r.location?.split(',')[0]?.trim() || 'Unknown';
+    areaCounts[area] = (areaCounts[area] || 0) + 1;
+  });
+  const topAreas = Object.entries(areaCounts).sort((a,b) => b[1]-a[1]).slice(0,6);
+  const maxCount = topAreas[0]?.[1] || 1;
+
+  // Recent reports
+  const recent = reports?.slice(0,5) || [];
+
+  mc.innerHTML = `
+    <div class="page-header">
+      <div class="page-title">📊 Overview</div>
+      <div class="page-sub">Last updated: ${new Date().toLocaleTimeString('en-PH')}</div>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-card-top">
+          <div class="stat-icon" style="background:var(--blue-light);">📝</div>
+          <span class="stat-trend up">+${today} today</span>
+        </div>
+        <div class="stat-num">${total}</div>
+        <div class="stat-label">Total Reports</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-top">
+          <div class="stat-icon" style="background:var(--red-light);">🚨</div>
+          <span class="stat-trend ${critical>0?'down':'up'}">${critical > 0 ? 'Action needed' : 'All clear'}</span>
+        </div>
+        <div class="stat-num" style="color:var(--red)">${critical}</div>
+        <div class="stat-label">Critical Reports</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-top">
+          <div class="stat-icon" style="background:var(--yellow-light);">🚩</div>
+          <span class="stat-trend ${flagged>0?'down':'up'}">${flagged > 0 ? 'Review needed' : 'None flagged'}</span>
+        </div>
+        <div class="stat-num" style="color:var(--yellow)">${flagged}</div>
+        <div class="stat-label">Flagged Reports</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-top">
+          <div class="stat-icon" style="background:var(--green-light);">🏫</div>
+          <span class="stat-trend up">${openEvac} open</span>
+        </div>
+        <div class="stat-num" style="color:var(--green)">${openEvac}</div>
+        <div class="stat-label">Evacuation Centers Open</div>
+      </div>
+    </div>
+
+    <div class="charts-grid">
+      <div class="chart-card">
+        <div class="chart-title">📍 Top Flood Areas</div>
+        <div class="bar-chart">
+          ${topAreas.map(([area, count]) => `
+            <div class="bar-row">
+              <div class="bar-label">${area}</div>
+              <div class="bar-track"><div class="bar-fill" style="width:${Math.round(count/maxCount*100)}%;background:var(--blue);"></div></div>
+              <div class="bar-val">${count}</div>
+            </div>`).join('') || '<div style="color:var(--muted);font-size:13px;">No data yet</div>'}
+        </div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">📊 Report Severity Breakdown</div>
+        <div class="donut-wrap">
+          <svg width="100" height="100" viewBox="0 0 36 36">
+            ${buildDonut(reports)}
+          </svg>
+          <div class="donut-legend">
+            <div class="donut-leg-item"><div class="donut-dot" style="background:var(--red)"></div>Critical: ${critical}</div>
+            <div class="donut-leg-item"><div class="donut-dot" style="background:var(--orange)"></div>Moderate: ${reports?.filter(r=>r.depth?.includes('Tuhod')||r.depth?.includes('Knee')).length||0}</div>
+            <div class="donut-leg-item"><div class="donut-dot" style="background:var(--blue)"></div>Light: ${reports?.filter(r=>r.depth?.includes('Bukung')||r.depth?.includes('Ankle')).length||0}</div>
+            <div class="donut-leg-item"><div class="donut-dot" style="background:var(--muted)"></div>No depth: ${reports?.filter(r=>!r.depth).length||0}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-card">
+      <div class="section-header">
+        <div class="section-title">🕐 Recent Reports</div>
+        <button class="btn btn-secondary" onclick="showPage('reports', document.querySelectorAll('.nav-item')[1])">View All</button>
+      </div>
+      <table>
+        <thead><tr><th>Location</th><th>Depth</th><th>Time</th><th>GPS</th><th>Votes</th><th>Flags</th></tr></thead>
+        <tbody>
+          ${recent.map(r => `
+            <tr>
+              <td><strong>${r.location}</strong>${r.description ? `<br><span style="font-size:11px;color:var(--muted)">${r.description.slice(0,50)}${r.description.length>50?'...':''}</span>` : ''}</td>
+              <td>${r.depth ? `<span class="badge ${depthBadge(r.depth)}">${r.depth}</span>` : '—'}</td>
+              <td style="color:var(--muted);font-size:12px;">${timeAgo(r.created_at)}</td>
+              <td>${r.lat ? '<span style="color:var(--green);font-size:12px;">✓ GPS</span>' : '<span style="color:var(--muted);font-size:12px;">—</span>'}</td>
+              <td><span style="font-weight:700;">👍 ${r.votes||0}</span></td>
+              <td>${(r.flags||0) > 0 ? `<span style="color:var(--red);font-weight:700;">🚩 ${r.flags}</span>` : '—'}</td>
+            </tr>`).join('') || '<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:24px;">No reports yet</td></tr>'}
+        </tbody>
+      </table>
+    </div>
+
+    ${alerts?.length ? `
+    <div class="section-card">
+      <div class="section-header">
+        <div class="section-title">📢 Recent Broadcasts</div>
+        <button class="btn btn-primary" onclick="showPage('broadcast', document.querySelectorAll('.nav-item')[3])">+ New Alert</button>
+      </div>
+      <table>
+        <thead><tr><th>Title</th><th>Severity</th><th>Area</th><th>Sent</th><th>Status</th><th></th></tr></thead>
+        <tbody>
+          ${alerts.map(a => `
+            <tr>
+              <td><strong>${a.title}</strong><br><span style="font-size:11px;color:var(--muted)">${a.message.slice(0,60)}...</span></td>
+              <td><span class="badge badge-${a.severity}">${a.severity.toUpperCase()}</span></td>
+              <td>${a.area || 'All Philippines'}</td>
+              <td style="font-size:12px;color:var(--muted)">${timeAgo(a.created_at)}</td>
+              <td>${a.active ? '<span class="badge badge-open">ACTIVE</span>' : '<span class="badge" style="background:var(--soft);color:var(--muted)">ENDED</span>'}</td>
+              <td><button class="btn btn-danger btn-sm" onclick="deactivateAlert('${a.id}')">End</button></td>
+            </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>` : ''}
+  `;
+}
+
+function buildDonut(reports) {
+  if (!reports?.length) return `<circle cx="18" cy="18" r="15.9" fill="none" stroke="#e2e8f8" stroke-width="3"/>`;
+  const total = reports.length;
+  const critical = reports.filter(r => r.depth?.includes('Dibdib')||r.depth?.includes('Baywang')||r.depth?.includes('Chest')).length;
+  const moderate = reports.filter(r => r.depth?.includes('Tuhod')||r.depth?.includes('Knee')).length;
+  const light = reports.filter(r => r.depth?.includes('Bukung')||r.depth?.includes('Ankle')).length;
+  const other = total - critical - moderate - light;
+  const segs = [
+    { val: critical, color: '#ef4444' },
+    { val: moderate, color: '#f97316' },
+    { val: light,    color: '#2563eb' },
+    { val: other,    color: '#94a3b8' },
+  ].filter(s => s.val > 0);
+  let offset = 25; let svg = '';
+  segs.forEach(s => {
+    const pct = (s.val / total) * 100;
+    svg += `<circle cx="18" cy="18" r="15.9" fill="none" stroke="${s.color}" stroke-width="3.5" stroke-dasharray="${pct} ${100-pct}" stroke-dashoffset="${offset}" transform="rotate(-90 18 18)"/>`;
+    offset -= pct;
+  });
+  return svg;
+}
+
+// ── REPORTS ──
+async function renderReports() {
+  const mc = document.getElementById('mainContent');
+  mc.innerHTML = `<div class="loading-state"><div class="spinner-lg"></div>Loading reports...</div>`;
+
+  const reports = await sb('reports?order=created_at.desc&limit=200');
+
+  const flagged = reports?.filter(r => (r.flags||0) >= 1) || [];
+
+  mc.innerHTML = `
+    <div class="page-header">
+      <div class="page-title">📣 Community Reports</div>
+      <div class="page-sub">${reports?.length || 0} total reports · ${flagged.length} flagged</div>
+    </div>
+
+    ${flagged.length > 0 ? `
+    <div class="section-card" style="border-left:4px solid var(--red);">
+      <div class="section-header">
+        <div class="section-title">🚩 Flagged Reports (${flagged.length}) — Needs Review</div>
+      </div>
+      <table>
+        <thead><tr><th>Location</th><th>Description</th><th>Depth</th><th>Flags</th><th>GPS</th><th>Time</th><th>Actions</th></tr></thead>
+        <tbody>
+          ${flagged.map(r => `
+            <tr style="background:var(--red-light)">
+              <td><strong>${r.location}</strong></td>
+              <td style="font-size:12px;max-width:200px;">${r.description || '—'}</td>
+              <td>${r.depth ? `<span class="badge ${depthBadge(r.depth)}">${r.depth}</span>` : '—'}</td>
+              <td><span style="color:var(--red);font-weight:700;">🚩 ${r.flags}</span></td>
+              <td>${r.lat ? `<a href="https://maps.google.com/?q=${r.lat},${r.lng}" target="_blank" style="color:var(--blue);font-size:11px;">📍 View</a>` : '—'}</td>
+              <td style="font-size:12px;color:var(--muted)">${timeAgo(r.created_at)}</td>
+              <td style="display:flex;gap:6px;">
+                <button class="btn btn-success btn-sm" onclick="approveReport('${r.id}')">✓ Keep</button>
+                <button class="btn btn-danger btn-sm" onclick="deleteReport('${r.id}')">✕ Delete</button>
+              </td>
+            </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>` : ''}
+
+    <div class="section-card">
+      <div class="section-header">
+        <div class="section-title">All Reports</div>
+        <div class="section-actions">
+          <button class="btn btn-secondary" onclick="renderReports()">🔄 Refresh</button>
+        </div>
+      </div>
+      <table>
+        <thead><tr><th>Location</th><th>Depth</th><th>Description</th><th>Role</th><th>GPS</th><th>Votes</th><th>Time</th><th>Actions</th></tr></thead>
+        <tbody>
+          ${reports?.map(r => `
+            <tr>
+              <td><strong>${r.location}</strong></td>
+              <td>${r.depth ? `<span class="badge ${depthBadge(r.depth)}">${r.depth}</span>` : '—'}</td>
+              <td style="font-size:12px;color:var(--muted);max-width:180px;">${r.description ? r.description.slice(0,60)+'...' : '—'}</td>
+              <td style="font-size:11px;color:var(--muted)">${r.role || '—'}</td>
+              <td>${r.lat ? `<a href="https://maps.google.com/?q=${r.lat},${r.lng}" target="_blank" style="color:var(--blue);font-size:11px;">📍 Map</a>` : '—'}</td>
+              <td>👍 ${r.votes||0}</td>
+              <td style="font-size:12px;color:var(--muted)">${timeAgo(r.created_at)}</td>
+              <td><button class="btn btn-danger btn-sm" onclick="deleteReport('${r.id}')">✕</button></td>
+            </tr>`).join('') || '<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:24px;">No reports yet</td></tr>'}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
+async function approveReport(id) {
+  await sb(`reports?id=eq.${id}`, 'PATCH', { flags: 0 });
+  showToast('✅ Report approved and unflagged');
+  renderReports();
+}
+
+async function deleteReport(id) {
+  if (!confirm('Delete this report permanently?')) return;
+  await fetch(`${SUPABASE_URL}/rest/v1/reports?id=eq.${id}`, { method:'DELETE', headers:H });
+  showToast('🗑️ Report deleted');
+  renderReports();
+}
+
+// ── EVACUATION CENTERS ──
+async function renderEvac() {
+  const mc = document.getElementById('mainContent');
+  mc.innerHTML = `<div class="loading-state"><div class="spinner-lg"></div>Loading...</div>`;
+
+  const centers = await sb('evacuation_centers?order=name');
+
+  mc.innerHTML = `
+    <div class="page-header">
+      <div class="page-title">🏫 Evacuation Centers</div>
+      <div class="page-sub">${centers?.length || 0} centers · ${centers?.filter(c=>c.status==='open').length||0} open</div>
+    </div>
+    <div class="section-card">
+      <div class="section-header">
+        <div class="section-title">All Centers</div>
+        <button class="btn btn-primary" onclick="openAddEvacModal()">+ Add Center</button>
+      </div>
+      <table>
+        <thead><tr><th>Name</th><th>Area</th><th>Capacity</th><th>Current</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody id="evacTableBody">
+          ${centers?.map(c => {
+            const pct = c.capacity > 0 ? Math.round(c.current/c.capacity*100) : 0;
+            return `
+            <tr>
+              <td><strong>${c.name}</strong></td>
+              <td>${c.area || '—'}</td>
+              <td>${c.capacity}</td>
+              <td>
+                <div style="display:flex;align-items:center;gap:8px;">
+                  <div style="width:60px;height:6px;background:var(--soft);border-radius:3px;overflow:hidden;">
+                    <div style="width:${pct}%;height:100%;background:${pct>90?'var(--red)':pct>70?'var(--orange)':'var(--green)'};border-radius:3px;"></div>
+                  </div>
+                  <span style="font-size:12px;">${c.current}/${c.capacity}</span>
+                </div>
+              </td>
+              <td>
+                <select onchange="updateEvacStatus('${c.id}',this.value,${c.current},${c.capacity})"
+                  style="font-size:12px;padding:4px 8px;border-radius:8px;border:1px solid var(--border);background:var(--soft);font-family:Lexend,sans-serif;">
+                  <option value="open" ${c.status==='open'?'selected':''}>Open</option>
+                  <option value="full" ${c.status==='full'?'selected':''}>Full</option>
+                  <option value="closed" ${c.status==='closed'?'selected':''}>Closed</option>
+                </select>
+              </td>
+              <td style="display:flex;gap:6px;">
+                <button class="btn btn-secondary btn-sm" onclick="openUpdateEvacModal('${c.id}','${c.name}',${c.current},${c.capacity})">Update Count</button>
+                <button class="btn btn-danger btn-sm" onclick="deleteEvac('${c.id}')">✕</button>
+              </td>
+            </tr>`;
+          }).join('') || '<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:24px;">No centers yet. Add one above.</td></tr>'}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
+function openAddEvacModal() {
+  document.getElementById('modalBox').innerHTML = `
+    <div class="modal-title">🏫 Add Evacuation Center</div>
+    <div class="modal-sub">Add a new evacuation center to the map.</div>
+    <div class="form-group"><label>Center Name</label><input id="evacName" placeholder="e.g. Marikina Sports Center"/></div>
+    <div class="form-group"><label>Area / City</label><input id="evacArea" placeholder="e.g. Marikina City"/></div>
+    <div class="form-group"><label>Total Capacity</label><input id="evacCap" type="number" placeholder="500"/></div>
+    <div class="form-group"><label>Latitude</label><input id="evacLat" type="number" step="0.0001" placeholder="14.6507"/></div>
+    <div class="form-group"><label>Longitude</label><input id="evacLng" type="number" step="0.0001" placeholder="121.1029"/></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="addEvacCenter()">Add Center</button>
+    </div>`;
+  document.getElementById('modalOverlay').classList.add('show');
+}
+
+function openUpdateEvacModal(id, name, current, capacity) {
+  document.getElementById('modalBox').innerHTML = `
+    <div class="modal-title">Update Count — ${name}</div>
+    <div class="modal-sub">Update the current number of evacuees.</div>
+    <div class="form-group"><label>Current Evacuees</label><input id="updateCurrent" type="number" value="${current}" max="${capacity}"/></div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:16px;">Maximum capacity: ${capacity}</div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="updateEvacCount('${id}',${capacity})">Update</button>
+    </div>`;
+  document.getElementById('modalOverlay').classList.add('show');
+}
+
+async function addEvacCenter() {
+  const data = {
+    name: document.getElementById('evacName').value,
+    area: document.getElementById('evacArea').value,
+    capacity: parseInt(document.getElementById('evacCap').value) || 0,
+    current: 0, status: 'open',
+    lat: parseFloat(document.getElementById('evacLat').value) || null,
+    lng: parseFloat(document.getElementById('evacLng').value) || null,
+  };
+  if (!data.name) { showToast('⚠️ Please enter a name'); return; }
+  await sb('evacuation_centers', 'POST', data);
+  closeModal(); showToast('✅ Evacuation center added!'); renderEvac();
+}
+
+async function updateEvacCount(id, capacity) {
+  const current = parseInt(document.getElementById('updateCurrent').value) || 0;
+  const status = current >= capacity ? 'full' : 'open';
+  await sb(`evacuation_centers?id=eq.${id}`, 'PATCH', { current, status, updated_at: new Date().toISOString() });
+  closeModal(); showToast('✅ Count updated!'); renderEvac();
+}
+
+async function updateEvacStatus(id, status, current, capacity) {
+  await sb(`evacuation_centers?id=eq.${id}`, 'PATCH', { status, updated_at: new Date().toISOString() });
+  showToast(`✅ Status updated to ${status}`);
+}
+
+async function deleteEvac(id) {
+  if (!confirm('Delete this evacuation center?')) return;
+  await fetch(`${SUPABASE_URL}/rest/v1/evacuation_centers?id=eq.${id}`, { method:'DELETE', headers:H });
+  showToast('🗑️ Center deleted'); renderEvac();
+}
+
+// ── BROADCAST ──
+function renderBroadcast() {
+  const mc = document.getElementById('mainContent');
+  mc.innerHTML = `
+    <div class="page-header">
+      <div class="page-title">📢 Broadcast Alert</div>
+      <div class="page-sub">Send an emergency alert to all users in an area.</div>
+    </div>
+    <div class="section-card" style="max-width:600px;">
+      <div class="section-header"><div class="section-title">New Broadcast</div></div>
+      <div style="padding:20px;">
+        <div class="form-group">
+          <label>Alert Title</label>
+          <input id="bcTitle" placeholder="e.g. FLOOD WARNING — Marikina River rising"/>
+        </div>
+        <div class="form-group">
+          <label>Severity</label>
+          <div class="severity-grid">
+            <div class="severity-tile" id="sev-critical" onclick="selectSeverity('critical')">
+              <div style="font-size:24px;">🚨</div>
+              <div style="font-size:12px;font-weight:700;margin-top:4px;">Critical</div>
+              <div style="font-size:10px;color:var(--muted);">Evacuate now</div>
+            </div>
+            <div class="severity-tile selected-warning" id="sev-warning" onclick="selectSeverity('warning')">
+              <div style="font-size:24px;">⚠️</div>
+              <div style="font-size:12px;font-weight:700;margin-top:4px;">Warning</div>
+              <div style="font-size:10px;color:var(--muted);">Be alert</div>
+            </div>
+            <div class="severity-tile" id="sev-info" onclick="selectSeverity('info')">
+              <div style="font-size:24px;">ℹ️</div>
+              <div style="font-size:12px;font-weight:700;margin-top:4px;">Info</div>
+              <div style="font-size:10px;color:var(--muted);">For awareness</div>
+            </div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Message</label>
+          <textarea id="bcMessage" placeholder="Describe the situation and what people should do..."></textarea>
+        </div>
+        <div class="form-group">
+          <label>Target Area (leave blank for all Philippines)</label>
+          <input id="bcArea" placeholder="e.g. Metro Manila, Marikina City"/>
+        </div>
+        <button class="btn btn-primary" style="width:100%;padding:14px;font-size:15px;" onclick="sendBroadcast()">
+          📢 Send Broadcast Alert
+        </button>
+      </div>
+    </div>
+
+    <div class="section-card" style="max-width:600px;">
+      <div class="section-header"><div class="section-title">Recent Broadcasts</div></div>
+      <div id="broadcastHistory"><div class="loading-state"><div class="spinner-lg"></div></div></div>
+    </div>
+  `;
+
+  let selectedSeverity = 'warning';
+  window.selectSeverity = (sev) => {
+    selectedSeverity = sev;
+    ['critical','warning','info'].forEach(s => {
+      document.getElementById(`sev-${s}`).className = 'severity-tile' + (s===sev ? ` selected-${s}` : '');
+    });
+  };
+
+  window.sendBroadcast = async () => {
+    const title = document.getElementById('bcTitle').value.trim();
+    const msg   = document.getElementById('bcMessage').value.trim();
+    const area  = document.getElementById('bcArea').value.trim();
+    if (!title || !msg) { showToast('⚠️ Please fill in title and message'); return; }
+    await sb('alerts', 'POST', {
+      title, message: msg, severity: selectedSeverity,
+      area: area || null, created_by: currentAdmin.email, active: true
+    });
+    // Send push notification to all subscribers
+    try {
+      const pushRes = await fetch('/api/notify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title, message: msg, severity: selectedSeverity, area: area || null, url: 'https://bahaalert.vercel.app' })
+      });
+      const pushData = await pushRes.json();
+      const r = pushData.recipients || 0;
+      showToast(`📢 Broadcast sent! Push delivered to ${r} subscriber${r !== 1 ? 's' : ''}`);
+    } catch(e) {
+      showToast('📢 Alert saved! Push notification pending.');
+    }
+    document.getElementById('bcTitle').value = '';
+    document.getElementById('bcMessage').value = '';
+    loadBroadcastHistory();
+  };
+
+  loadBroadcastHistory();
+}
+
+async function loadBroadcastHistory() {
+  const alerts = await sb('alerts?order=created_at.desc&limit=20');
+  const el = document.getElementById('broadcastHistory');
+  if (!el) return;
+  el.innerHTML = alerts?.length ? `
+    <table>
+      <thead><tr><th>Title</th><th>Severity</th><th>Area</th><th>Sent by</th><th>Time</th><th>Status</th><th></th></tr></thead>
+      <tbody>
+        ${alerts.map(a => `
+          <tr>
+            <td><strong>${a.title}</strong></td>
+            <td><span class="badge badge-${a.severity}">${a.severity.toUpperCase()}</span></td>
+            <td>${a.area || 'All PH'}</td>
+            <td style="font-size:11px;color:var(--muted)">${a.created_by||'—'}</td>
+            <td style="font-size:12px;color:var(--muted)">${timeAgo(a.created_at)}</td>
+            <td>${a.active ? '<span class="badge badge-open">ACTIVE</span>' : '<span class="badge" style="background:var(--soft);color:var(--muted)">ENDED</span>'}</td>
+            <td>${a.active ? `<button class="btn btn-danger btn-sm" onclick="deactivateAlert('${a.id}')">End</button>` : ''}</td>
+          </tr>`).join('')}
+      </tbody>
+    </table>` : `<div class="empty-state"><div class="empty-icon">📭</div><div>No broadcasts yet</div></div>`;
+}
+
+async function deactivateAlert(id) {
+  await sb(`alerts?id=eq.${id}`, 'PATCH', { active: false });
+  showToast('✅ Alert ended'); renderOverview();
+}
+
+// ── ADMIN USERS ──
+async function renderAdmins() {
+  const mc = document.getElementById('mainContent');
+  mc.innerHTML = `<div class="loading-state"><div class="spinner-lg"></div>Loading...</div>`;
+  const admins = await sb('admin_users?order=created_at.desc');
+
+  mc.innerHTML = `
+    <div class="page-header">
+      <div class="page-title">👥 Admin Users</div>
+      <div class="page-sub">Manage who has access to this dashboard.</div>
+    </div>
+    <div class="section-card">
+      <div class="section-header">
+        <div class="section-title">${admins?.length || 0} Admin Accounts</div>
+        <button class="btn btn-primary" onclick="openAddAdminModal()">+ Add Admin</button>
+      </div>
+      <table>
+        <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Area</th><th>Added</th><th>Actions</th></tr></thead>
+        <tbody>
+          ${admins?.map(a => `
+            <tr>
+              <td><div style="display:flex;align-items:center;gap:10px;">
+                <div style="width:32px;height:32px;border-radius:50%;background:var(--blue-light);display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--blue);">${(a.name||a.email)[0].toUpperCase()}</div>
+                <strong>${a.name || '—'}</strong>
+              </div></td>
+              <td style="font-size:13px;">${a.email}</td>
+              <td><span class="badge" style="background:var(--purple-light);color:var(--purple);">${a.role||'admin'}</span></td>
+              <td>${a.area || 'All Philippines'}</td>
+              <td style="font-size:12px;color:var(--muted)">${timeAgo(a.created_at)}</td>
+              <td>${a.email !== currentAdmin.email ? `<button class="btn btn-danger btn-sm" onclick="deleteAdmin('${a.id}')">Remove</button>` : '<span style="font-size:12px;color:var(--muted)">You</span>'}</td>
+            </tr>`).join('') || '<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:24px;">No admins yet</td></tr>'}
+        </tbody>
+      </table>
+    </div>
+    <div class="section-card" style="max-width:500px;padding:20px;">
+      <div style="font-size:14px;font-weight:700;margin-bottom:8px;">🔐 How Admin Access Works</div>
+      <div style="font-size:13px;color:var(--muted);line-height:1.7;">
+        1. Add an admin account with their email and a temporary password<br>
+        2. Share the admin URL with them: <strong style="color:var(--blue);">bahaalert.vercel.app/admin</strong><br>
+        3. They log in with their email + password<br>
+        4. They can manage reports, evacuation centers, and broadcast alerts for their area
+      </div>
+    </div>
+  `;
+}
+
+function openAddAdminModal() {
+  document.getElementById('modalBox').innerHTML = `
+    <div class="modal-title">👤 Add Admin User</div>
+    <div class="modal-sub">Create access for a barangay official or LGU staff member.</div>
+    <div class="form-group"><label>Full Name</label><input id="adminNameInput" placeholder="e.g. Juan dela Cruz"/></div>
+    <div class="form-group"><label>Email Address</label><input id="adminEmailInput" type="email" placeholder="juan@marikina.gov.ph"/></div>
+    <div class="form-group"><label>Temporary Password</label><input id="adminPassInput" type="text" placeholder="e.g. BahaAlert2026!"/></div>
+    <div class="form-group">
+      <label>Role</label>
+      <select id="adminRoleInput">
+        <option value="admin">Admin (full access)</option>
+        <option value="lgu">LGU Staff (reports + evac)</option>
+        <option value="barangay">Barangay Official (reports only)</option>
+      </select>
+    </div>
+    <div class="form-group"><label>Area (optional)</label><input id="adminAreaInput" placeholder="e.g. Marikina City"/></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="addAdmin()">Add Admin</button>
+    </div>`;
+  document.getElementById('modalOverlay').classList.add('show');
+}
+
+async function addAdmin() {
+  const data = {
+    name: document.getElementById('adminNameInput').value.trim(),
+    email: document.getElementById('adminEmailInput').value.trim(),
+    password_hash: document.getElementById('adminPassInput').value.trim(),
+    role: document.getElementById('adminRoleInput').value,
+    area: document.getElementById('adminAreaInput').value.trim() || null,
+  };
+  if (!data.email || !data.password_hash) { showToast('⚠️ Email and password required'); return; }
+  await sb('admin_users', 'POST', data);
+  closeModal(); showToast('✅ Admin user added!'); renderAdmins();
+}
+
+async function deleteAdmin(id) {
+  if (!confirm('Remove this admin user?')) return;
+  await fetch(`${SUPABASE_URL}/rest/v1/admin_users?id=eq.${id}`, { method:'DELETE', headers:H });
+  showToast('🗑️ Admin removed'); renderAdmins();
+}
+
+// ── HELPERS ──
+function depthBadge(depth) {
+  if (!depth) return '';
+  if (depth.includes('Dibdib')||depth.includes('Baywang')||depth.includes('Chest')) return 'badge-critical';
+  if (depth.includes('Tuhod')||depth.includes('Knee')) return 'badge-warning';
+  return 'badge-normal';
+}
+
+function timeAgo(dateStr) {
+  const diff = Math.floor((Date.now() - new Date(dateStr)) / 1000);
+  if (diff < 60) return `${diff}s ago`;
+  if (diff < 3600) return `${Math.floor(diff/60)}m ago`;
+  if (diff < 86400) return `${Math.floor(diff/3600)}h ago`;
+  return new Date(dateStr).toLocaleDateString('en-PH', {month:'short',day:'numeric'});
+}
+
+// ── FLOOD STATIONS ──
+async function renderStations() {
+  const mc = document.getElementById('mainContent');
+  mc.innerHTML = `<div class="loading-state"><div class="spinner-lg"></div>Loading flood stations...</div>`;
+
+  let stations = [];
+  try {
+    stations = await sb('flood_stations?order=name');
+  } catch(e) {
+    mc.innerHTML = `<div class="loading-state">Failed to load stations. Make sure the flood_stations table exists in Supabase.</div>`;
+    return;
+  }
+
+  if (!Array.isArray(stations) || stations.length === 0) {
+    mc.innerHTML = `
+      <div class="page-header">
+        <div class="page-title">🌊 Flood Stations</div>
+        <div class="page-sub">No stations found. Run the SQL setup script to seed the table.</div>
+      </div>`;
+    return;
+  }
+
+  const critical = stations.filter(s => s.flood_status === 'critical').length;
+  const warning = stations.filter(s => s.flood_status === 'warning').length;
+  const normal = stations.filter(s => s.flood_status === 'normal').length;
+
+  mc.innerHTML = `
+    <div class="page-header">
+      <div class="page-title">🌊 Flood Stations</div>
+      <div class="page-sub">${stations.length} monitoring stations &middot; Last refreshed: ${new Date().toLocaleTimeString('en-PH')}</div>
+    </div>
+
+    <div class="stats-grid" style="margin-bottom:20px;">
+      <div class="stat-card">
+        <div class="stat-card-top"><div class="stat-icon" style="background:var(--red-light);">🔴</div></div>
+        <div class="stat-num" style="color:var(--red)">${critical}</div>
+        <div class="stat-label">Critical</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-top"><div class="stat-icon" style="background:var(--orange-light);">🟠</div></div>
+        <div class="stat-num" style="color:var(--orange)">${warning}</div>
+        <div class="stat-label">Warning</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-top"><div class="stat-icon" style="background:var(--green-light);">🟢</div></div>
+        <div class="stat-num" style="color:var(--green)">${normal}</div>
+        <div class="stat-label">Normal</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">All Stations</div>
+        <button class="btn btn-secondary" onclick="renderStations()">🔄 Refresh</button>
+      </div>
+      <table class="table">
+        <thead>
+          <tr>
+            <th>City</th>
+            <th>Region</th>
+            <th>River</th>
+            <th>Level / Max</th>
+            <th>Status</th>
+            <th>Updated</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${stations.map(s => {
+            const pct = Math.round((s.river_level / s.river_max) * 100);
+            const statusColors = { critical: 'var(--red)', warning: 'var(--orange)', normal: 'var(--green)' };
+            const statusBg = { critical: 'var(--red-light)', warning: 'var(--orange-light)', normal: 'var(--green-light)' };
+            const ago = s.updated_at ? timeAgo(s.updated_at) : 'never';
+            return `<tr>
+              <td><strong>${s.name}</strong></td>
+              <td style="text-transform:uppercase;font-size:11px;color:var(--muted);">${s.region}</td>
+              <td style="font-size:12px;">${s.river}</td>
+              <td>
+                <div style="display:flex;align-items:center;gap:8px;">
+                  <div style="flex:1;height:6px;background:var(--soft);border-radius:3px;overflow:hidden;min-width:60px;">
+                    <div style="width:${Math.min(pct,100)}%;height:100%;background:${statusColors[s.flood_status]};border-radius:3px;"></div>
+                  </div>
+                  <span style="font-size:12px;font-weight:700;white-space:nowrap;">${s.river_level}m / ${s.river_max}m</span>
+                </div>
+              </td>
+              <td>
+                <span style="display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;background:${statusBg[s.flood_status]};color:${statusColors[s.flood_status]};text-transform:uppercase;">
+                  ${s.flood_status}
+                </span>
+              </td>
+              <td style="font-size:11px;color:var(--muted);">${ago}</td>
+              <td><button class="btn btn-primary btn-sm" onclick="openStationEditor(this)" data-id="${s.id}" data-name="${s.name}" data-level="${s.river_level}" data-max="${s.river_max}" data-status="${s.flood_status}">Edit</button></td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
+function openStationEditor(btn) {
+  const id = btn.dataset.id;
+  const name = btn.dataset.name;
+  const level = parseFloat(btn.dataset.level);
+  const max = parseFloat(btn.dataset.max);
+  const status = btn.dataset.status;
+
+  const modal = document.getElementById('modalOverlay');
+  const mc = document.getElementById('modalBox');
+  mc.innerHTML = `
+    <div style="padding:24px;">
+      <div style="font-family:'Nunito',sans-serif;font-size:20px;font-weight:900;margin-bottom:4px;">Edit Station: ${name}</div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:20px;">Update river level and flood status</div>
+
+      <div style="margin-bottom:14px;">
+        <label style="font-size:12px;font-weight:700;display:block;margin-bottom:4px;">River Level (meters)</label>
+        <input type="number" id="editLevel" value="${level}" step="0.1" min="0" max="99"
+          style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;font-family:'Lexend',sans-serif;font-size:14px;outline:none;">
+      </div>
+
+      <div style="margin-bottom:14px;">
+        <label style="font-size:12px;font-weight:700;display:block;margin-bottom:4px;">Max Capacity (meters)</label>
+        <input type="number" id="editMax" value="${max}" step="0.1" min="0.1" max="99"
+          style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;font-family:'Lexend',sans-serif;font-size:14px;outline:none;">
+      </div>
+
+      <div style="margin-bottom:20px;">
+        <label style="font-size:12px;font-weight:700;display:block;margin-bottom:4px;">Flood Status</label>
+        <select id="editStatus"
+          style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;font-family:'Lexend',sans-serif;font-size:14px;outline:none;background:white;">
+          <option value="normal" ${status==='normal'?'selected':''}>🟢 Normal</option>
+          <option value="warning" ${status==='warning'?'selected':''}>🟠 Warning</option>
+          <option value="critical" ${status==='critical'?'selected':''}>🔴 Critical</option>
+        </select>
+      </div>
+
+      <div style="display:flex;gap:8px;">
+        <button onclick="saveStation()" class="btn btn-primary" style="flex:1;">Save Changes</button>
+        <button onclick="closeModal()" class="btn btn-secondary">Cancel</button>
+      </div>
+    </div>
+  `;
+  window._editingStationId = id;
+  modal.classList.add('show');
+}
+
+async function saveStation() {
+  const id = window._editingStationId;
+  const level = parseFloat(document.getElementById('editLevel').value);
+  const max = parseFloat(document.getElementById('editMax').value);
+  const status = document.getElementById('editStatus').value;
+
+  if (isNaN(level) || isNaN(max) || max <= 0) {
+    showToast('Please enter valid numbers');
+    return;
+  }
+
+  try {
+    await fetch(`${SUPABASE_URL}/rest/v1/flood_stations?id=eq.${id}`, {
+      method: 'PATCH',
+      headers: H,
+      body: JSON.stringify({
+        river_level: level,
+        river_max: max,
+        flood_status: status,
+        updated_by: currentAdmin?.email || 'admin'
+      })
+    });
+    closeModal();
+    showToast('Station updated successfully');
+    renderStations();
+  } catch(e) {
+    console.error('Save station error:', e);
+    showToast('Failed to save. Try again.');
+  }
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.innerHTML = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3500);
+}
+
+function closeModal() { document.getElementById('modalOverlay').classList.remove('show'); }
+function closeModalOut(e) { if (e.target === document.getElementById('modalOverlay')) closeModal(); }
+</script>
+</body>
+</html>
