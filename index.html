@@ -545,11 +545,11 @@
       <div style="font-size:14px;font-weight:700;color:var(--text);">Get flood alerts instantly</div>
       <div style="font-size:11px;color:var(--muted);margin-top:2px;">We'll notify you when flooding is reported near you</div>
     </div>
-    <button onclick="document.getElementById('notifPrompt').style.display='none'" style="background:none;border:none;font-size:18px;color:var(--muted);cursor:pointer;padding:4px;">✕</button>
+    <button onclick="dismissNotifPrompt()" style="background:none;border:none;font-size:18px;color:var(--muted);cursor:pointer;padding:4px;">✕</button>
   </div>
   <div style="display:flex;gap:8px;margin-top:12px;">
-    <button onclick="toggleNotifications();document.getElementById('notifPrompt').style.display='none';" style="flex:1;background:var(--green);color:white;border:none;border-radius:10px;padding:10px;font-family:'Lexend',sans-serif;font-size:13px;font-weight:700;cursor:pointer;">🔔 Enable Alerts</button>
-    <button onclick="document.getElementById('notifPrompt').style.display='none'" style="padding:10px 14px;background:var(--soft);color:var(--muted);border:none;border-radius:10px;font-family:'Lexend',sans-serif;font-size:13px;cursor:pointer;">Later</button>
+    <button onclick="toggleNotifications();dismissNotifPrompt();" style="flex:1;background:var(--green);color:white;border:none;border-radius:10px;padding:10px;font-family:'Lexend',sans-serif;font-size:13px;font-weight:700;cursor:pointer;">🔔 Enable Alerts</button>
+    <button onclick="dismissNotifPrompt()" style="padding:10px 14px;background:var(--soft);color:var(--muted);border:none;border-radius:10px;font-family:'Lexend',sans-serif;font-size:13px;cursor:pointer;">Later</button>
   </div>
 </div>
 
@@ -592,34 +592,82 @@
 
 <script>
 const API_KEY = '751e43c3eba5e441f025126d4252c4fc';
+const SUPABASE_URL = 'https://dqjdnjutsxerqkpepbri.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRxamRuanV0c3hlcnFrcGVwYnJpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0OTE3MTcsImV4cCI6MjA5MDA2NzcxN30.nttC3ruA1WfzmS7k0HNOv0cq_PxyRhDLJYxVElbxEEA';
+const sbHeaders = {
+  'Content-Type': 'application/json',
+  'apikey': SUPABASE_KEY,
+  'Authorization': `Bearer ${SUPABASE_KEY}`,
+  'Prefer': 'return=representation'
+};
 
-// ── MONITORING CITIES ──
-const cities = [
+// ── MONITORING CITIES (static base — live data fetched from Supabase) ──
+const CITY_DEFAULTS = [
   // NCR
-  { name:'Marikina',       region:'ncr',      lat:14.6507, lng:121.1029, river:'Marikina River',   riverLevel:19.8, riverMax:20.0, floodStatus:'critical' },
-  { name:'Manila',         region:'ncr',      lat:14.5995, lng:120.9842, river:'Pasig River',      riverLevel:3.1,  riverMax:4.5,  floodStatus:'warning'  },
-  { name:'Caloocan',       region:'ncr',      lat:14.7294, lng:120.9732, river:'Tullahan River',   riverLevel:5.2,  riverMax:5.5,  floodStatus:'critical' },
-  { name:'Quezon City',    region:'ncr',      lat:14.6760, lng:121.0437, river:'San Juan River',   riverLevel:2.8,  riverMax:4.0,  floodStatus:'warning'  },
-  { name:'Pasig',          region:'ncr',      lat:14.5764, lng:121.0851, river:'Pasig River',      riverLevel:3.0,  riverMax:4.5,  floodStatus:'normal'   },
+  { name:'Marikina',       region:'ncr',      lat:14.6507, lng:121.1029, river:'Marikina River',       riverLevel:0, riverMax:20.0, floodStatus:'normal' },
+  { name:'Manila',         region:'ncr',      lat:14.5995, lng:120.9842, river:'Pasig River',           riverLevel:0, riverMax:4.5,  floodStatus:'normal' },
+  { name:'Caloocan',       region:'ncr',      lat:14.7294, lng:120.9732, river:'Tullahan River',        riverLevel:0, riverMax:5.5,  floodStatus:'normal' },
+  { name:'Quezon City',    region:'ncr',      lat:14.6760, lng:121.0437, river:'San Juan River',        riverLevel:0, riverMax:4.0,  floodStatus:'normal' },
+  { name:'Pasig',          region:'ncr',      lat:14.5764, lng:121.0851, river:'Pasig River',           riverLevel:0, riverMax:4.5,  floodStatus:'normal' },
   // Luzon
-  { name:'Tuguegarao',     region:'luzon',    lat:17.6132, lng:121.7270, river:'Cagayan River',    riverLevel:8.7,  riverMax:10.0, floodStatus:'warning'  },
-  { name:'San Fernando',   region:'luzon',    lat:15.0285, lng:120.6899, river:'Pampanga River',   riverLevel:6.1,  riverMax:8.0,  floodStatus:'warning'  },
-  { name:'Naga',           region:'luzon',    lat:13.6218, lng:123.1945, river:'Bicol River',      riverLevel:7.3,  riverMax:9.5,  floodStatus:'warning'  },
-  { name:'Legazpi',        region:'luzon',    lat:13.1391, lng:123.7438, river:'Yawa River',       riverLevel:3.2,  riverMax:7.0,  floodStatus:'normal'   },
-  { name:'Dagupan',        region:'luzon',    lat:16.0433, lng:120.3333, river:'Agno River',       riverLevel:4.5,  riverMax:9.0,  floodStatus:'normal'   },
+  { name:'Tuguegarao',     region:'luzon',    lat:17.6132, lng:121.7270, river:'Cagayan River',         riverLevel:0, riverMax:10.0, floodStatus:'normal' },
+  { name:'San Fernando',   region:'luzon',    lat:15.0285, lng:120.6899, river:'Pampanga River',        riverLevel:0, riverMax:8.0,  floodStatus:'normal' },
+  { name:'Naga',           region:'luzon',    lat:13.6218, lng:123.1945, river:'Bicol River',           riverLevel:0, riverMax:9.5,  floodStatus:'normal' },
+  { name:'Legazpi',        region:'luzon',    lat:13.1391, lng:123.7438, river:'Yawa River',            riverLevel:0, riverMax:7.0,  floodStatus:'normal' },
+  { name:'Dagupan',        region:'luzon',    lat:16.0433, lng:120.3333, river:'Agno River',            riverLevel:0, riverMax:9.0,  floodStatus:'normal' },
   // Visayas
-  { name:'Cebu City',      region:'visayas',  lat:10.3157, lng:123.8854, river:'Butuanon River',   riverLevel:2.1,  riverMax:5.0,  floodStatus:'normal'   },
-  { name:'Iloilo City',    region:'visayas',  lat:10.7202, lng:122.5621, river:'Jalaur River',     riverLevel:5.5,  riverMax:7.2,  floodStatus:'warning'  },
-  { name:'Tacloban',       region:'visayas',  lat:11.2543, lng:125.0000, river:'Surigao River',    riverLevel:8.9,  riverMax:9.0,  floodStatus:'critical' },
-  { name:'Bacolod',        region:'visayas',  lat:10.6770, lng:122.9570, river:'Ilog River',       riverLevel:2.8,  riverMax:7.0,  floodStatus:'normal'   },
+  { name:'Cebu City',      region:'visayas',  lat:10.3157, lng:123.8854, river:'Butuanon River',        riverLevel:0, riverMax:5.0,  floodStatus:'normal' },
+  { name:'Iloilo City',    region:'visayas',  lat:10.7202, lng:122.5621, river:'Jalaur River',          riverLevel:0, riverMax:7.2,  floodStatus:'normal' },
+  { name:'Tacloban',       region:'visayas',  lat:11.2543, lng:125.0000, river:'Surigao River',         riverLevel:0, riverMax:9.0,  floodStatus:'normal' },
+  { name:'Bacolod',        region:'visayas',  lat:10.6770, lng:122.9570, river:'Ilog River',            riverLevel:0, riverMax:7.0,  floodStatus:'normal' },
   // Mindanao
-  { name:'Davao City',     region:'mindanao', lat:7.0644,  lng:125.5978, river:'Davao River',      riverLevel:3.5,  riverMax:9.0,  floodStatus:'normal'   },
-  { name:'Cagayan de Oro', region:'mindanao', lat:8.4822,  lng:124.6472, river:'Cagayan de Oro R.',riverLevel:6.8,  riverMax:10.0, floodStatus:'warning'  },
-  { name:'Cotabato',       region:'mindanao', lat:7.2047,  lng:124.2310, river:'Mindanao River',   riverLevel:9.2,  riverMax:12.0, floodStatus:'warning'  },
-  { name:'Butuan',         region:'mindanao', lat:8.9500,  lng:125.5400, river:'Agusan River',     riverLevel:10.1, riverMax:13.0, floodStatus:'warning'  },
-  { name:'Zamboanga',      region:'mindanao', lat:6.9214,  lng:122.0790, river:'Great Sta. Cruz R.',riverLevel:2.3, riverMax:6.0,  floodStatus:'normal'   },
-  { name:'General Santos', region:'mindanao', lat:6.1164,  lng:125.1716, river:'Buayan River',     riverLevel:1.9,  riverMax:5.5,  floodStatus:'normal'   },
+  { name:'Davao City',     region:'mindanao', lat:7.0644,  lng:125.5978, river:'Davao River',           riverLevel:0, riverMax:9.0,  floodStatus:'normal' },
+  { name:'Cagayan de Oro', region:'mindanao', lat:8.4822,  lng:124.6472, river:'Cagayan de Oro River',  riverLevel:0, riverMax:10.0, floodStatus:'normal' },
+  { name:'Cotabato',       region:'mindanao', lat:7.2047,  lng:124.2310, river:'Mindanao River',        riverLevel:0, riverMax:12.0, floodStatus:'normal' },
+  { name:'Butuan',         region:'mindanao', lat:8.9500,  lng:125.5400, river:'Agusan River',          riverLevel:0, riverMax:13.0, floodStatus:'normal' },
+  { name:'Zamboanga',      region:'mindanao', lat:6.9214,  lng:122.0790, river:'Great Sta. Cruz River', riverLevel:0, riverMax:6.0,  floodStatus:'normal' },
+  { name:'General Santos', region:'mindanao', lat:6.1164,  lng:125.1716, river:'Buayan River',          riverLevel:0, riverMax:5.5,  floodStatus:'normal' },
 ];
+
+// Mutable cities array — updated with live Supabase data
+let cities = CITY_DEFAULTS.map(c => ({ ...c }));
+
+// ── FETCH LIVE FLOOD DATA FROM SUPABASE ──
+async function fetchFloodStations() {
+  try {
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/flood_stations?select=name,river_level,river_max,flood_status,updated_at&order=name`,
+      { headers: sbHeaders }
+    );
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+
+    // Merge live data onto city defaults
+    const liveMap = {};
+    data.forEach(s => { liveMap[s.name] = s; });
+
+    cities = CITY_DEFAULTS.map(c => {
+      const live = liveMap[c.name];
+      if (live) {
+        return {
+          ...c,
+          riverLevel: live.river_level,
+          riverMax: live.river_max ?? c.riverMax,
+          floodStatus: live.flood_status,
+          updatedAt: live.updated_at
+        };
+      }
+      return { ...c };
+    });
+
+    console.log(`Loaded live flood data for ${data.length} stations`);
+    return true;
+  } catch(e) {
+    console.error('Failed to fetch flood stations:', e);
+    // Keep using defaults (all normal) — don't show stale hardcoded data
+    return false;
+  }
+}
 
 const weatherCache = {};
 let currentLayer = 'flood';
@@ -1535,15 +1583,6 @@ function setLang(lang) {
     else if (title.includes('Evacuation')) buildEvacPanel();
   }
 }
-const SUPABASE_URL = 'https://dqjdnjutsxerqkpepbri.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRxamRuanV0c3hlcnFrcGVwYnJpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0OTE3MTcsImV4cCI6MjA5MDA2NzcxN30.nttC3ruA1WfzmS7k0HNOv0cq_PxyRhDLJYxVElbxEEA';
-
-const sbHeaders = {
-  'Content-Type': 'application/json',
-  'apikey': SUPABASE_KEY,
-  'Authorization': `Bearer ${SUPABASE_KEY}`,
-  'Prefer': 'return=representation'
-};
 
 // ── FETCH REPORTS FROM SUPABASE ──
 async function fetchReports() {
@@ -1926,6 +1965,11 @@ function dismissNotifBanner() {
   localStorage.setItem('notifDismissed', '1');
 }
 
+function dismissNotifPrompt() {
+  const el = document.getElementById('notifPrompt');
+  if (el) el.classList.remove('show');
+}
+
 // Tag the user's area in OneSignal for targeted notifications
 async function tagUserLocation() {
   if (!window.OneSignal || !userLat || !userLng) return;
@@ -2212,12 +2256,20 @@ async function init() {
     const bar = document.getElementById('refreshBar');
     if (bar) { bar.style.display='block'; bar.classList.add('loading'); }
 
+    // Fetch live flood station data from Supabase before rendering
+    const liveLoaded = await fetchFloodStations();
+    if (liveLoaded) {
+      console.log('Live flood data loaded from Supabase');
+    } else {
+      console.warn('Using default flood data — Supabase fetch failed');
+    }
+
     await renderMarkers('all');
     await updateAlertStrip();
 
     const now = new Date().toLocaleTimeString('en-PH', {hour:'2-digit', minute:'2-digit'});
     const sub = document.getElementById('lastUpdated');
-    if (sub) sub.textContent = `Updated ${now} · Live via OpenWeatherMap`;
+    if (sub) sub.textContent = `Updated ${now} · Live via ${liveLoaded ? 'Supabase + ' : ''}OpenWeatherMap`;
 
     if (bar) { bar.classList.add('done'); setTimeout(() => { bar.style.display='none'; }, 500); }
 
@@ -2239,12 +2291,13 @@ async function init() {
 
     setInterval(async () => {
       Object.keys(weatherCache).forEach(k => delete weatherCache[k]);
+      await fetchFloodStations(); // Refresh live flood data
       await renderMarkers(currentFilter);
       await updateAlertStrip();
       await checkForNewCriticalAlerts();
       const t = new Date().toLocaleTimeString('en-PH', {hour:'2-digit', minute:'2-digit'});
       const s = document.getElementById('lastUpdated');
-      if (s) s.textContent = `Updated ${t} · Live via OpenWeatherMap`;
+      if (s) s.textContent = `Updated ${t} · Live via Supabase + OpenWeatherMap`;
     }, 600000);
 
   } catch(err) {
