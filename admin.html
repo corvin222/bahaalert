@@ -1044,7 +1044,7 @@ async function renderStations() {
 
 function openStationEditor(id, name, level, max, status) {
   const modal = document.getElementById('modalOverlay');
-  const mc = document.getElementById('modalContent');
+  const mc = document.getElementById('modalBox');
   mc.innerHTML = `
     <div style="padding:24px;">
       <div style="font-family:'Nunito',sans-serif;font-size:20px;font-weight:900;margin-bottom:4px;">Edit Station: ${name}</div>
