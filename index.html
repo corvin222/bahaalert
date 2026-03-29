@@ -352,6 +352,12 @@
 
   /* TOAST */
   .toast{position:fixed;top:20px;left:50%;transform:translateX(-50%) translateY(-80px);background:var(--text);color:white;border-radius:14px;padding:11px 18px;font-size:13px;font-weight:600;z-index:2000;white-space:nowrap;transition:transform 0.35s cubic-bezier(0.4,0,0.2,1);box-shadow:0 8px 24px rgba(0,0,0,0.2);display:flex;align-items:center;gap:7px;}
+
+  /* UPDATE BANNER */
+  .update-banner{position:fixed;top:12px;left:50%;transform:translateX(-50%) translateY(-100px);background:linear-gradient(135deg,#2563eb,#38bdf8);color:white;border-radius:14px;padding:10px 16px;font-size:13px;font-weight:600;z-index:2500;display:flex;align-items:center;gap:10px;box-shadow:0 8px 32px rgba(37,99,235,0.3);transition:transform 0.4s cubic-bezier(0.4,0,0.2,1);font-family:'Lexend',sans-serif;max-width:calc(100vw - 24px);}
+  .update-banner.show{transform:translateX(-50%) translateY(0);}
+  .update-banner button{background:white;color:#2563eb;border:none;border-radius:8px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Lexend',sans-serif;white-space:nowrap;}
+  .update-banner .dismiss{background:transparent;color:rgba(255,255,255,0.7);font-size:18px;padding:2px 6px;}
   .toast.show{transform:translateX(-50%) translateY(0);}
 
   /* REFRESH indicator */
@@ -651,6 +657,13 @@
 </div>
 <!-- TOAST -->
 <div class="toast" id="toast">✅ <span id="toastMsg"></span></div>
+
+<!-- UPDATE AVAILABLE BANNER -->
+<div class="update-banner" id="updateBanner">
+  <span>🔄 A new version is available</span>
+  <button onclick="applyUpdate()">Update now</button>
+  <button class="dismiss" onclick="document.getElementById('updateBanner').classList.remove('show')">✕</button>
+</div>
 
 <script>
 const API_KEY = '751e43c3eba5e441f025126d4252c4fc';
@@ -2805,12 +2818,63 @@ async function notifyNearbyUsers(report) {
   await sendFloodNotification(title, message, 'critical', report.location);
 }
 
-// ── PWA: SERVICE WORKER ──
+// ── PWA: SERVICE WORKER WITH UPDATE DETECTION ──
+let waitingWorker = null;
+
+function applyUpdate() {
+  if (waitingWorker) {
+    waitingWorker.postMessage({ type: 'SKIP_WAITING' });
+  } else {
+    // Fallback: just reload
+    window.location.reload();
+  }
+}
+
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/sw.js')
-      .then(reg => console.log('SW registered:', reg.scope))
+      .then(reg => {
+        console.log('SW registered:', reg.scope);
+
+        // Check for updates immediately
+        reg.update();
+
+        // Check for updates every 5 minutes
+        setInterval(() => reg.update(), 5 * 60 * 1000);
+
+        // A new SW is waiting to activate
+        if (reg.waiting) {
+          waitingWorker = reg.waiting;
+          document.getElementById('updateBanner')?.classList.add('show');
+        }
+
+        // A new SW has been found and is installing
+        reg.addEventListener('updatefound', () => {
+          const newWorker = reg.installing;
+          if (!newWorker) return;
+
+          newWorker.addEventListener('statechange', () => {
+            // New SW is installed and waiting
+            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+              waitingWorker = newWorker;
+              document.getElementById('updateBanner')?.classList.add('show');
+            }
+          });
+        });
+      })
       .catch(err => console.log('SW failed:', err));
+
+    // When the new SW takes over, reload the page
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      window.location.reload();
+    });
+
+    // Listen for messages from SW
+    navigator.serviceWorker.addEventListener('message', e => {
+      if (e.data && e.data.type === 'SW_UPDATED') {
+        console.log('SW updated to cache:', e.data.cache);
+      }
+    });
   });
 }
 
