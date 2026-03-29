@@ -676,9 +676,16 @@ function downloadReportsPDF(reports) {
   // Load jsPDF from CDN if not already loaded
   if (!window.jspdf) {
     const script = document.createElement('script');
-    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.2/jspdf.umd.min.js';
+    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
     script.onload = () => generateReportPDF(reports);
-    script.onerror = () => showToast('❌ Failed to load PDF library');
+    script.onerror = () => {
+      // Fallback URL
+      const s2 = document.createElement('script');
+      s2.src = 'https://unpkg.com/jspdf@2.5.1/dist/jspdf.umd.min.js';
+      s2.onload = () => generateReportPDF(reports);
+      s2.onerror = () => showToast('❌ Failed to load PDF library. Check your internet connection.');
+      document.head.appendChild(s2);
+    };
     document.head.appendChild(script);
   } else {
     generateReportPDF(reports);
