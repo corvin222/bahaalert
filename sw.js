@@ -1,9 +1,13 @@
-const CACHE = 'bahaalert-v4';
+const CACHE = 'bahaalert-v5';
 const OFFLINE_ASSETS = ['/', '/index.html', '/manifest.json'];
 
 // ── INSTALL ──
 self.addEventListener('install', e => {
-  e.waitUntil(caches.open(CACHE).then(c => c.addAll(OFFLINE_ASSETS)).then(() => self.skipWaiting()));
+  e.waitUntil(
+    caches.open(CACHE)
+      .then(c => c.addAll(OFFLINE_ASSETS))
+      .then(() => self.skipWaiting())
+  );
 });
 
 // ── ACTIVATE ──
@@ -12,18 +16,42 @@ self.addEventListener('activate', e => {
     caches.keys().then(keys =>
       Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))
     ).then(() => self.clients.claim())
+    .then(() => {
+      // Notify all open tabs that a new version is active
+      self.clients.matchAll({ type: 'window' }).then(clients => {
+        clients.forEach(client => client.postMessage({ type: 'SW_UPDATED', cache: CACHE }));
+      });
+    })
   );
 });
 
 // ── FETCH ──
 self.addEventListener('fetch', e => {
   const url = new URL(e.request.url);
+
+  // Skip caching for API calls, external services
   if (url.hostname.includes('openweathermap') || url.hostname.includes('supabase') ||
       url.hostname.includes('unpkg') || url.hostname.includes('googleapis') ||
-      url.hostname.includes('onesignal')) {
+      url.hostname.includes('onesignal') || url.pathname.startsWith('/api/')) {
     e.respondWith(fetch(e.request).catch(() => new Response('Offline', { status: 503 })));
     return;
   }
+
+  // Network-first for HTML pages (so updates are picked up immediately)
+  if (e.request.mode === 'navigate' || e.request.headers.get('accept')?.includes('text/html')) {
+    e.respondWith(
+      fetch(e.request).then(res => {
+        const clone = res.clone();
+        caches.open(CACHE).then(c => c.put(e.request, clone));
+        return res;
+      }).catch(() => {
+        return caches.match(e.request).then(cached => cached || caches.match('/'));
+      })
+    );
+    return;
+  }
+
+  // Cache-first for static assets
   e.respondWith(
     caches.match(e.request).then(cached => {
       if (cached) return cached;
@@ -35,6 +63,13 @@ self.addEventListener('fetch', e => {
       }).catch(() => e.request.mode === 'navigate' ? caches.match('/') : null);
     })
   );
+});
+
+// ── LISTEN FOR SKIP WAITING MESSAGE FROM PAGE ──
+self.addEventListener('message', e => {
+  if (e.data && e.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
 });
 
 // ── PUSH NOTIFICATIONS ──
@@ -76,7 +111,7 @@ self.addEventListener('notificationclick', e => {
   );
 });
 
-// ── BACKGROUND SYNC (retry failed reports) ──
+// ── BACKGROUND SYNC ──
 self.addEventListener('sync', e => {
   if (e.tag === 'sync-reports') e.waitUntil(syncPendingReports());
 });
