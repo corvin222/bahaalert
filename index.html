@@ -573,12 +573,13 @@
     <div class="form-field"><label data-i18n="description">Description</label><textarea id="repDesc" data-i18n-placeholder="descPlaceholder"></textarea></div>
     <div class="form-field">
       <label data-i18n="photoLabel">📸 Add photo (deleted after 48 hours)</label>
-      <div id="photoUploadArea" onclick="document.getElementById('photoInput').click()"
+      <div id="photoUploadArea" onclick="handlePhotoUpload()"
         style="border:2px dashed var(--border);border-radius:12px;padding:20px;text-align:center;cursor:pointer;background:var(--soft);transition:all 0.2s;">
         <div id="photoPlaceholder">
           <div style="font-size:28px;margin-bottom:6px;">📷</div>
           <div id="photoUploadText" style="font-size:13px;font-weight:600;color:var(--muted);" data-i18n="photoTap">Tap to upload a photo</div>
           <div id="photoUploadSub" style="font-size:11px;color:var(--muted);margin-top:3px;" data-i18n="photoSub">JPG, PNG · Max 5MB · Deleted after 48h</div>
+          <div id="photoLocationHint" style="display:none;font-size:11px;color:var(--red);margin-top:6px;">📍 Location must be enabled to upload photos</div>
         </div>
         <img id="photoPreview" style="display:none;width:100%;border-radius:8px;max-height:180px;object-fit:cover;" />
       </div>
@@ -2169,7 +2170,59 @@ async function flagReport(id, btn) {
     console.error('Flag error:', e);
   }
 }
-function openModal()  { document.getElementById('modalBg').classList.add('show'); }
+function openModal() {
+  document.getElementById('modalBg').classList.add('show');
+  // Request location when opening report modal
+  if (!userLat || !userLng) {
+    requestLocation();
+  }
+  updatePhotoUploadState();
+}
+
+function updatePhotoUploadState() {
+  const hint = document.getElementById('photoLocationHint');
+  const area = document.getElementById('photoUploadArea');
+  if (userLat && userLng) {
+    if (hint) hint.style.display = 'none';
+    if (area) area.style.opacity = '1';
+  } else {
+    if (hint) hint.style.display = 'block';
+    if (area) area.style.opacity = '0.6';
+  }
+}
+
+function handlePhotoUpload() {
+  if (!userLat || !userLng) {
+    // Location not available — ask for it
+    showToast(currentLang === 'tl'
+      ? '📍 I-enable muna ang location para mag-upload ng photo'
+      : '📍 Please enable location to upload a photo');
+    // Try requesting location
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        pos => {
+          userLat = pos.coords.latitude;
+          userLng = pos.coords.longitude;
+          updatePhotoUploadState();
+          showToast(currentLang === 'tl'
+            ? '✅ Location nakuha na! Pwede ka na mag-upload ng photo'
+            : '✅ Location detected! You can now upload a photo');
+          // Auto-open file picker after location is granted
+          document.getElementById('photoInput').click();
+        },
+        () => {
+          showToast(currentLang === 'tl'
+            ? '❌ Hindi ma-access ang location. I-check ang browser settings'
+            : '❌ Location access denied. Check your browser settings');
+        },
+        { timeout: 10000 }
+      );
+    }
+    return;
+  }
+  // Location is available — proceed with photo upload
+  document.getElementById('photoInput').click();
+}
 function closeModal() { document.getElementById('modalBg').classList.remove('show'); }
 function closeModalOutside(e) { if(e.target===document.getElementById('modalBg')) closeModal(); }
 function pickDepth(el){ document.querySelectorAll('.depth-tile').forEach(d=>d.classList.remove('selected')); el.classList.add('selected'); }
@@ -2186,6 +2239,15 @@ async function submitReport() {
   const photoFile = document.getElementById('photoInput').files[0];
 
   if (!loc) { showToast(t('locationRequired')); return; }
+
+  // Block submission with photo if location is not available
+  if (photoFile && !userLat && !userLng) {
+    showToast(currentLang === 'tl'
+      ? '📍 I-enable ang location para mag-submit ng report na may photo'
+      : '📍 Please enable location to submit a report with a photo');
+    return;
+  }
+
   if (desc && desc.length < 5) {
     showToast(currentLang === 'tl'
       ? '⚠️ Pakigamit ang mas mahabang deskripsyon'
