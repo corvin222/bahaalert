@@ -528,6 +528,7 @@ async function renderReports() {
   mc.innerHTML = `<div class="loading-state"><div class="spinner-lg"></div>Loading reports...</div>`;
 
   const reports = await sb('reports?order=created_at.desc&limit=200');
+  window._allReports = reports || [];
 
   const flagged = reports?.filter(r => (r.flags||0) >= 1) || [];
 
@@ -565,28 +566,235 @@ async function renderReports() {
     <div class="section-card">
       <div class="section-header">
         <div class="section-title">All Reports</div>
-        <div class="section-actions">
+        <div class="section-actions" style="display:flex;gap:8px;align-items:center;">
+          <span id="selectedCount" style="font-size:12px;color:var(--muted);display:none;">0 selected</span>
+          <button class="btn btn-primary btn-sm" id="btnDownloadSelected" onclick="downloadSelectedReports()" style="display:none;">📄 Download PDF</button>
+          <button class="btn btn-danger btn-sm" id="btnDeleteSelected" onclick="deleteSelectedReports()" style="display:none;">🗑️ Delete selected</button>
           <button class="btn btn-secondary" onclick="renderReports()">🔄 Refresh</button>
         </div>
       </div>
       <table>
-        <thead><tr><th>Location</th><th>Depth</th><th>Description</th><th>Role</th><th>GPS</th><th>Votes</th><th>Time</th><th>Actions</th></tr></thead>
+        <thead><tr>
+          <th style="width:36px;"><input type="checkbox" id="selectAll" onchange="toggleSelectAll(this)" style="cursor:pointer;width:16px;height:16px;"></th>
+          <th>Location</th><th>Depth</th><th>Description</th><th>Role</th><th>GPS</th><th>Votes</th><th>Time</th><th>Actions</th>
+        </tr></thead>
         <tbody>
           ${reports?.map(r => `
-            <tr>
+            <tr data-report-id="${r.id}">
+              <td><input type="checkbox" class="report-check" value="${r.id}" onchange="updateBulkActions()" style="cursor:pointer;width:16px;height:16px;"></td>
               <td><strong>${r.location}</strong></td>
               <td>${r.depth ? `<span class="badge ${depthBadge(r.depth)}">${r.depth}</span>` : '—'}</td>
-              <td style="font-size:12px;color:var(--muted);max-width:180px;">${r.description ? r.description.slice(0,60)+'...' : '—'}</td>
+              <td style="font-size:12px;color:var(--muted);max-width:180px;">${r.description ? r.description.slice(0,60)+(r.description.length>60?'...':'') : '—'}</td>
               <td style="font-size:11px;color:var(--muted)">${r.role || '—'}</td>
               <td>${r.lat ? `<a href="https://maps.google.com/?q=${r.lat},${r.lng}" target="_blank" style="color:var(--blue);font-size:11px;">📍 Map</a>` : '—'}</td>
               <td>👍 ${r.votes||0}</td>
               <td style="font-size:12px;color:var(--muted)">${timeAgo(r.created_at)}</td>
-              <td><button class="btn btn-danger btn-sm" onclick="deleteReport('${r.id}')">✕</button></td>
-            </tr>`).join('') || '<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:24px;">No reports yet</td></tr>'}
+              <td style="display:flex;gap:4px;">
+                <button class="btn btn-secondary btn-sm" onclick="downloadSingleReport('${r.id}')" title="Download PDF">📄</button>
+                <button class="btn btn-danger btn-sm" onclick="deleteReport('${r.id}')">✕</button>
+              </td>
+            </tr>`).join('') || '<tr><td colspan="9" style="text-align:center;color:var(--muted);padding:24px;">No reports yet</td></tr>'}
         </tbody>
       </table>
     </div>
   `;
+}
+
+function toggleSelectAll(master) {
+  document.querySelectorAll('.report-check').forEach(cb => { cb.checked = master.checked; });
+  updateBulkActions();
+}
+
+function updateBulkActions() {
+  const checked = document.querySelectorAll('.report-check:checked');
+  const count = checked.length;
+  const countEl = document.getElementById('selectedCount');
+  const btnDel = document.getElementById('btnDeleteSelected');
+  const btnDl = document.getElementById('btnDownloadSelected');
+
+  if (count > 0) {
+    countEl.textContent = count + ' selected';
+    countEl.style.display = 'inline';
+    btnDel.style.display = 'inline-flex';
+    btnDl.style.display = 'inline-flex';
+  } else {
+    countEl.style.display = 'none';
+    btnDel.style.display = 'none';
+    btnDl.style.display = 'none';
+  }
+}
+
+function getSelectedIds() {
+  return Array.from(document.querySelectorAll('.report-check:checked')).map(cb => cb.value);
+}
+
+async function deleteSelectedReports() {
+  const ids = getSelectedIds();
+  if (ids.length === 0) return;
+
+  const msg = ids.length === 1
+    ? 'Are you sure you want to delete this report?'
+    : `Are you sure you want to delete ${ids.length} reports? This cannot be undone.`;
+
+  if (!confirm(msg)) return;
+
+  showToast('🗑️ Deleting ' + ids.length + ' reports...');
+
+  let deleted = 0;
+  for (const id of ids) {
+    try {
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/reports?id=eq.${id}`, {
+        method: 'DELETE',
+        headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Prefer': 'return=representation' }
+      });
+      const data = await res.json().catch(() => []);
+      if (data.length > 0) deleted++;
+    } catch(e) { console.error('Delete error:', e); }
+  }
+
+  showToast(`🗑️ ${deleted} of ${ids.length} reports deleted`);
+  renderReports();
+}
+
+function getReportsById(ids) {
+  return (window._allReports || []).filter(r => ids.includes(r.id));
+}
+
+function downloadSingleReport(id) {
+  downloadReportsPDF(getReportsById([id]));
+}
+
+function downloadSelectedReports() {
+  const ids = getSelectedIds();
+  if (ids.length === 0) return;
+  downloadReportsPDF(getReportsById(ids));
+}
+
+function downloadReportsPDF(reports) {
+  if (!reports || reports.length === 0) { showToast('No reports selected'); return; }
+
+  // Load jsPDF from CDN if not already loaded
+  if (!window.jspdf) {
+    const script = document.createElement('script');
+    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.2/jspdf.umd.min.js';
+    script.onload = () => generateReportPDF(reports);
+    script.onerror = () => showToast('❌ Failed to load PDF library');
+    document.head.appendChild(script);
+  } else {
+    generateReportPDF(reports);
+  }
+}
+
+function generateReportPDF(reports) {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  const pageW = doc.internal.pageSize.getWidth();
+  const margin = 20;
+  const contentW = pageW - margin * 2;
+
+  // Title page
+  doc.setFontSize(22);
+  doc.setFont('helvetica', 'bold');
+  doc.text('BahaAlert', margin, 30);
+  doc.setFontSize(14);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(120);
+  doc.text('Community Flood Reports', margin, 40);
+  doc.setFontSize(10);
+  doc.text('Generated: ' + new Date().toLocaleString('en-PH'), margin, 48);
+  doc.text(reports.length + ' report' + (reports.length > 1 ? 's' : ''), margin, 55);
+
+  doc.setDrawColor(200);
+  doc.line(margin, 60, pageW - margin, 60);
+
+  let y = 70;
+
+  reports.forEach((r, idx) => {
+    // Check if we need a new page
+    if (y > 240) {
+      doc.addPage();
+      y = 25;
+    }
+
+    // Report header
+    doc.setFontSize(13);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(30);
+    doc.text((idx + 1) + '. ' + (r.location || 'Unknown location'), margin, y);
+    y += 7;
+
+    // Status badge
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
+    const statusColor = r.depth ? (r.depth.includes('Chest') || r.depth.includes('Dibdib') ? [239,68,68] : r.depth.includes('Waist') || r.depth.includes('Baywang') ? [249,115,22] : [34,197,94]) : [150,150,150];
+    doc.setTextColor(...statusColor);
+    doc.text('Depth: ' + (r.depth || 'Not specified'), margin, y);
+    y += 5;
+
+    // Details
+    doc.setFontSize(10);
+    doc.setTextColor(100);
+
+    const details = [
+      ['Role', r.role || 'Not specified'],
+      ['Submitted', r.created_at ? new Date(r.created_at).toLocaleString('en-PH') : 'Unknown'],
+      ['Votes', String(r.votes || 0)],
+      ['GPS', r.lat ? r.lat.toFixed(5) + ', ' + r.lng.toFixed(5) : 'Not available'],
+    ];
+
+    details.forEach(([label, value]) => {
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(80);
+      doc.text(label + ':', margin + 4, y);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(50);
+      doc.text(value, margin + 40, y);
+      y += 5;
+    });
+
+    // Description
+    if (r.description) {
+      y += 2;
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(80);
+      doc.text('Description:', margin + 4, y);
+      y += 5;
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(50);
+      const lines = doc.splitTextToSize(r.description, contentW - 8);
+      doc.text(lines, margin + 4, y);
+      y += lines.length * 5;
+    }
+
+    // Photo URL
+    if (r.photo_url) {
+      y += 2;
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(37, 99, 235);
+      doc.textWithLink('📷 View photo', margin + 4, y, { url: r.photo_url });
+      y += 5;
+    }
+
+    // Separator
+    y += 4;
+    doc.setDrawColor(220);
+    doc.line(margin, y, pageW - margin, y);
+    y += 8;
+  });
+
+  // Footer on last page
+  doc.setFontSize(8);
+  doc.setTextColor(150);
+  doc.text('BahaAlert — bahaalert.vercel.app — Confidential', margin, doc.internal.pageSize.getHeight() - 10);
+
+  // Download
+  const dateStr = new Date().toISOString().slice(0,10);
+  const filename = reports.length === 1
+    ? `BahaAlert_Report_${reports[0].location}_${dateStr}.pdf`
+    : `BahaAlert_Reports_${reports.length}_${dateStr}.pdf`;
+
+  doc.save(filename);
+  showToast('📄 PDF downloaded: ' + filename);
 }
 
 async function approveReport(id) {
