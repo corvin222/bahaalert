@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BahaAlert — Barangay Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Lexend:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#f0f4ff; --white:#fff; --border:#e2e8f8;
+  --text:#1a2340; --muted:#7a8aaa; --soft:#f7f9ff;
+  --blue:#2563eb; --blue-light:#eff4ff;
+  --red:#ef4444; --red-light:#fef2f2;
+  --orange:#f97316; --orange-light:#fff7ed;
+  --green:#22c55e; --green-light:#f0fdf4;
+  --yellow:#eab308; --yellow-light:#fefce8;
+  --purple:#7c3aed; --purple-light:#f5f3ff;
+  --shadow:0 2px 16px rgba(37,99,235,0.08);
+  --radius:14px;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Lexend',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+
+/* LOGIN */
+.auth-page{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;}
+.auth-card{background:var(--white);border-radius:24px;padding:40px;width:100%;max-width:420px;border:1px solid var(--border);box-shadow:0 8px 40px rgba(37,99,235,0.1);}
+.auth-logo{display:flex;align-items:center;gap:12px;margin-bottom:6px;}
+.auth-logo-icon{width:48px;height:48px;background:linear-gradient(135deg,#22c55e,#38bdf8);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:24px;}
+.auth-logo-name{font-family:'Nunito',sans-serif;font-size:22px;font-weight:900;color:var(--green);}
+.auth-sub{font-size:13px;color:var(--muted);margin-bottom:28px;line-height:1.5;}
+.auth-label{display:block;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;}
+.auth-input,.auth-select{width:100%;background:var(--soft);border:1.5px solid var(--border);border-radius:12px;padding:11px 14px;font-family:'Lexend',sans-serif;font-size:14px;color:var(--text);outline:none;margin-bottom:14px;transition:border-color 0.2s;}
+.auth-input:focus,.auth-select:focus{border-color:var(--green);}
+.auth-btn{width:100%;padding:14px;background:linear-gradient(90deg,#22c55e,#38bdf8);color:white;border:none;border-radius:12px;font-family:'Nunito',sans-serif;font-size:16px;font-weight:900;cursor:pointer;transition:opacity 0.2s;}
+.auth-btn:hover{opacity:0.9;}
+.auth-btn:disabled{opacity:0.6;cursor:not-allowed;}
+.auth-error{background:var(--red-light);color:var(--red);border-radius:10px;padding:10px 14px;font-size:13px;margin-top:12px;display:none;}
+.auth-success{background:var(--green-light);color:var(--green);border-radius:10px;padding:10px 14px;font-size:13px;margin-top:12px;display:none;}
+.auth-link{text-align:center;margin-top:16px;font-size:13px;color:var(--muted);}
+.auth-link a{color:var(--blue);text-decoration:none;font-weight:600;cursor:pointer;}
+.auth-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+
+/* DASHBOARD */
+.app{display:none;min-height:100vh;}
+.topbar{background:var(--white);border-bottom:1px solid var(--border);padding:14px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
+.topbar-left{display:flex;align-items:center;gap:12px;}
+.topbar-icon{width:36px;height:36px;background:linear-gradient(135deg,#22c55e,#38bdf8);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;}
+.topbar-title{font-family:'Nunito',sans-serif;font-size:18px;font-weight:900;color:var(--green);}
+.topbar-badge{background:var(--green-light);color:var(--green);font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;}
+.topbar-right{display:flex;align-items:center;gap:12px;}
+.topbar-user{font-size:13px;font-weight:600;color:var(--text);}
+.topbar-brgy{font-size:11px;color:var(--muted);}
+.btn{padding:8px 14px;border-radius:10px;font-family:'Lexend',sans-serif;font-size:12px;font-weight:700;cursor:pointer;border:none;transition:all 0.15s;}
+.btn-primary{background:var(--green);color:white;}
+.btn-primary:hover{opacity:0.9;}
+.btn-secondary{background:var(--soft);color:var(--muted);border:1px solid var(--border);}
+.btn-danger{background:var(--red-light);color:var(--red);}
+.btn-sm{padding:5px 10px;font-size:11px;}
+.btn-outline{background:transparent;color:var(--red);border:1px solid var(--border);}
+
+.main{max-width:900px;margin:0 auto;padding:24px;}
+.card{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:20px 24px;margin-bottom:16px;}
+.card-title{font-family:'Nunito',sans-serif;font-size:16px;font-weight:900;margin-bottom:4px;}
+.card-sub{font-size:12px;color:var(--muted);margin-bottom:16px;}
+.stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px;}
+.stat{background:var(--soft);border-radius:12px;padding:16px;text-align:center;}
+.stat-num{font-size:28px;font-weight:900;font-family:'Nunito',sans-serif;}
+.stat-label{font-size:11px;color:var(--muted);margin-top:2px;}
+table{width:100%;border-collapse:collapse;font-size:13px;}
+th{text-align:left;font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;padding:10px 12px;border-bottom:1.5px solid var(--border);}
+td{padding:10px 12px;border-bottom:0.5px solid var(--border);}
+.badge{font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px;white-space:nowrap;}
+.badge-verified{background:var(--green-light);color:var(--green);}
+.badge-pending{background:var(--yellow-light);color:var(--yellow);}
+.badge-critical{background:var(--red-light);color:var(--red);}
+.badge-warning{background:var(--orange-light);color:var(--orange);}
+.badge-info{background:var(--blue-light);color:var(--blue);}
+
+/* TABS */
+.tabs{display:flex;gap:4px;margin-bottom:20px;border-bottom:1.5px solid var(--border);padding-bottom:0;}
+.tab{padding:10px 16px;font-size:13px;font-weight:700;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;transition:all 0.15s;font-family:'Lexend',sans-serif;background:none;border-top:none;border-left:none;border-right:none;}
+.tab.active{color:var(--green);border-bottom-color:var(--green);}
+.tab:hover{color:var(--text);}
+.tab-content{display:none;}
+.tab-content.active{display:block;}
+
+/* FORM */
+.form-group{margin-bottom:14px;}
+.form-group label{display:block;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;}
+.form-group input,.form-group select,.form-group textarea{width:100%;background:var(--soft);border:1.5px solid var(--border);border-radius:10px;padding:10px 13px;font-family:'Lexend',sans-serif;font-size:14px;color:var(--text);outline:none;}
+.form-group textarea{resize:vertical;min-height:80px;}
+.severity-options{display:flex;gap:8px;}
+.severity-opt{flex:1;padding:10px;border:1.5px solid var(--border);border-radius:10px;text-align:center;cursor:pointer;font-size:12px;font-weight:700;transition:all 0.15s;}
+.severity-opt.selected{border-width:2px;}
+.severity-opt.info.selected{border-color:var(--blue);background:var(--blue-light);color:var(--blue);}
+.severity-opt.warning.selected{border-color:var(--orange);background:var(--orange-light);color:var(--orange);}
+.severity-opt.critical.selected{border-color:var(--red);background:var(--red-light);color:var(--red);}
+
+/* TOAST */
+.toast{position:fixed;top:20px;right:20px;background:var(--text);color:white;border-radius:12px;padding:12px 18px;font-size:13px;font-weight:600;z-index:500;display:none;box-shadow:0 8px 24px rgba(0,0,0,0.2);}
+.toast.show{display:block;animation:fadeIn 0.3s ease;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:none}}
+
+/* MOBILE */
+@media(max-width:768px){
+  .topbar{padding:10px 14px;}
+  .main{padding:14px;}
+  .stats-grid{grid-template-columns:1fr 1fr;}
+  .auth-row{grid-template-columns:1fr;}
+  .tabs{overflow-x:auto;scrollbar-width:none;}
+  .tabs::-webkit-scrollbar{display:none;}
+  .tab{white-space:nowrap;font-size:12px;padding:8px 12px;}
+}
+</style>
+</head>
+<body>
+
+<!-- LOGIN PAGE -->
+<div class="auth-page" id="loginPage">
+  <div class="auth-card" id="loginCard">
+    <div class="auth-logo">
+      <div class="auth-logo-icon">🏘️</div>
+      <div class="auth-logo-name">BahaAlert Barangay</div>
+    </div>
+    <div class="auth-sub">Verified barangay officials can submit trusted flood reports and send alerts to their community.</div>
+
+    <div id="loginForm">
+      <label class="auth-label">Email</label>
+      <input type="email" class="auth-input" id="loginEmail" placeholder="your@email.com">
+      <label class="auth-label">Password</label>
+      <input type="password" class="auth-input" id="loginPass" placeholder="Enter password">
+      <button class="auth-btn" onclick="doLogin()">Sign In</button>
+      <div class="auth-error" id="loginError"></div>
+    </div>
+
+    <div class="auth-link">
+      Don't have an account? <a onclick="showRegister()">Register as Barangay Official</a>
+    </div>
+    <div class="auth-link" style="margin-top:8px;">
+      <a href="/">← Back to BahaAlert Map</a>
+    </div>
+  </div>
+
+  <!-- REGISTER CARD -->
+  <div class="auth-card" id="registerCard" style="display:none;">
+    <div class="auth-logo">
+      <div class="auth-logo-icon">📝</div>
+      <div class="auth-logo-name">Register</div>
+    </div>
+    <div class="auth-sub">Register your barangay account. An admin will verify your identity before your account is activated.</div>
+
+    <div id="registerForm">
+      <label class="auth-label">Full Name</label>
+      <input type="text" class="auth-input" id="regName" placeholder="Juan Dela Cruz">
+
+      <div class="auth-row">
+        <div>
+          <label class="auth-label">Barangay</label>
+          <input type="text" class="auth-input" id="regBarangay" placeholder="Brgy. San Antonio">
+        </div>
+        <div>
+          <label class="auth-label">City / Municipality</label>
+          <input type="text" class="auth-input" id="regCity" placeholder="Marikina City">
+        </div>
+      </div>
+
+      <label class="auth-label">Role</label>
+      <select class="auth-select" id="regRole">
+        <option value="captain">Barangay Captain</option>
+        <option value="official" selected>Barangay Official / Kagawad</option>
+        <option value="tanod">Barangay Tanod</option>
+        <option value="health_worker">Health Worker</option>
+        <option value="volunteer">BDRRMC Volunteer</option>
+      </select>
+
+      <label class="auth-label">Phone (optional)</label>
+      <input type="tel" class="auth-input" id="regPhone" placeholder="09XX XXX XXXX">
+
+      <label class="auth-label">Email</label>
+      <input type="email" class="auth-input" id="regEmail" placeholder="your@email.com">
+
+      <label class="auth-label">Password</label>
+      <input type="password" class="auth-input" id="regPass" placeholder="Min 6 characters">
+
+      <button class="auth-btn" onclick="doRegister()">Submit Registration</button>
+      <div class="auth-error" id="regError"></div>
+      <div class="auth-success" id="regSuccess"></div>
+    </div>
+
+    <div class="auth-link">
+      Already have an account? <a onclick="showLogin()">Sign In</a>
+    </div>
+  </div>
+</div>
+
+<!-- DASHBOARD -->
+<div class="app" id="app">
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="topbar-icon">🏘️</div>
+      <div>
+        <div class="topbar-title">BahaAlert Barangay</div>
+        <div class="topbar-brgy" id="topBarangay">—</div>
+      </div>
+      <span class="topbar-badge">✓ Verified</span>
+    </div>
+    <div class="topbar-right">
+      <div style="text-align:right;">
+        <div class="topbar-user" id="topName">—</div>
+        <div class="topbar-brgy" id="topRole">—</div>
+      </div>
+      <button class="btn btn-outline btn-sm" onclick="doLogout()">Sign Out</button>
+    </div>
+  </div>
+
+  <div class="main">
+    <!-- TABS -->
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('overview',this)">📊 Overview</button>
+      <button class="tab" onclick="switchTab('report',this)">🌊 Submit Report</button>
+      <button class="tab" onclick="switchTab('notify',this)">📢 Send Alert</button>
+      <button class="tab" onclick="switchTab('history',this)">📋 My Reports</button>
+    </div>
+
+    <!-- OVERVIEW TAB -->
+    <div class="tab-content active" id="tab-overview">
+      <div class="stats-grid" id="overviewStats"></div>
+      <div class="card">
+        <div class="card-title">Recent Reports in Your Area</div>
+        <div class="card-sub" id="areaReportsSub">Loading...</div>
+        <div id="areaReportsTable"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Active Alerts in Your Area</div>
+        <div id="areaAlerts">Loading...</div>
+      </div>
+    </div>
+
+    <!-- SUBMIT REPORT TAB -->
+    <div class="tab-content" id="tab-report">
+      <div class="card">
+        <div class="card-title">🌊 Submit Verified Flood Report</div>
+        <div class="card-sub">Your report will be marked as verified and carry more weight in the system.</div>
+        <div class="form-group">
+          <label>Location</label>
+          <input type="text" id="repLocation" placeholder="Street, Barangay, City">
+        </div>
+        <div class="form-group">
+          <label>Flood Depth</label>
+          <select id="repDepth">
+            <option value="">Select depth...</option>
+            <option value="Ankle-deep">🦶 Ankle-deep</option>
+            <option value="Knee-deep">🦵 Knee-deep</option>
+            <option value="Waist-deep">🧍 Waist-deep</option>
+            <option value="Chest-deep">🌊 Chest-deep or higher</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Description</label>
+          <textarea id="repDesc" placeholder="Describe the situation — road closures, affected families, rescue needed, etc."></textarea>
+        </div>
+        <button class="btn btn-primary" onclick="submitVerifiedReport()" style="width:100%;padding:14px;font-size:14px;">✅ Submit Verified Report</button>
+      </div>
+    </div>
+
+    <!-- SEND ALERT TAB -->
+    <div class="tab-content" id="tab-notify">
+      <div class="card">
+        <div class="card-title">📢 Send Alert to Your Barangay</div>
+        <div class="card-sub">This notification will appear on BahaAlert for users in your area.</div>
+        <div class="form-group">
+          <label>Alert Title</label>
+          <input type="text" id="alertTitle" placeholder="e.g. Flash flood warning on Main Street">
+        </div>
+        <div class="form-group">
+          <label>Message</label>
+          <textarea id="alertMessage" placeholder="Detailed information about the situation, instructions for residents..."></textarea>
+        </div>
+        <div class="form-group">
+          <label>Severity</label>
+          <div class="severity-options">
+            <div class="severity-opt info selected" onclick="pickSeverity(this,'info')">ℹ️ Info</div>
+            <div class="severity-opt warning" onclick="pickSeverity(this,'warning')">⚠️ Warning</div>
+            <div class="severity-opt critical" onclick="pickSeverity(this,'critical')">🚨 Critical</div>
+          </div>
+        </div>
+        <button class="btn btn-primary" onclick="sendBarangayAlert()" style="width:100%;padding:14px;font-size:14px;">📢 Send Alert</button>
+      </div>
+      <div class="card">
+        <div class="card-title">Previous Alerts</div>
+        <div id="alertHistory">Loading...</div>
+      </div>
+    </div>
+
+    <!-- MY REPORTS TAB -->
+    <div class="tab-content" id="tab-history">
+      <div class="card">
+        <div class="card-title">My Submitted Reports</div>
+        <div class="card-sub" id="myReportsSub">Loading...</div>
+        <div id="myReportsTable"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+const SUPABASE_URL = 'https://dqjdnjutsxerqkpepbri.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRxamRuanV0c3hlcnFrcGVwYnJpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0OTE3MTcsImV4cCI6MjA5MDA2NzcxN30.nttC3ruA1WfzmS7k0HNOv0cq_PxyRhDLJYxVElbxEEA';
+const H = { 'Content-Type':'application/json','apikey':SUPABASE_KEY,'Authorization':`Bearer ${SUPABASE_KEY}`,'Prefer':'return=representation' };
+
+let currentUser = null;
+let selectedSeverity = 'info';
+
+// ── SIMPLE HASH (not crypto-secure, but ok for MVP) ──
+async function hashPassword(pass) {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(pass + 'bahaalert_salt_2026');
+  const hash = await crypto.subtle.digest('SHA-256', data);
+  return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2,'0')).join('');
+}
+
+// ── AUTH ──
+function showLogin() {
+  document.getElementById('loginCard').style.display = 'block';
+  document.getElementById('registerCard').style.display = 'none';
+}
+function showRegister() {
+  document.getElementById('loginCard').style.display = 'none';
+  document.getElementById('registerCard').style.display = 'block';
+}
+
+async function doLogin() {
+  const email = document.getElementById('loginEmail').value.trim().toLowerCase();
+  const pass = document.getElementById('loginPass').value;
+  const errEl = document.getElementById('loginError');
+  errEl.style.display = 'none';
+
+  if (!email || !pass) { errEl.textContent = 'Please enter email and password'; errEl.style.display = 'block'; return; }
+
+  try {
+    const hash = await hashPassword(pass);
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/barangay_users?email=eq.${encodeURIComponent(email)}&password_hash=eq.${hash}&select=*`,
+      { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } }
+    );
+    const users = await res.json();
+
+    if (!users || users.length === 0) {
+      errEl.textContent = 'Invalid email or password';
+      errEl.style.display = 'block';
+      return;
+    }
+
+    const user = users[0];
+    if (!user.verified) {
+      errEl.textContent = 'Your account is pending verification. Please wait for admin approval.';
+      errEl.style.display = 'block';
+      return;
+    }
+    if (!user.active) {
+      errEl.textContent = 'Your account has been deactivated. Contact admin.';
+      errEl.style.display = 'block';
+      return;
+    }
+
+    // Update last login
+    await fetch(`${SUPABASE_URL}/rest/v1/barangay_users?id=eq.${user.id}`, {
+      method: 'PATCH', headers: H,
+      body: JSON.stringify({ last_login: new Date().toISOString() })
+    });
+
+    currentUser = user;
+    localStorage.setItem('brgy_session', JSON.stringify(user));
+    showDashboard();
+  } catch(e) {
+    errEl.textContent = 'Login failed. Please try again.';
+    errEl.style.display = 'block';
+    console.error(e);
+  }
+}
+
+async function doRegister() {
+  const name = document.getElementById('regName').value.trim();
+  const barangay = document.getElementById('regBarangay').value.trim();
+  const city = document.getElementById('regCity').value.trim();
+  const role = document.getElementById('regRole').value;
+  const phone = document.getElementById('regPhone').value.trim();
+  const email = document.getElementById('regEmail').value.trim().toLowerCase();
+  const pass = document.getElementById('regPass').value;
+  const errEl = document.getElementById('regError');
+  const sucEl = document.getElementById('regSuccess');
+  errEl.style.display = 'none';
+  sucEl.style.display = 'none';
+
+  if (!name || !barangay || !city || !email || !pass) {
+    errEl.textContent = 'Please fill in all required fields';
+    errEl.style.display = 'block';
+    return;
+  }
+  if (pass.length < 6) {
+    errEl.textContent = 'Password must be at least 6 characters';
+    errEl.style.display = 'block';
+    return;
+  }
+
+  try {
+    const hash = await hashPassword(pass);
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/barangay_users`, {
+      method: 'POST', headers: H,
+      body: JSON.stringify({ name, barangay, city, role, phone, email, password_hash: hash, verified: false })
+    });
+    const data = await res.json();
+
+    if (res.status === 409 || (data.code === '23505')) {
+      errEl.textContent = 'An account with this email already exists';
+      errEl.style.display = 'block';
+      return;
+    }
+    if (!res.ok) {
+      errEl.textContent = 'Registration failed: ' + (data.message || res.status);
+      errEl.style.display = 'block';
+      return;
+    }
+
+    sucEl.textContent = 'Registration submitted! An admin will verify your account. You will be able to log in once approved.';
+    sucEl.style.display = 'block';
+    document.getElementById('registerForm').querySelectorAll('input,select').forEach(el => el.disabled = true);
+    document.querySelector('#registerCard .auth-btn').disabled = true;
+  } catch(e) {
+    errEl.textContent = 'Registration failed. Please try again.';
+    errEl.style.display = 'block';
+    console.error(e);
+  }
+}
+
+function doLogout() {
+  currentUser = null;
+  localStorage.removeItem('brgy_session');
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('loginPage').style.display = 'flex';
+  showLogin();
+}
+
+// ── DASHBOARD ──
+function showDashboard() {
+  document.getElementById('loginPage').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  document.getElementById('topName').textContent = currentUser.name;
+  document.getElementById('topBarangay').textContent = `${currentUser.barangay}, ${currentUser.city}`;
+  const roleLabels = { captain: 'Barangay Captain', official: 'Kagawad', tanod: 'Tanod', health_worker: 'Health Worker', volunteer: 'BDRRMC Volunteer' };
+  document.getElementById('topRole').textContent = roleLabels[currentUser.role] || currentUser.role;
+
+  // Pre-fill report location
+  document.getElementById('repLocation').value = `${currentUser.barangay}, ${currentUser.city}`;
+
+  loadOverview();
+  loadAlertHistory();
+  loadMyReports();
+}
+
+function switchTab(tab, btn) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('tab-' + tab).classList.add('active');
+}
+
+// ── OVERVIEW ──
+async function loadOverview() {
+  try {
+    const city = encodeURIComponent(currentUser.city);
+    const reports = await fetch(`${SUPABASE_URL}/rest/v1/reports?location=ilike.*${city}*&order=created_at.desc&limit=50`,
+      { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } }).then(r => r.json());
+
+    const today = reports.filter(r => new Date(r.created_at).toDateString() === new Date().toDateString()).length;
+    const verified = reports.filter(r => r.verified).length;
+    const critical = reports.filter(r => r.depth && (r.depth.includes('Chest') || r.depth.includes('Waist'))).length;
+
+    document.getElementById('overviewStats').innerHTML = `
+      <div class="stat"><div class="stat-num" style="color:var(--blue)">${reports.length}</div><div class="stat-label">Reports in ${currentUser.city}</div></div>
+      <div class="stat"><div class="stat-num" style="color:var(--green)">${verified}</div><div class="stat-label">Verified Reports</div></div>
+      <div class="stat"><div class="stat-num" style="color:var(--red)">${critical}</div><div class="stat-label">Critical/Severe</div></div>
+    `;
+
+    document.getElementById('areaReportsSub').textContent = `${reports.length} reports in ${currentUser.city} · ${today} today`;
+    document.getElementById('areaReportsTable').innerHTML = reports.length > 0 ? `
+      <table>
+        <thead><tr><th>Location</th><th>Depth</th><th>Source</th><th>Time</th></tr></thead>
+        <tbody>${reports.slice(0, 15).map(r => `
+          <tr>
+            <td>${r.location}</td>
+            <td>${r.depth ? `<span class="badge ${r.depth.includes('Chest') ? 'badge-critical' : r.depth.includes('Waist') ? 'badge-warning' : 'badge-info'}">${r.depth}</span>` : '—'}</td>
+            <td>${r.verified ? '<span class="badge badge-verified">✓ Verified</span>' : '<span class="badge badge-info">Community</span>'}</td>
+            <td style="font-size:11px;color:var(--muted)">${timeAgo(r.created_at)}</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    ` : '<div style="padding:20px;text-align:center;color:var(--muted);">No reports in your area yet</div>';
+
+    // Load area alerts
+    const alerts = await fetch(`${SUPABASE_URL}/rest/v1/barangay_notifications?city=eq.${city}&active=eq.true&order=created_at.desc&limit=10`,
+      { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } }).then(r => r.json());
+
+    document.getElementById('areaAlerts').innerHTML = alerts.length > 0 ? alerts.map(a => `
+      <div style="padding:12px;border:1px solid var(--border);border-radius:10px;margin-bottom:8px;border-left:4px solid ${a.severity==='critical'?'var(--red)':a.severity==='warning'?'var(--orange)':'var(--blue)'};">
+        <div style="font-weight:700;font-size:13px;">${a.title}</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:4px;">${a.message}</div>
+        <div style="font-size:10px;color:var(--muted);margin-top:6px;">By ${a.sent_by_name || 'Unknown'} · ${timeAgo(a.created_at)}</div>
+      </div>
+    `).join('') : '<div style="padding:20px;text-align:center;color:var(--muted);">No active alerts</div>';
+  } catch(e) { console.error('Overview error:', e); }
+}
+
+// ── SUBMIT VERIFIED REPORT ──
+async function submitVerifiedReport() {
+  const location = document.getElementById('repLocation').value.trim();
+  const depth = document.getElementById('repDepth').value;
+  const description = document.getElementById('repDesc').value.trim();
+
+  if (!location) { showToast('Please enter a location'); return; }
+  if (!depth) { showToast('Please select flood depth'); return; }
+
+  // Get GPS
+  let lat = null, lng = null;
+  try {
+    const pos = await new Promise((res, rej) => navigator.geolocation.getCurrentPosition(res, rej, { timeout: 5000 }));
+    lat = pos.coords.latitude;
+    lng = pos.coords.longitude;
+  } catch(e) {}
+
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/reports`, {
+      method: 'POST', headers: H,
+      body: JSON.stringify({
+        location, depth, description,
+        role: `Barangay ${currentUser.role.charAt(0).toUpperCase() + currentUser.role.slice(1)}`,
+        verified: true,
+        verified_by: currentUser.name,
+        barangay_user_id: currentUser.id,
+        lat, lng,
+        votes: 0, flags: 0
+      })
+    });
+
+    if (res.ok) {
+      showToast('✅ Verified report submitted!');
+      document.getElementById('repDesc').value = '';
+      document.getElementById('repDepth').value = '';
+      loadOverview();
+      loadMyReports();
+    } else {
+      showToast('Failed to submit report');
+    }
+  } catch(e) {
+    showToast('Error submitting report');
+    console.error(e);
+  }
+}
+
+// ── SEND BARANGAY ALERT ──
+function pickSeverity(el, severity) {
+  document.querySelectorAll('.severity-opt').forEach(o => o.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedSeverity = severity;
+}
+
+async function sendBarangayAlert() {
+  const title = document.getElementById('alertTitle').value.trim();
+  const message = document.getElementById('alertMessage').value.trim();
+
+  if (!title || !message) { showToast('Please fill in title and message'); return; }
+
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/barangay_notifications`, {
+      method: 'POST', headers: H,
+      body: JSON.stringify({
+        barangay: currentUser.barangay,
+        city: currentUser.city,
+        title, message,
+        severity: selectedSeverity,
+        sent_by: currentUser.id,
+        sent_by_name: currentUser.name
+      })
+    });
+
+    if (res.ok) {
+      showToast('📢 Alert sent to your barangay!');
+      document.getElementById('alertTitle').value = '';
+      document.getElementById('alertMessage').value = '';
+      loadAlertHistory();
+    } else {
+      showToast('Failed to send alert');
+    }
+  } catch(e) {
+    showToast('Error sending alert');
+    console.error(e);
+  }
+}
+
+async function loadAlertHistory() {
+  try {
+    const alerts = await fetch(
+      `${SUPABASE_URL}/rest/v1/barangay_notifications?sent_by=eq.${currentUser.id}&order=created_at.desc&limit=20`,
+      { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } }
+    ).then(r => r.json());
+
+    document.getElementById('alertHistory').innerHTML = alerts.length > 0 ? `
+      <table>
+        <thead><tr><th>Title</th><th>Severity</th><th>Time</th></tr></thead>
+        <tbody>${alerts.map(a => `
+          <tr>
+            <td>${a.title}</td>
+            <td><span class="badge badge-${a.severity}">${a.severity}</span></td>
+            <td style="font-size:11px;color:var(--muted)">${timeAgo(a.created_at)}</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    ` : '<div style="padding:16px;text-align:center;color:var(--muted);">No alerts sent yet</div>';
+  } catch(e) { console.error(e); }
+}
+
+// ── MY REPORTS ──
+async function loadMyReports() {
+  try {
+    const reports = await fetch(
+      `${SUPABASE_URL}/rest/v1/reports?barangay_user_id=eq.${currentUser.id}&order=created_at.desc&limit=50`,
+      { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } }
+    ).then(r => r.json());
+
+    document.getElementById('myReportsSub').textContent = `${reports.length} reports submitted by you`;
+    document.getElementById('myReportsTable').innerHTML = reports.length > 0 ? `
+      <table>
+        <thead><tr><th>Location</th><th>Depth</th><th>Description</th><th>Votes</th><th>Time</th></tr></thead>
+        <tbody>${reports.map(r => `
+          <tr>
+            <td><strong>${r.location}</strong></td>
+            <td>${r.depth ? `<span class="badge badge-${r.depth.includes('Chest')?'critical':r.depth.includes('Waist')?'warning':'info'}">${r.depth}</span>` : '—'}</td>
+            <td style="font-size:12px;color:var(--muted);max-width:200px;">${r.description ? r.description.slice(0,80) : '—'}</td>
+            <td>👍 ${r.votes||0}</td>
+            <td style="font-size:11px;color:var(--muted)">${timeAgo(r.created_at)}</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    ` : '<div style="padding:20px;text-align:center;color:var(--muted);">No reports yet. Submit your first verified report!</div>';
+  } catch(e) { console.error(e); }
+}
+
+// ── UTILS ──
+function timeAgo(dateStr) {
+  const diff = (Date.now() - new Date(dateStr).getTime()) / 1000;
+  if (diff < 60) return 'just now';
+  if (diff < 3600) return `${Math.floor(diff/60)}m ago`;
+  if (diff < 86400) return `${Math.floor(diff/3600)}h ago`;
+  return new Date(dateStr).toLocaleDateString('en-PH', {month:'short',day:'numeric'});
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.innerHTML = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3500);
+}
+
+// ── AUTO-LOGIN FROM SESSION ──
+const saved = localStorage.getItem('brgy_session');
+if (saved) {
+  try {
+    currentUser = JSON.parse(saved);
+    if (currentUser && currentUser.id) showDashboard();
+  } catch(e) { localStorage.removeItem('brgy_session'); }
+}
+</script>
+</body>
+</html>
