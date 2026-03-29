@@ -227,6 +227,9 @@ tr:hover td{background:var(--soft);}
       <div class="nav-item" onclick="showPage('broadcast',this)">
         <span class="nav-icon">📢</span><span>Broadcast Alert</span>
       </div>
+      <div class="nav-item" onclick="showPage('barangay',this)">
+        <span class="nav-icon">🏘️</span><span>Barangay Users</span>
+      </div>
       <div class="nav-section">Settings</div>
       <div class="nav-item" onclick="showPage('admins',this)">
         <span class="nav-icon">👥</span><span>Admin Users</span>
@@ -340,7 +343,7 @@ window.addEventListener('load', () => {
 function showPage(page, navEl) {
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   if (navEl) navEl.classList.add('active');
-  const pages = { overview: renderOverview, reports: renderReports, evac: renderEvac, broadcast: renderBroadcast, admins: renderAdmins, stations: renderStations };
+  const pages = { overview: renderOverview, reports: renderReports, evac: renderEvac, broadcast: renderBroadcast, admins: renderAdmins, stations: renderStations, barangay: renderBarangayUsers };
   if (pages[page]) pages[page]();
 }
 
@@ -1351,6 +1354,100 @@ async function saveStation() {
     console.error('Save station error:', e);
     showToast('Failed to save. Try again.');
   }
+}
+
+// ── BARANGAY USERS ──
+async function renderBarangayUsers() {
+  const mc = document.getElementById('mainContent');
+  mc.innerHTML = `<div class="loading-state"><div class="spinner-lg"></div>Loading barangay users...</div>`;
+
+  let users = [];
+  try {
+    users = await sb('barangay_users?order=created_at.desc');
+  } catch(e) {
+    mc.innerHTML = `<div class="loading-state">Failed to load. Make sure the barangay_users table exists.</div>`;
+    return;
+  }
+
+  if (!Array.isArray(users)) users = [];
+  const pending = users.filter(u => !u.verified);
+  const verified = users.filter(u => u.verified);
+
+  mc.innerHTML = `
+    <div class="page-header">
+      <div class="page-title">🏘️ Barangay Users</div>
+      <div class="page-sub">${users.length} total · ${pending.length} pending approval · ${verified.length} verified</div>
+    </div>
+
+    ${pending.length > 0 ? `
+    <div class="section-card" style="border-left:4px solid var(--orange);">
+      <div class="section-header">
+        <div class="section-title">⏳ Pending Approval (${pending.length})</div>
+      </div>
+      <table>
+        <thead><tr><th>Name</th><th>Email</th><th>Barangay</th><th>City</th><th>Role</th><th>Registered</th><th>Actions</th></tr></thead>
+        <tbody>
+          ${pending.map(u => `
+            <tr>
+              <td><strong>${u.name}</strong></td>
+              <td style="font-size:12px;">${u.email}</td>
+              <td>${u.barangay}</td>
+              <td>${u.city}</td>
+              <td style="font-size:11px;text-transform:capitalize;">${u.role.replace('_',' ')}</td>
+              <td style="font-size:11px;color:var(--muted)">${timeAgo(u.created_at)}</td>
+              <td style="display:flex;gap:6px;">
+                <button class="btn btn-success btn-sm" onclick="approveBarangayUser('${u.id}')">✓ Approve</button>
+                <button class="btn btn-danger btn-sm" onclick="deleteBarangayUser('${u.id}')">✕ Reject</button>
+              </td>
+            </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>` : ''}
+
+    <div class="section-card">
+      <div class="section-header">
+        <div class="section-title">Verified Barangay Officials</div>
+        <button class="btn btn-secondary" onclick="renderBarangayUsers()">🔄 Refresh</button>
+      </div>
+      ${verified.length > 0 ? `
+      <table>
+        <thead><tr><th>Name</th><th>Email</th><th>Barangay</th><th>City</th><th>Role</th><th>Last Login</th><th>Actions</th></tr></thead>
+        <tbody>
+          ${verified.map(u => `
+            <tr>
+              <td><strong>${u.name}</strong></td>
+              <td style="font-size:12px;">${u.email}</td>
+              <td>${u.barangay}</td>
+              <td>${u.city}</td>
+              <td style="font-size:11px;text-transform:capitalize;">${u.role.replace('_',' ')}</td>
+              <td style="font-size:11px;color:var(--muted)">${u.last_login ? timeAgo(u.last_login) : 'Never'}</td>
+              <td><button class="btn btn-danger btn-sm" onclick="deleteBarangayUser('${u.id}')">✕ Remove</button></td>
+            </tr>`).join('')}
+        </tbody>
+      </table>
+      ` : '<div style="padding:20px;text-align:center;color:var(--muted);">No verified barangay users yet</div>'}
+    </div>
+  `;
+}
+
+async function approveBarangayUser(id) {
+  if (!confirm('Approve this barangay user? They will be able to submit verified reports and send area notifications.')) return;
+  await fetch(`${SUPABASE_URL}/rest/v1/barangay_users?id=eq.${id}`, {
+    method: 'PATCH', headers: H,
+    body: JSON.stringify({ verified: true, approved_by: currentAdmin?.email || 'admin' })
+  });
+  showToast('✅ Barangay user approved');
+  renderBarangayUsers();
+}
+
+async function deleteBarangayUser(id) {
+  if (!confirm('Remove this barangay user?')) return;
+  await fetch(`${SUPABASE_URL}/rest/v1/barangay_users?id=eq.${id}`, {
+    method: 'DELETE',
+    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Prefer': 'return=representation' }
+  });
+  showToast('🗑️ User removed');
+  renderBarangayUsers();
 }
 
 function showToast(msg) {
