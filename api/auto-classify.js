@@ -110,11 +110,30 @@ module.exports = async function handler(req, res) {
       const rain = weather?.rain?.['1h'] || 0;
       const weatherStatus = classifyByRain(rain);
 
-      // 3. Check community reports
+      // 3. Estimate river level based on rainfall
+      // River rises with rain, gradually drops when dry
+      const currentLevel = station.river_level || 0;
+      const maxLevel = station.river_max || 10;
+      const baseLevel = maxLevel * 0.2; // Rivers don't go to zero — base is ~20% of max
+      let estimatedLevel;
+
+      if (rain > 0) {
+        // Rain raises the level: heavier rain = faster rise
+        // Each mm/hr of rain adds ~0.5-1.5% of max capacity per update cycle
+        const riseRate = (rain / 15) * maxLevel * 0.15;
+        estimatedLevel = Math.min(currentLevel + riseRate, maxLevel * 1.05);
+      } else {
+        // No rain: level slowly drops by ~2% per cycle (10 min), but not below base
+        estimatedLevel = Math.max(currentLevel * 0.98, baseLevel);
+      }
+      // Round to 1 decimal
+      estimatedLevel = Math.round(estimatedLevel * 10) / 10;
+
+      // 4. Check community reports
       const reports = await getRecentReports(station.name);
       const reportStatus = classifyByReports(reports);
 
-      // 4. Determine final status (highest severity wins)
+      // 5. Determine final status (highest severity wins)
       const severityOrder = { normal: 0, warning: 1, critical: 2 };
       let finalStatus = weatherStatus;
       let source = `weather (${rain.toFixed(1)}mm/hr)`;
@@ -124,29 +143,34 @@ module.exports = async function handler(req, res) {
         source = `community (${reports.length} reports)`;
       }
 
-      // 5. Update Supabase if status changed
+      // 6. Update Supabase — always update river_level, only change status if different
+      const updatePayload = {
+        river_level: estimatedLevel,
+        updated_by: 'auto'
+      };
       if (finalStatus !== station.flood_status) {
-        await fetch(
-          `${SUPABASE_URL}/rest/v1/flood_stations?id=eq.${station.id}`,
-          {
-            method: 'PATCH',
-            headers: sbHeaders,
-            body: JSON.stringify({
-              flood_status: finalStatus,
-              updated_by: 'auto'
-            })
-          }
-        );
+        updatePayload.flood_status = finalStatus;
       }
+
+      await fetch(
+        `${SUPABASE_URL}/rest/v1/flood_stations?id=eq.${station.id}`,
+        {
+          method: 'PATCH',
+          headers: sbHeaders,
+          body: JSON.stringify(updatePayload)
+        }
+      );
 
       results.push({
         name: station.name,
         rain: `${rain.toFixed(1)}mm/hr`,
+        level: `${estimatedLevel}m / ${maxLevel}m`,
+        previousLevel: `${currentLevel}m`,
         weatherStatus,
         reportStatus: reportStatus || 'none',
         reportsCount: reports.length,
         finalStatus,
-        changed: finalStatus !== station.flood_status,
+        statusChanged: finalStatus !== station.flood_status,
         source
       });
     }
