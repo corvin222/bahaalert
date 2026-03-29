@@ -597,9 +597,28 @@ async function approveReport(id) {
 
 async function deleteReport(id) {
   if (!confirm('Delete this report permanently?')) return;
-  await fetch(`${SUPABASE_URL}/rest/v1/reports?id=eq.${id}`, { method:'DELETE', headers:H });
-  showToast('🗑️ Report deleted');
-  renderReports();
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/reports?id=eq.${id}`, {
+      method: 'DELETE',
+      headers: {
+        'apikey': SUPABASE_KEY,
+        'Authorization': `Bearer ${SUPABASE_KEY}`,
+        'Prefer': 'return=representation'
+      }
+    });
+    const data = await res.json().catch(() => []);
+    if (res.ok && data.length > 0) {
+      showToast('🗑️ Report deleted');
+    } else if (res.ok && data.length === 0) {
+      showToast('⚠️ Delete failed — check Supabase RLS policies for the reports table. You need a DELETE policy.');
+    } else {
+      showToast('❌ Delete failed: ' + res.status);
+    }
+    renderReports();
+  } catch(e) {
+    console.error('Delete error:', e);
+    showToast('❌ Delete failed');
+  }
 }
 
 // ── EVACUATION CENTERS ──
