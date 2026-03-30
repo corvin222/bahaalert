@@ -221,6 +221,9 @@
   .report-foot{display:flex;justify-content:space-between;align-items:center;margin-top:6px;}
   .report-ago{font-size:10px;color:var(--muted);}
   .verify-btn{display:flex;align-items:center;gap:4px;background:var(--blue-light);color:var(--blue);border:none;border-radius:8px;padding:4px 9px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Lexend',sans-serif;}
+  .delete-own-btn{background:none;border:none;font-size:14px;cursor:pointer;padding:2px 6px;border-radius:4px;opacity:0.6;transition:opacity 0.2s,background 0.2s;flex-shrink:0;}
+  .delete-own-btn:hover{opacity:1;background:rgba(239,68,68,0.1);}
+  .delete-own-btn:disabled{opacity:0.3;cursor:not-allowed;}
   .evac-card{background:var(--soft);border:1.5px solid var(--border);border-radius:14px;padding:12px 14px;display:flex;align-items:center;gap:11px;margin-bottom:10px;}
   .evac-icon{width:42px;height:42px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:21px;flex-shrink:0;}
   .evac-icon.open{background:var(--green-light);}
@@ -1883,12 +1886,18 @@ async function buildReportsPanel() {
             <div class="photo-expiry">⏳ ${t('expiry')} ${hoursLeft}${t('hoursLeft')}</div>
           ` : ''}
           ${r.role ? `<div style="font-size:10px;color:var(--blue);margin-top:3px;">👤 ${r.role}${r.verified ? ' <span style="background:var(--green-light);color:var(--green);padding:1px 6px;border-radius:4px;font-weight:700;font-size:9px;">✓ VERIFIED</span>' : ''}</div>` : ''}
-          <div class="report-foot">
-            <span class="report-ago">${timeAgo(r.created_at)}</span>
-            <button class="verify-btn" onclick="handleVerify(this,'${r.id}',${r.votes})">
-              👍 <span>${r.votes || 0}</span> ${t('verifiedBy')}
+        <div class="report-foot">
+          <span class="report-ago">${timeAgo(r.created_at)}</span>
+          ${r.device_id === getDeviceId() ? `
+            <button class="delete-own-btn" onclick="deleteReport('${r.id}',this)"
+              title="${currentLang === 'tl' ? 'Burahin ang iyong report' : 'Delete your report'}">
+              🗑️
             </button>
-          </div>
+          ` : ''}
+          <button class="verify-btn" onclick="handleVerify(this,'${r.id}',${r.votes})">
+            👍 <span>${r.votes || 0}</span> ${t('verifiedBy')}
+          </button>
+        </div>
         </div>
       </div>`;
   });
@@ -2183,6 +2192,64 @@ async function flagReport(id, btn) {
     console.error('Flag error:', e);
   }
 }
+
+    // Delete own report
+    async function deleteReport(id, btn) {
+      const confirmMsg = currentLang === 'tl'
+        ? 'Sigurado ka bang gusto mong burahin ang report na ito?'
+        : 'Are you sure you want to delete this report?';
+      if (!confirm(confirmMsg)) return;
+      btn.disabled = true;
+      btn.textContent = currentLang === 'tl' ? 'Binubura...' : 'Deleting...';
+      try {
+        const checkRes = await fetch(
+          `${SUPABASE_URL}/rest/v1/reports?id=eq.${id}&device_id=eq.${getDeviceId()}&select=id,photo_url`,
+          { headers: sbHeaders }
+        );
+        const matches = await checkRes.json();
+        if (!matches || matches.length === 0) {
+          showToast(currentLang === 'tl' ? '⚠️ Hindi mo mabubura ang report na ito' : '⚠️ You cannot delete this report');
+          btn.disabled = false;
+          btn.textContent = '🗑️';
+          return;
+        }
+        const photoUrl = matches[0].photo_url;
+        if (photoUrl) {
+          try {
+            const photoPath = photoUrl.split('/storage/v1/object/public/')[1];
+            if (photoPath) {
+              await fetch(`${SUPABASE_URL}/storage/v1/object/${photoPath}`, {
+                method: 'DELETE', headers: sbHeaders
+              });
+            }
+          } catch (e) { console.warn('Photo cleanup failed:', e); }
+        }
+        const res = await fetch(
+          `${SUPABASE_URL}/rest/v1/reports?id=eq.${id}&device_id=eq.${getDeviceId()}`,
+          { method: 'DELETE', headers: sbHeaders }
+        );
+        if (res.ok) {
+          const card = btn.closest('.report-card');
+          if (card) {
+            card.style.transition = 'opacity 0.3s, transform 0.3s';
+            card.style.opacity = '0';
+            card.style.transform = 'translateX(-20px)';
+            setTimeout(() => card.remove(), 300);
+          }
+          showToast(currentLang === 'tl' ? '✅ Na-delete na ang report' : '✅ Report deleted successfully');
+          const badge = document.getElementById('statReports');
+          if (badge) {
+            const cur = parseInt(badge.textContent.match(/\d+/)?.[0] || '0');
+            if (cur > 0) badge.textContent = `📝 ${cur - 1} ${t("reports")}`;
+          }
+        } else { throw new Error('Delete failed'); }
+      } catch (e) {
+        console.error('Failed to delete report:', e);
+        showToast(currentLang === 'tl' ? '❌ Hindi na-delete ang report' : '❌ Failed to delete report');
+        btn.disabled = false;
+        btn.textContent = '🗑️';
+      }
+    }
 function openModal() {
   document.getElementById('modalBg').classList.add('show');
   // Request location when opening report modal
